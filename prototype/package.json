@@ -1,0 +1,36 @@
+{
+  "name": "aalishaan-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aalishaan Studio public prototype and Admin A2 (86400 UI edition) demo",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "build": "npm run build:browse && npm run build:products && npm run build:pending && npm run pages && npm run check && npm run check:artworks",
+    "build:browse": "node scripts/build-browse.cjs",
+    "build:products": "node scripts/build-products.cjs",
+    "pages": "node scripts/build-directory.cjs",
+    "check": "node scripts/check-site.cjs",
+    "check:routes": "node scripts/check-routes.cjs",
+    "check:artworks": "node scripts/check-artwork-mapping.cjs",
+    "review:home": "node scripts/review-home.cjs",
+    "review:products": "node scripts/review-products.cjs",
+    "build:pending": "node scripts/build-pending.cjs",
+    "review:commerce": "node scripts/review-commerce.cjs",
+    "review:wireframe": "node scripts/review-wireframe.cjs",
+    "build:site": "npm run build && node scripts/export-site.cjs",
+    "check:static": "node scripts/check-static.cjs",
+    "review:static": "node scripts/review-static.cjs",
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-prototype.ps1",
+    "review:mobile": "node scripts/review-mobile.cjs",
+    "check:admin": "node scripts/check-admin-model.cjs",
+    "check:handoff": "node scripts/check-handoff.cjs",
+    "check:baseline": "node scripts/development-baseline.cjs",
+    "freeze:baseline": "node scripts/development-baseline.cjs --freeze"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "release": "Admin A2",
+  "date": "2026-09-17",
+  "source_integrity": {
+    "source": "admin pages.zip",
+    "original_files": 409,
+    "non_admin_files_checked": 395,
+    "non_admin_changes": [],
+    "status": "PASS"
+  },
+  "original_model_guards": [
+    "Authorisation cannot release work; captured duplicates produce one confirmation.",
+    "Last-frame competition keeps the existing reservation and retains the late paid order.",
+    "Hold blocks production; a stale cancellation cannot erase actual printing or consumed materials.",
+    "Competing refunds cannot exceed balance; editing invalidates approval and unknown submissions remain reserved.",
+    "Uncertain booking is recovered once; handover gates dispatch and old tracking cannot regress delivery; split order remains partial.",
+    "Failed mutations restore state and keep dialog record references valid for correction.",
+    "Another tab\u2019s newer state blocks a stale consequential edit.",
+    "Filter/session saves also cannot overwrite a newer tab; explicit scenario reset can replace sample state.",
+    "A one-item remedy cannot refund the value of two purchased units.",
+    "A stock correction after reservation cannot start printing or consume negative stock.",
+    "Later refunds invalidate the current bank comparison but retain receipt evidence; unknown fees keep expected settlement unknown.",
+    "Resolving one request leaves other cases on the same order open; reopening restores a correctly owned follow-up.",
+    "CSV exports neutralise formula-like cells and quote embedded quotes."
+  ],
+  "focused_checks": [
+    {
+      "test": "Fresh install: 7 sections, one owner, one order, 22 products",
+      "result": "PASS",
+      "seconds": 0.36
+    },
+    {
+      "test": "Complete order journey through actual forms and confirmations",
+      "result": "PASS",
+      "seconds": 7.71
+    },
+    {
+      "test": "Damage after delivery and canonical refund approval/unknown/verification/reporting",
+      "result": "PASS",
+      "seconds": 4.25
+    },
+    {
+      "test": "Profile identity check, address/history separation, tags and promotional consent",
+      "result": "PASS",
+      "seconds": 4.86
+    },
+    {
+      "test": "Staff, honest connection state, and scenario reset preserving staff/public storage",
+      "result": "PASS",
+      "seconds": 3.34
+    },
+    {
+      "test": "Encrypted private upload, verified original download, lock and wrong-passphrase rejection",
+      "result": "PASS",
+      "seconds": 6.66
+    },
+    {
+      "test": "New print versions keep released job pinned; approval evidence stays private",
+      "result": "PASS",
+      "seconds": 6.78
+    },
+    {
+      "test": "Public image revisions, unchanged originals and exact-path shared assets export excluding private files",
+      "result": "PASS",
+      "seconds": 7.6
+    },
+    {
+      "test": "Backup/restore round-trip, passphrase retained, corrupt backup rejected without data replacement",
+      "result": "PASS",
+      "seconds": 2.12
+    },
+    {
+      "test": "Uncaught browser JavaScript exceptions",
+      "result": "PASS",
+      "errors": []
+    },
+    {
+      "test": "Draft saving, exact publish blockers, safe deletion, demo publication and pause",
+      "result": "PASS",
+      "seconds": 6.23
+    },
+    {
+      "test": "Mixed CSV validation and new drafts never inherit private files or approvals",
+      "result": "PASS",
+      "seconds": 1.04
+    },
+    {
+      "test": "Unsaved product edits protected on navigation; explicit discard leaves saved record intact",
+      "result": "PASS",
+      "seconds": 0.64
+    },
+    {
+      "test": "Filtered order export, follow-up ownership and saved reply tools remain reachable",
+      "result": "PASS",
+      "seconds": 2.37
+    },
+    {
+      "test": "All 23 isolated scenario entry points and operations-role restrictions",
+      "result": "PASS",
+      "seconds": 3.34
+    },
+    {
+      "test": "60 desktop, tablet and phone route renders without page-width overflow",
+      "result": "PASS",
+      "seconds": 5.78
+    }
+  ],
+  "integration": [
+    {
+      "route": "/admin/",
+      "status": 200
+    },
+    {
+      "route": "/admin/index.html",
+      "status": 200
+    },
+    {
+      "route": "/admin/admin.css",
+      "status": 200
+    },
+    {
+      "route": "/admin/workspace.css",
+      "status": 200
+    },
+    {
+      "route": "/admin/catalogue.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/catalogue-public.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/media-manifest.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/wireframe/scope.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/state.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/workspace-state.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/app.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/orders.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/records.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/products.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/settings.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/media-store.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/workspace.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/cms.js",
+      "status": 200
+    },
+    {
+      "route": "/admin/workspace-admin.js",
+      "status": 200
+    },
+    {
+      "route": "/index.html",
+      "status": 200
+    },
+    {
+      "route": "/data/products.json",
+      "status": 200
+    },
+    {
+      "check": "A1 migration preserves all existing orders, customer notes and order notes",
+      "result": "PASS"
+    },
+    {
+      "check": "Scenario draft does not inherit a private master or approval",
+      "result": "PASS"
+    }
+  ],
+  "limitations": "Offline Chromium with memory storage adapters and native Node WebCrypto relay. Not a hosted/native persistence or live integration certification."
+}

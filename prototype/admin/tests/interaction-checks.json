@@ -1,0 +1,114 @@
+{
+  "tests": [
+    {
+      "name": "Payment verification retains captured outcome",
+      "passed": true
+    },
+    {
+      "name": "Materials reserve and job release",
+      "passed": true
+    },
+    {
+      "name": "Printing starts only after confirmation",
+      "passed": true
+    },
+    {
+      "name": "Printing completion retained",
+      "passed": true
+    },
+    {
+      "name": "Five-point quality inspection with evidence",
+      "passed": true
+    },
+    {
+      "name": "Packing checks and measurements retained",
+      "passed": true
+    },
+    {
+      "name": "Pickup booking retained",
+      "passed": true
+    },
+    {
+      "name": "Physical handover is separate from booking",
+      "passed": true
+    },
+    {
+      "name": "Out-for-delivery demo event",
+      "passed": true
+    },
+    {
+      "name": "Delivered demo event",
+      "passed": true
+    },
+    {
+      "name": "Create linked customer request from drawer",
+      "passed": true
+    },
+    {
+      "name": "Product draft save and revision history",
+      "passed": true
+    },
+    {
+      "name": "Cancelling dirty navigation retains form",
+      "passed": true
+    },
+    {
+      "name": "Confirmed dirty navigation leaves saved record unchanged",
+      "passed": true
+    },
+    {
+      "name": "Desktop drawer aligned to right edge",
+      "passed": true
+    },
+    {
+      "name": "Local staff form retains explicit preview confirmation",
+      "passed": true
+    },
+    {
+      "name": "Escape closes drawer and returns focus",
+      "passed": true
+    },
+    {
+      "name": "Catalogue filter remains functional",
+      "passed": true
+    },
+    {
+      "name": "Catalogue pagination retained",
+      "passed": true
+    },
+    {
+      "name": "Public image upload keeps original file types and required control",
+      "passed": true
+    },
+    {
+      "name": "Phone records expose all seven labelled columns",
+      "passed": true
+    },
+    {
+      "name": "Phone menu opens and exposes seven sections",
+      "passed": true
+    },
+    {
+      "name": "Phone navigation closes after selection",
+      "passed": true
+    },
+    {
+      "name": "Phone drawer fits viewport",
+      "passed": true
+    },
+    {
+      "name": "Keyboard focus remains within drawer",
+      "passed": true
+    },
+    {
+      "name": "Owner-only staff area remains restricted",
+      "passed": true
+    },
+    {
+      "name": "Operations preview cannot expose refund execution",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "context": "Isolated local demo records in offline Chromium harness; no real services called."
+}

@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "the-bridge-of-blue-stone",
+    "source": "assets/originals/1. Collection 6 - Painted in Gold/1. Art Style 1 - Gilded Peaks/Artwork 1 The Bridge of Blue Stone (41-F).png",
+    "width": 1049,
+    "height": 1499
+  },
+  {
+    "slug": "the-moon-between-two-peaks",
+    "source": "assets/originals/1. Collection 6 - Painted in Gold/1. Art Style 1 - Gilded Peaks/Artwork 2 The Moon Between Two Peaks (41-B).png",
+    "width": 1049,
+    "height": 1499
+  },
+  {
+    "slug": "the-pine-that-holds-the-moon",
+    "source": "assets/originals/1. Collection 6 - Painted in Gold/2. Art Style 2 - Rinpa Moon/Artwork 1 The Pine That Holds the Moon (42-F).png",
+    "width": 1049,
+    "height": 1499
+  },
+  {
+    "slug": "willow-after-rain",
+    "source": "assets/originals/1. Collection 6 - Painted in Gold/2. Art Style 2 - Rinpa Moon/Artwork 2 Willow After Rain (42-B).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "bamboo-after-the-storm",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/1. Art Style 1 - Four Gentlemen/Artwork 1 Bamboo After the Storm (38-F).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-cup-beneath-the-plum",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/1. Art Style 1 - Four Gentlemen/Artwork 2 The Cup Beneath the Plum (38-B).png",
+    "width": 1049,
+    "height": 1499
+  },
+  {
+    "slug": "the-blossom-over-the-closed-window",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/2. Art Style 2 - Scarlet Blossom/Artwork 1 The Blossom Over the Closed Window (39-F).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-first-warm-wall",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/2. Art Style 2 - Scarlet Blossom/Artwork 2 The First Warm Wall (39-B).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-branch-above-dark-water",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/3. Art Style 3 - Moonlit Blossom/Artwork 1 The Branch Above Dark Water (40-F).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-window-after-midnight",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/3. Art Style 3 - Moonlit Blossom/Artwork 2 The Window After Midnight (40-B).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-teahouse-shutters-at-spring-dawn",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/4. Art Style 4 - Hand-Printed Ukiyo-e/Artwork 1 The Teahouse Shutters at Spring Dawn.png",
+    "width": 1498,
+    "height": 1050
+  },
+  {
+    "slug": "the-bridge-under-falling-blossom",
+    "source": "assets/originals/2. Collection 7 - Blossoms in Ink/4. Art Style 4 - Hand-Printed Ukiyo-e/Artwork 2 The Bridge Under Falling Blossom (29-B).png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-harbour-chain-opens",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/1. Art Style 1 - Mythic Voyage/Artwork 1 The Harbour Chain Opens (13-F).png",
+    "width": 1498,
+    "height": 1050
+  },
+  {
+    "slug": "the-galley-beyond-the-breakwater",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/1. Art Style 1 - Mythic Voyage/Artwork 2 The Galley Beyond the Breakwater (13-B).png",
+    "width": 1498,
+    "height": 1050
+  },
+  {
+    "slug": "the-lantern-that-outlasted-the-gale",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/2. Art Style 2 - Corsair Chronicles/Artwork 1 The Lantern That Outlasted the Gale (14-F.png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-ship-between-two-storms",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/2. Art Style 2 - Corsair Chronicles/Artwork 2 The Ship Between Two Storms (14-B).png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-last-mooring-in-the-mist",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/3. Art Style 3 - Ghostly Armada/Artwork 1 The Last Mooring in the Mist (15-F).png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-ship-behind-the-fog-bell",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/3. Art Style 3 - Ghostly Armada/Artwork 2 The Ship Behind the Fog Bell (15-B).png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-shipyard-at-low-tide",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/4. Art Style 4 - Marquetry Voyage/Artwork 1 The Shipyard at Low Tide (44-F).png",
+    "width": 1498,
+    "height": 1050
+  },
+  {
+    "slug": "the-clipper-in-a-grain-wind",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/4. Art Style 4 - Marquetry Voyage/Artwork 2 The Clipper in a Grain-Wind (44-B).png",
+    "width": 1499,
+    "height": 1049
+  },
+  {
+    "slug": "the-copper-citadel-at-the-sea-gate",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/5. Art Style 5 - Neo-Classical Fantasy/Artwork 1 The Copper Citadel at the Sea Gate (09-F).png",
+    "width": 1050,
+    "height": 1498
+  },
+  {
+    "slug": "the-palace-above-the-dry-dock",
+    "source": "assets/originals/3. Collection 9 - The Age of Sail/5. Art Style 5 - Neo-Classical Fantasy/Artwork 2 The Palace Above the Dry Dock (09-B).png",
+    "width": 1050,
+    "height": 1498
+  }
+]

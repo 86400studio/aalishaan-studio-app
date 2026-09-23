@@ -1,0 +1,218 @@
+{
+  "Page Hero.png": {
+    "source": "assets/site/Page Hero.png",
+    "sourceBytes": 1386246,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/page-hero-600.webp",
+        "width": 600,
+        "height": 338,
+        "bytes": 8558
+      },
+      "1200": {
+        "file": "assets/site/responsive/page-hero-1200.webp",
+        "width": 1200,
+        "height": 675,
+        "bytes": 26708
+      },
+      "1600": {
+        "file": "assets/site/responsive/page-hero-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 39558
+      }
+    }
+  },
+  "Hero Artwork.png": {
+    "source": "assets/site/Hero Artwork.png",
+    "sourceBytes": 1909074,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/hero-artwork-600.webp",
+        "width": 600,
+        "height": 657,
+        "bytes": 109468
+      },
+      "1200": {
+        "file": "assets/site/responsive/hero-artwork-1200.webp",
+        "width": 1199,
+        "height": 1312,
+        "bytes": 321620
+      },
+      "1600": {
+        "file": "assets/site/responsive/hero-artwork-1600.webp",
+        "width": 1199,
+        "height": 1312,
+        "bytes": 321620
+      }
+    }
+  },
+  "Card 1 - Shop All Image.png": {
+    "source": "assets/site/Card 1 - Shop All Image.png",
+    "sourceBytes": 1783118,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/card-1---shop-all-image-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 55766
+      },
+      "1200": {
+        "file": "assets/site/responsive/card-1---shop-all-image-1200.webp",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 193840
+      },
+      "1600": {
+        "file": "assets/site/responsive/card-1---shop-all-image-1600.webp",
+        "width": 1254,
+        "height": 1254,
+        "bytes": 245900
+      }
+    }
+  },
+  "Card 2 - Collection Image.png": {
+    "source": "assets/site/Card 2 - Collection Image.png",
+    "sourceBytes": 3833798,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/card-2---collection-image-600.webp",
+        "width": 600,
+        "height": 600,
+        "bytes": 66436
+      },
+      "1200": {
+        "file": "assets/site/responsive/card-2---collection-image-1200.webp",
+        "width": 1200,
+        "height": 1200,
+        "bytes": 258902
+      },
+      "1600": {
+        "file": "assets/site/responsive/card-2---collection-image-1600.webp",
+        "width": 1600,
+        "height": 1600,
+        "bytes": 421204
+      }
+    }
+  },
+  "Card 3 - Artstyle Image.png": {
+    "source": "assets/site/Card 3 - Artstyle Image.png",
+    "sourceBytes": 2149481,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/card-3---artstyle-image-600.webp",
+        "width": 600,
+        "height": 750,
+        "bytes": 85606
+      },
+      "1200": {
+        "file": "assets/site/responsive/card-3---artstyle-image-1200.webp",
+        "width": 1122,
+        "height": 1402,
+        "bytes": 237890
+      },
+      "1600": {
+        "file": "assets/site/responsive/card-3---artstyle-image-1600.webp",
+        "width": 1122,
+        "height": 1402,
+        "bytes": 237890
+      }
+    }
+  },
+  "Shop All Page Hero.png": {
+    "source": "assets/site/Shop All Page Hero.png",
+    "sourceBytes": 1624403,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/shop-all-page-hero-600.webp",
+        "width": 600,
+        "height": 338,
+        "bytes": 13640
+      },
+      "1200": {
+        "file": "assets/site/responsive/shop-all-page-hero-1200.webp",
+        "width": 1200,
+        "height": 675,
+        "bytes": 40554
+      },
+      "1600": {
+        "file": "assets/site/responsive/shop-all-page-hero-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 59456
+      }
+    }
+  },
+  "Collections Page Hero.png": {
+    "source": "assets/site/Collections Page Hero.png",
+    "sourceBytes": 1854626,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/collections-page-hero-600.webp",
+        "width": 600,
+        "height": 338,
+        "bytes": 15720
+      },
+      "1200": {
+        "file": "assets/site/responsive/collections-page-hero-1200.webp",
+        "width": 1200,
+        "height": 675,
+        "bytes": 55788
+      },
+      "1600": {
+        "file": "assets/site/responsive/collections-page-hero-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 83472
+      }
+    }
+  },
+  "Art Styles Page Hero.png": {
+    "source": "assets/site/Art Styles Page Hero.png",
+    "sourceBytes": 1806343,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/art-styles-page-hero-600.webp",
+        "width": 600,
+        "height": 338,
+        "bytes": 16846
+      },
+      "1200": {
+        "file": "assets/site/responsive/art-styles-page-hero-1200.webp",
+        "width": 1200,
+        "height": 675,
+        "bytes": 54410
+      },
+      "1600": {
+        "file": "assets/site/responsive/art-styles-page-hero-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 86096
+      }
+    }
+  },
+  "About Page Hero.png": {
+    "source": "assets/site/About Page Hero.png",
+    "sourceBytes": 1512823,
+    "variants": {
+      "600": {
+        "file": "assets/site/responsive/about-page-hero-600.webp",
+        "width": 600,
+        "height": 338,
+        "bytes": 10348
+      },
+      "1200": {
+        "file": "assets/site/responsive/about-page-hero-1200.webp",
+        "width": 1200,
+        "height": 675,
+        "bytes": 28292
+      },
+      "1600": {
+        "file": "assets/site/responsive/about-page-hero-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 44334
+      }
+    }
+  }
+}

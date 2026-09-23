@@ -1,0 +1,110 @@
+[
+  {
+    "file": "app.js",
+    "original_sha256": "df70d1303ab9235d3bd155f0ab7649f6621deed9d43920e3e409a74d80797949",
+    "final_sha256": "df70d1303ab9235d3bd155f0ab7649f6621deed9d43920e3e409a74d80797949",
+    "unchanged": true
+  },
+  {
+    "file": "catalogue-public.js",
+    "original_sha256": "a1d4032f17cf4f4b307af510216c4569ee4a43960980a9f7876b63f819a6e828",
+    "final_sha256": "a1d4032f17cf4f4b307af510216c4569ee4a43960980a9f7876b63f819a6e828",
+    "unchanged": true
+  },
+  {
+    "file": "catalogue.js",
+    "original_sha256": "67b11fd0b74b396e65ccc52dc1234da5fe6f48b4f04acce7e156187cff830e6e",
+    "final_sha256": "67b11fd0b74b396e65ccc52dc1234da5fe6f48b4f04acce7e156187cff830e6e",
+    "unchanged": true
+  },
+  {
+    "file": "cms.js",
+    "original_sha256": "9e6f24c1442abc78557c1e1f903809fbfdd2aa9e465cf96ed2b7ff55f8d0e46b",
+    "final_sha256": "9e6f24c1442abc78557c1e1f903809fbfdd2aa9e465cf96ed2b7ff55f8d0e46b",
+    "unchanged": true
+  },
+  {
+    "file": "media-manifest.js",
+    "original_sha256": "8de810a4a8d4192baf39135ab71c2f7b80ab464da3371c8d3bfeec1e1827b365",
+    "final_sha256": "8de810a4a8d4192baf39135ab71c2f7b80ab464da3371c8d3bfeec1e1827b365",
+    "unchanged": true
+  },
+  {
+    "file": "media-store.js",
+    "original_sha256": "54608dfc29c88584c26f889fe651d4f8fd54ea0d356b986a676d1c000842caca",
+    "final_sha256": "54608dfc29c88584c26f889fe651d4f8fd54ea0d356b986a676d1c000842caca",
+    "unchanged": true
+  },
+  {
+    "file": "orders.js",
+    "original_sha256": "56c27a0864eaf0aed16fba395273a35417cefa7c625990a0f5eb7039699f9201",
+    "final_sha256": "56c27a0864eaf0aed16fba395273a35417cefa7c625990a0f5eb7039699f9201",
+    "unchanged": true
+  },
+  {
+    "file": "products.js",
+    "original_sha256": "545670bb65d7bb1b96e0b04e4d55d5ef2d549e0243ec7dabafacbebb18b4154b",
+    "final_sha256": "545670bb65d7bb1b96e0b04e4d55d5ef2d549e0243ec7dabafacbebb18b4154b",
+    "unchanged": true
+  },
+  {
+    "file": "records.js",
+    "original_sha256": "2840ab24341cf904ef267076841e74174a348f5409df96132c94c99e284b775b",
+    "final_sha256": "2840ab24341cf904ef267076841e74174a348f5409df96132c94c99e284b775b",
+    "unchanged": true
+  },
+  {
+    "file": "settings.js",
+    "original_sha256": "d5d0d05d516eef3eb5063226cc109e271a1bdbc3bea69a15b673e24036e93e6d",
+    "final_sha256": "d5d0d05d516eef3eb5063226cc109e271a1bdbc3bea69a15b673e24036e93e6d",
+    "unchanged": true
+  },
+  {
+    "file": "state.js",
+    "original_sha256": "681fbd7ce5b8ecd2c3fe16ea1a0d228aa5928421e5fed33b5286c752cd01c9fc",
+    "final_sha256": "681fbd7ce5b8ecd2c3fe16ea1a0d228aa5928421e5fed33b5286c752cd01c9fc",
+    "unchanged": true
+  },
+  {
+    "file": "wireframe/scope.js",
+    "original_sha256": "b6ba1895c8a75f50cb987c4b3c0e3c3e7e54f5f61ef709849c5da1ca42d42d21",
+    "final_sha256": "b6ba1895c8a75f50cb987c4b3c0e3c3e7e54f5f61ef709849c5da1ca42d42d21",
+    "unchanged": true
+  },
+  {
+    "file": "wireframe/wireframe.js",
+    "original_sha256": "5536000511506e6f9848e583038bceaa25d83a5ea874d7820738e21bd2423f1a",
+    "final_sha256": "5536000511506e6f9848e583038bceaa25d83a5ea874d7820738e21bd2423f1a",
+    "unchanged": true
+  },
+  {
+    "file": "workspace-admin.js",
+    "original_sha256": "818a7b7a0cd212f1cb84cec00247ff1c3abdaadda6b1188d816900865494db11",
+    "final_sha256": "818a7b7a0cd212f1cb84cec00247ff1c3abdaadda6b1188d816900865494db11",
+    "unchanged": true
+  },
+  {
+    "file": "workspace-state.js",
+    "original_sha256": "82cf2c9878f5b40bce14be2eed9684824fb6061e35a5c47f22d1960d38232f63",
+    "final_sha256": "82cf2c9878f5b40bce14be2eed9684824fb6061e35a5c47f22d1960d38232f63",
+    "unchanged": true
+  },
+  {
+    "file": "workspace.js",
+    "original_sha256": "6c3ce5e1c77cc8b75f927932d31c26b842271c2b05a510b99b0445a9e920f547",
+    "final_sha256": "6c3ce5e1c77cc8b75f927932d31c26b842271c2b05a510b99b0445a9e920f547",
+    "unchanged": true
+  },
+  {
+    "file": "admin.css",
+    "original_sha256": "59fbdbee2614e2411e72e581e94fdf50684c57fe6b6fb51dc2f43b805880c15e",
+    "final_sha256": "59fbdbee2614e2411e72e581e94fdf50684c57fe6b6fb51dc2f43b805880c15e",
+    "unchanged": true
+  },
+  {
+    "file": "workspace.css",
+    "original_sha256": "8569667d3c3ed81192cde874f3d2ff7249d624771e435ad9cb0dcde61fba0f7e",
+    "final_sha256": "8569667d3c3ed81192cde874f3d2ff7249d624771e435ad9cb0dcde61fba0f7e",
+    "unchanged": true
+  }
+]

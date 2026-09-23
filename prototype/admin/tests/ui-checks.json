@@ -1,0 +1,3381 @@
+{
+  "tested_at": "2026-09-17",
+  "environment": "Chromium headless, offline inline-file harness; isolated in-memory localStorage and IndexedDB adapters. Not a hosted/native-persistence test.",
+  "source_integrity": {
+    "products.js": true,
+    "media-manifest.js": true,
+    "records.js": true,
+    "catalogue-public.js": true,
+    "cms.js": true,
+    "media-store.js": true,
+    "state.js": true,
+    "orders.js": true,
+    "workspace.js": true,
+    "settings.js": true,
+    "catalogue.js": true,
+    "workspace-admin.js": true,
+    "app.js": true,
+    "workspace-state.js": true,
+    "wireframe/scope.js": true,
+    "wireframe/wireframe.js": true
+  },
+  "route_equivalence": [
+    {
+      "route": "orders",
+      "same_controls_fields_options_actions": true,
+      "controls": 37
+    },
+    {
+      "route": "customers",
+      "same_controls_fields_options_actions": true,
+      "controls": 18
+    },
+    {
+      "route": "products",
+      "same_controls_fields_options_actions": true,
+      "controls": 24
+    },
+    {
+      "route": "support",
+      "same_controls_fields_options_actions": true,
+      "controls": 13
+    },
+    {
+      "route": "reports",
+      "same_controls_fields_options_actions": true,
+      "controls": 15
+    },
+    {
+      "route": "staff",
+      "same_controls_fields_options_actions": true,
+      "controls": 11
+    },
+    {
+      "route": "connections",
+      "same_controls_fields_options_actions": true,
+      "controls": 16
+    },
+    {
+      "route": "help",
+      "same_controls_fields_options_actions": true,
+      "controls": 35
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "same_controls_fields_options_actions": true,
+      "controls": 34
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "same_controls_fields_options_actions": true,
+      "controls": 37
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "same_controls_fields_options_actions": true,
+      "controls": 35
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "same_controls_fields_options_actions": true,
+      "controls": 35
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "same_controls_fields_options_actions": true,
+      "controls": 34
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "same_controls_fields_options_actions": true,
+      "controls": 35
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "same_controls_fields_options_actions": true,
+      "controls": 33
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "same_controls_fields_options_actions": true,
+      "controls": 33
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "same_controls_fields_options_actions": true,
+      "controls": 33
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "same_controls_fields_options_actions": true,
+      "controls": 33
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "same_controls_fields_options_actions": true,
+      "controls": 33
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "same_controls_fields_options_actions": true,
+      "controls": 42
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "same_controls_fields_options_actions": true,
+      "controls": 36
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "same_controls_fields_options_actions": true,
+      "controls": 37
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "same_controls_fields_options_actions": true,
+      "controls": 39
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "same_controls_fields_options_actions": true,
+      "controls": 52
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "same_controls_fields_options_actions": true,
+      "controls": 43
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "same_controls_fields_options_actions": true,
+      "controls": 38
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "same_controls_fields_options_actions": true,
+      "controls": 41
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "same_controls_fields_options_actions": true,
+      "controls": 3
+    },
+    {
+      "route": "products/general",
+      "same_controls_fields_options_actions": true,
+      "controls": 32
+    },
+    {
+      "route": "products/materials",
+      "same_controls_fields_options_actions": true,
+      "controls": 9
+    },
+    {
+      "route": "products/import",
+      "same_controls_fields_options_actions": true,
+      "controls": 4
+    },
+    {
+      "route": "products/collections",
+      "same_controls_fields_options_actions": true,
+      "controls": 66
+    },
+    {
+      "route": "support?view=returns",
+      "same_controls_fields_options_actions": true,
+      "controls": 13
+    },
+    {
+      "route": "support?view=cancellations",
+      "same_controls_fields_options_actions": true,
+      "controls": 13
+    },
+    {
+      "route": "support?view=delivery",
+      "same_controls_fields_options_actions": true,
+      "controls": 13
+    },
+    {
+      "route": "support?view=refunds",
+      "same_controls_fields_options_actions": true,
+      "controls": 9
+    },
+    {
+      "route": "support/messages",
+      "same_controls_fields_options_actions": true,
+      "controls": 1
+    },
+    {
+      "route": "support/replies",
+      "same_controls_fields_options_actions": true,
+      "controls": 2
+    },
+    {
+      "route": "reports?view=products",
+      "same_controls_fields_options_actions": true,
+      "controls": 9
+    },
+    {
+      "route": "reports?view=operations",
+      "same_controls_fields_options_actions": true,
+      "controls": 17
+    },
+    {
+      "route": "reports?detail=settlements",
+      "same_controls_fields_options_actions": true,
+      "controls": 18
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "same_controls_fields_options_actions": true,
+      "controls": 23
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "same_controls_fields_options_actions": true,
+      "controls": 19
+    },
+    {
+      "route": "settings/rules",
+      "same_controls_fields_options_actions": true,
+      "controls": 7
+    },
+    {
+      "route": "settings/system",
+      "same_controls_fields_options_actions": true,
+      "controls": 7
+    },
+    {
+      "route": "settings/activity",
+      "same_controls_fields_options_actions": true,
+      "controls": 1
+    },
+    {
+      "route": "settings/automation",
+      "same_controls_fields_options_actions": true,
+      "controls": 2
+    },
+    {
+      "route": "settings/recovery",
+      "same_controls_fields_options_actions": true,
+      "controls": 8
+    },
+    {
+      "route": "settings/guides",
+      "same_controls_fields_options_actions": true,
+      "controls": 5
+    },
+    {
+      "route": "settings/login",
+      "same_controls_fields_options_actions": true,
+      "controls": 4
+    },
+    {
+      "route": "help?view=demos",
+      "same_controls_fields_options_actions": true,
+      "controls": 35
+    },
+    {
+      "route": "help?view=coverage",
+      "same_controls_fields_options_actions": true,
+      "controls": 113
+    },
+    {
+      "route": "help?view=scope",
+      "same_controls_fields_options_actions": true,
+      "controls": 3
+    }
+  ],
+  "responsive": [
+    {
+      "route": "orders",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "customers",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Customers",
+      "overflows": []
+    },
+    {
+      "route": "products",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "support",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "reports",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "staff",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Staff & Access",
+      "overflows": []
+    },
+    {
+      "route": "connections",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Connections",
+      "overflows": []
+    },
+    {
+      "route": "help",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Product preview",
+      "overflows": []
+    },
+    {
+      "route": "products/general",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "General images",
+      "overflows": []
+    },
+    {
+      "route": "products/materials",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Materials & suppliers",
+      "overflows": []
+    },
+    {
+      "route": "products/import",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Import records",
+      "overflows": []
+    },
+    {
+      "route": "products/collections",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Collections",
+      "overflows": []
+    },
+    {
+      "route": "support?view=returns",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=cancellations",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=delivery",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=refunds",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support/messages",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Message history",
+      "overflows": []
+    },
+    {
+      "route": "support/replies",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Saved replies",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=products",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=operations",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlements",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "settings/rules",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Business rules",
+      "overflows": []
+    },
+    {
+      "route": "settings/system",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "System checks",
+      "overflows": []
+    },
+    {
+      "route": "settings/activity",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Activity history",
+      "overflows": []
+    },
+    {
+      "route": "settings/automation",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Fixed automations",
+      "overflows": []
+    },
+    {
+      "route": "settings/recovery",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Recovery rehearsal",
+      "overflows": []
+    },
+    {
+      "route": "settings/guides",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Operating guides",
+      "overflows": []
+    },
+    {
+      "route": "settings/login",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Open your demo workspace",
+      "overflows": []
+    },
+    {
+      "route": "help?view=demos",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=coverage",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=scope",
+      "viewport": 1440,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "customers",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Customers",
+      "overflows": []
+    },
+    {
+      "route": "products",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "support",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "reports",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "staff",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Staff & Access",
+      "overflows": []
+    },
+    {
+      "route": "connections",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Connections",
+      "overflows": []
+    },
+    {
+      "route": "help",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Product preview",
+      "overflows": []
+    },
+    {
+      "route": "products/general",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "General images",
+      "overflows": []
+    },
+    {
+      "route": "products/materials",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Materials & suppliers",
+      "overflows": []
+    },
+    {
+      "route": "products/import",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Import records",
+      "overflows": []
+    },
+    {
+      "route": "products/collections",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Collections",
+      "overflows": []
+    },
+    {
+      "route": "support?view=returns",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=cancellations",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=delivery",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=refunds",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support/messages",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Message history",
+      "overflows": []
+    },
+    {
+      "route": "support/replies",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Saved replies",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=products",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=operations",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlements",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "settings/rules",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Business rules",
+      "overflows": []
+    },
+    {
+      "route": "settings/system",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "System checks",
+      "overflows": []
+    },
+    {
+      "route": "settings/activity",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Activity history",
+      "overflows": []
+    },
+    {
+      "route": "settings/automation",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Fixed automations",
+      "overflows": []
+    },
+    {
+      "route": "settings/recovery",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Recovery rehearsal",
+      "overflows": []
+    },
+    {
+      "route": "settings/guides",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Operating guides",
+      "overflows": []
+    },
+    {
+      "route": "settings/login",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Open your demo workspace",
+      "overflows": []
+    },
+    {
+      "route": "help?view=demos",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=coverage",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=scope",
+      "viewport": 1024,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "customers",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Customers",
+      "overflows": []
+    },
+    {
+      "route": "products",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "support",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "reports",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "staff",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Staff & Access",
+      "overflows": []
+    },
+    {
+      "route": "connections",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Connections",
+      "overflows": []
+    },
+    {
+      "route": "help",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Product preview",
+      "overflows": []
+    },
+    {
+      "route": "products/general",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "General images",
+      "overflows": []
+    },
+    {
+      "route": "products/materials",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Materials & suppliers",
+      "overflows": []
+    },
+    {
+      "route": "products/import",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Import records",
+      "overflows": []
+    },
+    {
+      "route": "products/collections",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Collections",
+      "overflows": []
+    },
+    {
+      "route": "support?view=returns",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=cancellations",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=delivery",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=refunds",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support/messages",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Message history",
+      "overflows": []
+    },
+    {
+      "route": "support/replies",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Saved replies",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=products",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=operations",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlements",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "settings/rules",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Business rules",
+      "overflows": []
+    },
+    {
+      "route": "settings/system",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "System checks",
+      "overflows": []
+    },
+    {
+      "route": "settings/activity",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Activity history",
+      "overflows": []
+    },
+    {
+      "route": "settings/automation",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Fixed automations",
+      "overflows": []
+    },
+    {
+      "route": "settings/recovery",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Recovery rehearsal",
+      "overflows": []
+    },
+    {
+      "route": "settings/guides",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Operating guides",
+      "overflows": []
+    },
+    {
+      "route": "settings/login",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Open your demo workspace",
+      "overflows": []
+    },
+    {
+      "route": "help?view=demos",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=coverage",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=scope",
+      "viewport": 768,
+      "width": 768,
+      "scrollWidth": 768,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "customers",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Customers",
+      "overflows": []
+    },
+    {
+      "route": "products",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "support",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "reports",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "staff",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Staff & Access",
+      "overflows": []
+    },
+    {
+      "route": "connections",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Connections",
+      "overflows": []
+    },
+    {
+      "route": "help",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Product preview",
+      "overflows": []
+    },
+    {
+      "route": "products/general",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "General images",
+      "overflows": []
+    },
+    {
+      "route": "products/materials",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Materials & suppliers",
+      "overflows": []
+    },
+    {
+      "route": "products/import",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Import records",
+      "overflows": []
+    },
+    {
+      "route": "products/collections",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Collections",
+      "overflows": []
+    },
+    {
+      "route": "support?view=returns",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=cancellations",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=delivery",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=refunds",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support/messages",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Message history",
+      "overflows": []
+    },
+    {
+      "route": "support/replies",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Saved replies",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=products",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=operations",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlements",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "settings/rules",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Business rules",
+      "overflows": []
+    },
+    {
+      "route": "settings/system",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "System checks",
+      "overflows": []
+    },
+    {
+      "route": "settings/activity",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Activity history",
+      "overflows": []
+    },
+    {
+      "route": "settings/automation",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Fixed automations",
+      "overflows": []
+    },
+    {
+      "route": "settings/recovery",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Recovery rehearsal",
+      "overflows": []
+    },
+    {
+      "route": "settings/guides",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Operating guides",
+      "overflows": []
+    },
+    {
+      "route": "settings/login",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Open your demo workspace",
+      "overflows": []
+    },
+    {
+      "route": "help?view=demos",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=coverage",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=scope",
+      "viewport": 390,
+      "width": 390,
+      "scrollWidth": 390,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "customers",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Customers",
+      "overflows": []
+    },
+    {
+      "route": "products",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "support",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "reports",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "staff",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Staff & Access",
+      "overflows": []
+    },
+    {
+      "route": "connections",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Connections",
+      "overflows": []
+    },
+    {
+      "route": "help",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=0",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=1",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=2",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=3",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=4",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=5",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=6",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=7",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=8",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=9",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&stage=10",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=changes",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=documents",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=replacements",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "orders?id=AS-1001&panel=job",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Orders",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=details",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=images",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=files",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products?id=ART-001&tab=review",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Products",
+      "overflows": []
+    },
+    {
+      "route": "products/preview?id=ART-001",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Product preview",
+      "overflows": []
+    },
+    {
+      "route": "products/general",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "General images",
+      "overflows": []
+    },
+    {
+      "route": "products/materials",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Materials & suppliers",
+      "overflows": []
+    },
+    {
+      "route": "products/import",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Import records",
+      "overflows": []
+    },
+    {
+      "route": "products/collections",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Collections",
+      "overflows": []
+    },
+    {
+      "route": "support?view=returns",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=cancellations",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=delivery",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support?view=refunds",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Support",
+      "overflows": []
+    },
+    {
+      "route": "support/messages",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Message history",
+      "overflows": []
+    },
+    {
+      "route": "support/replies",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Saved replies",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=products",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?view=operations",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlements",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=settlement&id=AS-1001",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "reports?detail=dispute&id=AS-1001",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Reports",
+      "overflows": []
+    },
+    {
+      "route": "settings/rules",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Business rules",
+      "overflows": []
+    },
+    {
+      "route": "settings/system",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "System checks",
+      "overflows": []
+    },
+    {
+      "route": "settings/activity",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Activity history",
+      "overflows": []
+    },
+    {
+      "route": "settings/automation",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Fixed automations",
+      "overflows": []
+    },
+    {
+      "route": "settings/recovery",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Recovery rehearsal",
+      "overflows": []
+    },
+    {
+      "route": "settings/guides",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Operating guides",
+      "overflows": []
+    },
+    {
+      "route": "settings/login",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Open your demo workspace",
+      "overflows": []
+    },
+    {
+      "route": "help?view=demos",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=coverage",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Help & demo",
+      "overflows": []
+    },
+    {
+      "route": "help?view=scope",
+      "viewport": 320,
+      "width": 320,
+      "scrollWidth": 320,
+      "heading": "Help & demo",
+      "overflows": []
+    }
+  ],
+  "scenario_smoke": [
+    {
+      "scenario": 1,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 1,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 2,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 3,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 4,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 5,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 6,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 7,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 8,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 9,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 10,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 11,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 12,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 13,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 14,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 15,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 16,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 17,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 18,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 19,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "customers",
+      "heading": "Access restricted",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "support",
+      "heading": "Access restricted",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "reports",
+      "heading": "Access restricted",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "staff",
+      "heading": "Access restricted",
+      "rendered": true
+    },
+    {
+      "scenario": 20,
+      "route": "connections",
+      "heading": "Access restricted",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 21,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 22,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "orders",
+      "heading": "Orders",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "customers",
+      "heading": "Customers",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "products",
+      "heading": "Products",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "support",
+      "heading": "Support",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "reports",
+      "heading": "Reports",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "staff",
+      "heading": "Staff & Access",
+      "rendered": true
+    },
+    {
+      "scenario": 23,
+      "route": "connections",
+      "heading": "Connections",
+      "rendered": true
+    }
+  ],
+  "errors": [],
+  "browser_version": "144.0.7559.96"
+}

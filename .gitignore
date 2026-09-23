@@ -1,0 +1,48 @@
+# Aalishaan Studio — repository ignore rules (S0.0). prototype/.gitignore still applies inside prototype/.
+
+# Dependencies
+node_modules/
+
+# Live environment files are never committed; only a placeholder-only .env.example may be tracked
+.env*
+!.env.example
+*.pem
+
+# QA evidence, local browser-tool output and test auth state
+qa-evidence/
+.playwright-mcp/
+.auth/
+
+# Build output and caches (/build/ and /out/ are anchored so app route folders with those names stay tracked)
+dist/
+/build/
+/out/
+.next/
+.vercel/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+*.tsbuildinfo
+.eslintcache
+*.log
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+
+# Per-operator Claude Code settings
+.claude/settings.local.json
+
+# D-07: prototype binary assets stay out of Git — only fonts/ and brand/ are committed; the pinned binary
+# reference is commit b24dce1b… of 86400studio/aalishaan-studio. Each child of prototype/assets/ is ignored,
+# never the folder itself, so the two negations below take effect.
+/prototype/assets/*
+!/prototype/assets/fonts/
+!/prototype/assets/brand/
+
+# D-07 as executed at S0.0: binary source workbooks are not text sources and are not committed (local copies stay)
+/prototype/**/*.xlsx
