@@ -1,0 +1,160 @@
+
+/* R8: mobile-first gallery refinement. Loaded last on storefront pages only. */
+body{--muted:#68635d;--taupe:#605b55;--ivory:#fff;--white:#fff;background:#fff}
+::selection{background:#eadfd1;color:#191813}
+button,a,input,select,textarea,summary{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--crimson);outline-offset:4px}
+.site-header .nav-cta{background:transparent;color:var(--ink);border:1px solid #c9c4bb;border-radius:4px;font-weight:500;min-height:44px}
+.site-header .nav-cta:hover{background:#f2eee8;border-color:var(--ink)}
+.nav-link,.nav-trigger{min-height:44px}
+.button,.art-card__view{border-radius:4px;min-height:48px}
+.art-card,.collection-card,.browse-story,.route-card{border-radius:4px;box-shadow:none;border-color:#e5e1da;background:#fff}
+.art-card:hover,.art-card:focus-within,.collection-card:hover,.collection-card:focus-within{transform:none;box-shadow:none;border-color:#b8afa2}
+.art-card{padding:0}
+.art-card__media{border-radius:0;border-bottom:1px solid #eeeae4}
+.art-card__body{padding:24px;gap:10px}
+.art-card__label{font-size:11px;line-height:1.6;letter-spacing:.08em;color:#716044}
+.art-card__body h3{font-size:clamp(1.6rem,2.2vw,2rem);line-height:1.18;text-wrap:balance}
+.art-card__hook{font-size:14px;line-height:1.65;white-space:normal;overflow:visible}
+.art-card__price{font-size:1.8rem;line-height:1.35;padding-top:8px}
+.art-card__price span{display:block;font-size:13px;margin:0 0 4px}
+.art-card__view{background:#fff;color:var(--ink);border-color:#c9c2b7;font-size:14px}
+.art-card__view:hover{background:var(--ink);color:#fff}
+.art-card__actions{padding-top:8px}
+.catalogue-grid{gap:32px}
+.catalogue-heading h2{font-size:2.2rem}
+.filters{border-radius:4px;background:#faf9f6}
+.filters summary{min-height:56px;align-items:center}
+.filters label{font-size:13px}
+.filters input,.filters select{border-radius:4px}
+.browse-hero h1{line-height:1.1}
+.collection-card__body,.browse-story__copy{padding:28px}
+.collection-card p,.browse-story p{font-size:15px;line-height:1.75}
+.browse-story__image{background:#fff}
+.collection-card__image{border-color:#eeeae4}
+.back-link{border-radius:4px;font-weight:500}
+.pd-stage,.pd-tile,.pd-spec,.pd-style,.pd-frame{border-radius:4px}
+.pd-stage{border-color:#eeeae4}
+.pd-stage__button img{padding:1.5%}
+.pd-thumbs button{border-radius:4px;font-size:12px;min-width:0}
+.pd-buy h1{line-height:1.15}
+.pd-hero--purchase .pd-price strong{font-size:2rem}
+.pd-hero--purchase .pd-frame-price{font-size:13px}
+.pd-frames legend,.pd-recommendation,.pd-reassurance{line-height:1.6}
+.pd-hero--purchase .pd-facts li{font-size:14px;line-height:1.6}
+.pd-delivery-check{background:#faf9f6;border-radius:4px;padding:16px}
+.pd-delivery-check input{font-size:16px}
+.pd-delivery-check__hint,.pd-delivery-check__result small{font-size:13px;line-height:1.6}
+.pd-sticky{background:#fff;box-shadow:0 -2px 16px #19181308}
+.pd-sticky small{font-size:14px}
+.pd-spec p,.pd-small,.pd-print-note{font-size:14px;line-height:1.65}
+.pd-palette span{font-size:12px}
+.pd-meta dt{color:#68635d;font-size:12px}
+.pd-section--ivory{background:#faf9f6}
+.help-page{color:var(--ink)}
+.help-page .help-banner{background:#191813}
+.help-page .utility-hero h1{font:400 clamp(2.2rem,4vw,3.4rem)/1.15 var(--font-display);text-wrap:balance}
+.help-page .utility-main h2{font:400 1.8rem/1.2 var(--font-display)}
+.help-page .help-category h2{font-size:1.8rem}
+.help-page .help-article h2{font-size:1.7rem}
+.help-page .utility-main p{font-size:16px;line-height:1.8}
+.help-page .utility-hero>p,.help-row small,.help-category small,.help-meta,.help-breadcrumb,.help-page #faq-status{color:#625e58}
+.help-page .help-banner p{color:#ece8e1}
+.help-page .help-search{background:#ffffff12;border:1px solid #ffffff60;border-radius:4px}
+.help-page .help-search input{font-size:16px}
+.help-page .help-list,.help-page .help-category,.help-page .utility-card{border-color:#e5e1da;border-radius:4px}
+.help-page .utility-faq{border:0;border-bottom:1px solid #ded9d1;background:#fff;border-radius:0;padding:0;margin:0}
+.help-page .utility-faq summary{padding:22px 0;line-height:1.6}
+.help-page .help-assistance{background:#faf9f6;border-radius:4px}
+.help-page .preview-note{background:#faf9f6;border-color:#ad9775;color:#625e58}
+.help-page .help-breadcrumb a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.utility-card,.flow-panel{border-radius:4px;background:#fff;border-color:#e5e1da}
+.utility-page input,.utility-page select,.utility-page textarea,.commerce-page .bag-controls input,.commerce-page .bag-controls select{font-size:16px;border-radius:4px;min-height:48px}
+.flow-fine,.flow-preview,.flow-help,.flow-arrival p,.commerce-page .bag-row p,.confirmation-details p,.confirmation-next p{font-size:14px!important;color:#625e58;line-height:1.7!important}
+.flow-fields label,.commerce-page .bag-controls label,.payment-choices small{font-size:14px;color:#625e58}
+.flow-sample,.studio-nav a{min-height:44px;display:inline-flex;align-items:center;font-size:14px}
+.commerce-page .bag-row h3{font-size:26px}
+.flow-panel{padding:28px}
+.flow-totals{font-variant-numeric:tabular-nums}
+.help-page .site-footer,.site-footer{background:#24231f;border-radius:4px}
+.footer-cta{background:#2d2d27}
+.footer-cta-content h2{text-wrap:balance}
+.footer-bottom{font-size:13px}
+.pd-bag-item button{min-height:44px}
+@media(max-width:900px){
+ .pd-thumbs{display:flex;overflow-x:auto;gap:8px;padding:2px 2px 10px;scroll-snap-type:x proximity;scrollbar-width:thin}
+ .pd-thumbs button{flex:0 0 76px;scroll-snap-align:start;padding:5px;font-size:12px}
+ .pd-hero--purchase{gap:24px}
+ .pd-buy{position:static}
+ .pd-buy h1{font-size:2.4rem}
+ .pd-related__grid{gap:24px}
+ .studio-nav{gap:4px 22px}
+}
+@media(max-width:599px){
+ .catalogue-grid,.pd-related__grid{grid-template-columns:minmax(0,1fr);gap:32px}
+ .catalogue-grid .art-card{padding:0;border-radius:4px}
+ .catalogue-grid .art-card__body,.art-card__body{padding:22px;gap:10px}
+ .catalogue-grid .art-card__body h3,.art-card__body h3{font-size:1.9rem;line-height:1.18}
+ .catalogue-grid .art-card__label{font-size:11px;line-height:1.6}
+ .catalogue-grid .art-card__hook{font-size:15px;line-height:1.65}
+ .catalogue-grid .art-card__price span{font-size:13px;margin:0 0 4px}
+ .catalogue-grid .art-card__view{font-size:14px;padding:12px 16px;min-height:48px}
+ .catalogue-grid .wishlist{right:10px;top:10px}
+ .catalogue{padding-block:32px 56px}
+ .browse-hero__inner{min-height:230px;padding-block:36px}
+ .browse-hero h1,.browse-hero--index h1{font-size:2.65rem}
+ .browse-hero p{font-size:16px;line-height:1.7}
+ .browse-hero--style .browse-hero__inner{min-height:260px}
+ .collection-card__body,.browse-story__copy{padding:24px}
+ .collection-card h2,.browse-story h2{font-size:2rem}
+ .collection-card p,.browse-story p{font-size:16px}
+ .route-card{grid-template-columns:1fr}
+ .route-card__image{aspect-ratio:4/3;border-right:0;border-bottom:1px solid var(--line-soft);padding:1rem}
+ .route-card__image img{height:100%;object-fit:contain}
+ .route-card__body{padding:24px;gap:12px}
+ .route-card h3{font-size:2rem}
+ .route-card p{font-size:15px;line-height:1.65}
+ .route-card .button{font-size:14px;min-height:48px}
+ .pd-top{padding-top:14px}
+ .pd-hero--purchase{padding-top:20px}
+ .pd-buy h1{font-size:2.2rem}
+ .pd-frame{font-size:13px;padding:10px 4px}
+ .pd-hero--purchase .pd-frame img{width:56px;height:56px}
+ .pd-hero--purchase .pd-frame-price{font-size:12px}
+ .pd-frames legend{font-size:14px}
+ .pd-add{min-height:54px}
+ .pd-section{padding-block:48px}
+ .pd-story__copy p{font-size:16px;line-height:1.8}
+ .pd-stage__button{aspect-ratio:1}
+ .pd-palette{gap:8px}
+ .pd-spec{grid-template-columns:96px minmax(0,1fr)}
+ .pd-spec p{font-size:14px}
+ .pd-sticky{padding-inline:18px;gap:12px}
+ .pd-sticky .button{min-height:48px}
+ .help-page .utility-hero h1{font-size:2.3rem}
+ .help-page .help-category{padding:24px}
+ .help-page .utility-filters{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+ .help-page .utility-filters label{min-width:0}
+ .help-page .utility-filters .button{justify-self:start}
+ .flow-panel{padding:20px}
+ .commerce-page .bag-row{grid-template-columns:76px minmax(0,1fr);gap:14px}
+ .commerce-page .bag-row img{width:76px;height:106px}
+ .commerce-page .bag-row h3{font-size:23px;overflow-wrap:break-word}
+ .commerce-page .bag-controls{gap:12px 8px}
+ .commerce-page .bag-controls select{max-width:100%;width:100%}
+ .commerce-page .bag-controls label:has(select){width:100%}
+ .checkout-steps button{font-size:13px;flex-wrap:wrap;gap:6px}
+ .checkout-actions{flex-wrap:wrap}
+ .checkout-actions [data-checkout-next]{min-height:52px}
+ .footer-cta-content{padding:32px 24px}
+ .footer-cta-content h2{font-size:2.35rem}
+ .footer-rooms{gap:0 20px}
+ .footer-photo{height:240px}
+ .footer-main{padding:32px 24px 16px}
+ .footer-bottom{padding:16px 24px}
+}
+@media(prefers-reduced-motion:reduce){
+ .art-card,.collection-card,.browse-story,.route-card,.pd-stage__button img{transition:none;transform:none}
+}
+
+

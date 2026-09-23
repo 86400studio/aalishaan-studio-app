@@ -1,0 +1,160 @@
+{
+  "revision": "E1",
+  "date": "2026-09-14",
+  "environment": {
+    "node": "v24.15.0",
+    "browser": "Google Chrome through playwright-core; desktop and phone/landscape emulation"
+  },
+  "scope": "Development reference and static prototype review, not live-service or owner visual acceptance",
+  "home": {
+    "viewportChecks": 9,
+    "interactions": "Menu, cart drawer, FAQs, wishlist persistence, mid-flight resize, reverse scroll, reduced motion and no-JS passed."
+  },
+  "products": {
+    "groups": 32,
+    "checks": [
+      "Lantern layout 320",
+      "Lantern layout 390",
+      "Lantern layout 650",
+      "Lantern layout 768",
+      "Lantern layout 1024",
+      "Lantern layout 1440",
+      "Lantern layout 1920",
+      "Artwork the-bridge-of-blue-stone",
+      "Artwork the-moon-between-two-peaks",
+      "Artwork the-pine-that-holds-the-moon",
+      "Artwork willow-after-rain",
+      "Artwork bamboo-after-the-storm",
+      "Artwork the-cup-beneath-the-plum",
+      "Artwork the-blossom-over-the-closed-window",
+      "Artwork the-first-warm-wall",
+      "Artwork the-branch-above-dark-water",
+      "Artwork the-window-after-midnight",
+      "Artwork the-teahouse-shutters-at-spring-dawn",
+      "Artwork the-bridge-under-falling-blossom",
+      "Artwork the-harbour-chain-opens",
+      "Artwork the-galley-beyond-the-breakwater",
+      "Artwork the-lantern-that-outlasted-the-gale",
+      "Artwork the-ship-between-two-storms",
+      "Artwork the-last-mooring-in-the-mist",
+      "Artwork the-ship-behind-the-fog-bell",
+      "Artwork the-shipyard-at-low-tide",
+      "Artwork the-clipper-in-a-grain-wind",
+      "Artwork the-copper-citadel-at-the-sea-gate",
+      "Artwork the-palace-above-the-dry-dock",
+      "Interactions",
+      "Reduced motion",
+      "No JavaScript"
+    ]
+  },
+  "commerce": {
+    "journey": "passed",
+    "checks": [
+      "Cart persistence, merged variants and quantity boundaries",
+      "Drawer background isolation and keyboard focus return",
+      "Checkout remains usable after browser Back",
+      "Wishlist retrieval, removal, empty recovery and mobile layout",
+      "Storefront reset preserves Admin state; empty cart recovery",
+      "Stale delivery estimate recovery",
+      "No-JavaScript forms cannot submit personal data through a URL",
+      "Blocked browser storage has an honest cart recovery message"
+    ]
+  },
+  "mobile": {
+    "publicPages": 58,
+    "widths": [
+      320,
+      390,
+      430
+    ],
+    "pageWidthChecks": 174,
+    "checks": [
+      "Touch-context menu, Home FAQ, catalogue filtering/no-match/reset, frame selection, lightbox, PIN check, add-to-cart and sample checkout."
+    ],
+    "smallInputFindings": 0
+  },
+  "admin": {
+    "screens": 57,
+    "widths": [
+      360,
+      390,
+      768,
+      1440
+    ],
+    "screenWidthChecks": 228,
+    "storyLoaders": 23,
+    "captures": 22,
+    "checks": [
+      "All registered Admin screens at 360, 390, 768 and 1440 px; no document overflow, missing records or JS/network errors.",
+      "Phone: complete payment-to-delivery journey, mismatch blocking, duplicate payment, one booking after timeout, handover before dispatch, stale delivery event, four messages and refresh persistence.",
+      "Retained order filters, no-match recovery and global provider-reference search open original records.",
+      "All 23 AF1 story loaders restore a fresh scenario, including Operations direct-finance denial.",
+      "Failed inspection cannot pass without recorded correction; history survives recheck. Partial refund approval, unknown submission and confirmed recovery work.",
+      "Identity-gated manual support response, CSV row errors/drafts, incomplete-publication block and synthetic two-factor session journey.",
+      "Keyboard: skip link preserves route and focuses content; closed phone navigation is inert, opening moves focus, Escape restores it and desktop resize restores navigation access.",
+      "A pre-purchase enquiry creates a separate contact and owned case without inventing an order; original profile/case links open correctly.",
+      "Confirmed refund value is credited once; return inspection requires actual receipt and old events cannot erase the four-event movement/evidence history.",
+      "An all-draft reply library has an actionable approval state; changing order filters in a stale tab cannot overwrite newer work.",
+      "No business/provider requests, no public storage changes; sample state only."
+    ],
+    "modelGuards": [
+      "Authorisation cannot release work; captured duplicates produce one confirmation.",
+      "Last-frame competition keeps the existing reservation and retains the late paid order.",
+      "Hold blocks production; a stale cancellation cannot erase actual printing or consumed materials.",
+      "Competing refunds cannot exceed balance; editing invalidates approval and unknown submissions remain reserved.",
+      "Uncertain booking is recovered once; handover gates dispatch and old tracking cannot regress delivery; split order remains partial.",
+      "Failed mutations restore state and keep dialog record references valid for correction.",
+      "Another tab’s newer state blocks a stale consequential edit.",
+      "Filter/session saves also cannot overwrite a newer tab; explicit scenario reset can replace sample state.",
+      "A one-item remedy cannot refund the value of two purchased units.",
+      "A stock correction after reservation cannot start printing or consume negative stock.",
+      "Later refunds invalidate the current bank comparison but retain receipt evidence; unknown fees keep expected settlement unknown.",
+      "Resolving one request leaves other cases on the same order open; reopening restores a correctly owned follow-up.",
+      "CSV exports neutralise formula-like cells and quote embedded quotes."
+    ]
+  },
+  "contrast": {
+    "adminScreens": 57,
+    "adminSolidBackgroundFindings": [],
+    "mobileHomeMinimum": 6.33,
+    "mobileHomeWidths": [
+      320,
+      375,
+      390,
+      430,
+      600,
+      601,
+      768,
+      844,
+      900
+    ],
+    "mobileHomeMethod": "Minimum contrast across all pixels behind each promise text line box. Screenshots taken with promise text hidden, computed text alpha composited over sampled background. Standard relative luminance ratio. Chrome at device scale 1, page top."
+  },
+  "hosting": {
+    "pages": 60,
+    "aliases": 66,
+    "prefix": "/prototype-check",
+    "checks": [
+      "All exported canonical pages and images",
+      "Responsive CSS heroes decode and stay inside project at 390/1440",
+      "Aliases preserve query/hash",
+      "Cart to checkout",
+      "Admin order/story deep links",
+      "Nested 404 recovery",
+      "No unexpected browser/network errors"
+    ],
+    "errors": []
+  },
+  "remaining": [
+    "Owner final visual acceptance of E1/A1",
+    "Owner-approved commercial and operational inputs recorded in DEVELOPMENT-HANDOFF.md",
+    "AF1 US01-US23 integration/live acceptance with real permissions, durable records and providers",
+    "Physical-device and additional browser/accessibility acceptance during implementation"
+  ],
+  "artifacts": {
+    "hosting": "dist/site/",
+    "sourceArchive": "releases/Aalishaan-Studio-Prototype.zip",
+    "baseline": "data/development-baseline.json",
+    "localEvidence": "preview/ (excluded from source archive and hosting)"
+  }
+}

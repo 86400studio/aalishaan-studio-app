@@ -1,0 +1,16 @@
+/* E10 (23 September 2026): capacity notice and waiting-list form on the bag and checkout pages; payment-policy line. */
+.intake-notice{border:1px solid #e5e1da;border-radius:4px;background:#fbf8f2;padding:28px;margin:0 0 24px}
+.intake-notice .eyebrow{display:block;margin-bottom:10px}
+.intake-notice h2{font-family:var(--font-display);font-size:clamp(26px,3vw,34px);line-height:1.15;margin:0 0 14px}
+.intake-notice>p{font-size:15px;line-height:1.7;color:#3d3a35;margin:0 0 20px;max-width:620px}
+.intake-fields{display:grid;gap:14px;margin-bottom:12px}
+.intake-fields label{display:block;font-size:14px;font-weight:600}
+.intake-fields input{display:block;width:100%;margin-top:6px;min-height:46px;padding:10px 14px;border:1px solid #cfc9bf;border-radius:4px;background:#fff;font:inherit;font-weight:400}
+.intake-fields input[aria-invalid="true"]{border-color:#a4473d}
+.intake-notice .button{width:100%;justify-content:center}
+.intake-done{font-size:15px;line-height:1.7;color:#3d3a35;margin:0}
+.intake-done small{display:block;margin-top:8px;font-size:13px;color:#625e58}
+.payment-policy{margin:18px 0 0;border-top:1px solid #e5e3e0;padding-top:16px}
+.intake-paused #checkout-link,.intake-paused #checkout-link+.flow-fine,.intake-paused [data-checkout-next],.intake-paused .checkout-fields-panel>section.flow-panel{display:none!important}
+.checkout-fields-panel .intake-slot{margin:0}
+@media(max-width:700px){.intake-notice{padding:20px}}

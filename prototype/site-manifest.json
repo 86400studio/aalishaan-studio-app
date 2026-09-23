@@ -1,0 +1,434 @@
+{
+  "home": "index.html",
+  "directory": "site-map.html",
+  "aliases": {
+    "/": "index.html",
+    "/home": "index.html",
+    "/shop": "shop-all/index.html",
+    "/shop-all": "shop-all/index.html",
+    "/product": "product/index.html",
+    "/about": "pages/about/index.html",
+    "/about-us": "pages/about/index.html",
+    "/collections": "pages/collections/index.html",
+    "/art-styles": "pages/art-styles/index.html",
+    "/help": "pages/help/index.html",
+    "/contact": "pages/contact/index.html",
+    "/track": "pages/track/index.html",
+    "/track-order": "pages/track/index.html",
+    "/cart": "pages/cart/index.html",
+    "/checkout": "pages/checkout/index.html",
+    "/admin": "admin/index.html",
+    "/site-map": "site-map.html",
+    "/order/demo": "pages/order/demo/index.html",
+    "/policies/cancellation": "pages/policies/cancellation/index.html",
+    "/policies/cookies": "pages/policies/cookies/index.html",
+    "/policies/privacy": "pages/policies/privacy/index.html",
+    "/policies/refunds": "pages/policies/refunds/index.html",
+    "/policies/returns": "pages/policies/returns/index.html",
+    "/policies/shipping": "pages/policies/shipping/index.html",
+    "/policies/terms": "pages/policies/terms/index.html",
+    "/collections/the-age-of-sail/the-ship-behind-the-fog-bell": "pages/artworks/the-ship-behind-the-fog-bell/index.html",
+    "/404": "pages/404.html",
+    "/500": "pages/500.html",
+    "/collections/painted-in-gold": "pages/collections/painted-in-gold/index.html",
+    "/collections/blossoms-in-ink": "pages/collections/blossoms-in-ink/index.html",
+    "/collections/the-age-of-sail": "pages/collections/the-age-of-sail/index.html",
+    "/art-styles/gilded-peaks": "pages/art-styles/gilded-peaks/index.html",
+    "/art-styles/rinpa-moon": "pages/art-styles/rinpa-moon/index.html",
+    "/art-styles/four-gentlemen": "pages/art-styles/four-gentlemen/index.html",
+    "/art-styles/scarlet-blossom": "pages/art-styles/scarlet-blossom/index.html",
+    "/art-styles/moonlit-blossom": "pages/art-styles/moonlit-blossom/index.html",
+    "/art-styles/hand-printed-ukiyo-e": "pages/art-styles/hand-printed-ukiyo-e/index.html",
+    "/art-styles/mythic-voyage": "pages/art-styles/mythic-voyage/index.html",
+    "/art-styles/corsair-chronicles": "pages/art-styles/corsair-chronicles/index.html",
+    "/art-styles/ghostly-armada": "pages/art-styles/ghostly-armada/index.html",
+    "/art-styles/marquetry-voyage": "pages/art-styles/marquetry-voyage/index.html",
+    "/art-styles/neo-classical-fantasy": "pages/art-styles/neo-classical-fantasy/index.html",
+    "/artworks/the-bridge-of-blue-stone": "pages/artworks/the-bridge-of-blue-stone/index.html",
+    "/artworks/the-moon-between-two-peaks": "pages/artworks/the-moon-between-two-peaks/index.html",
+    "/artworks/the-pine-that-holds-the-moon": "pages/artworks/the-pine-that-holds-the-moon/index.html",
+    "/artworks/willow-after-rain": "pages/artworks/willow-after-rain/index.html",
+    "/artworks/bamboo-after-the-storm": "pages/artworks/bamboo-after-the-storm/index.html",
+    "/artworks/the-cup-beneath-the-plum": "pages/artworks/the-cup-beneath-the-plum/index.html",
+    "/artworks/the-blossom-over-the-closed-window": "pages/artworks/the-blossom-over-the-closed-window/index.html",
+    "/artworks/the-first-warm-wall": "pages/artworks/the-first-warm-wall/index.html",
+    "/artworks/the-branch-above-dark-water": "pages/artworks/the-branch-above-dark-water/index.html",
+    "/artworks/the-window-after-midnight": "pages/artworks/the-window-after-midnight/index.html",
+    "/artworks/the-teahouse-shutters-at-spring-dawn": "pages/artworks/the-teahouse-shutters-at-spring-dawn/index.html",
+    "/artworks/the-bridge-under-falling-blossom": "pages/artworks/the-bridge-under-falling-blossom/index.html",
+    "/artworks/the-harbour-chain-opens": "pages/artworks/the-harbour-chain-opens/index.html",
+    "/artworks/the-galley-beyond-the-breakwater": "pages/artworks/the-galley-beyond-the-breakwater/index.html",
+    "/artworks/the-lantern-that-outlasted-the-gale": "pages/artworks/the-lantern-that-outlasted-the-gale/index.html",
+    "/artworks/the-ship-between-two-storms": "pages/artworks/the-ship-between-two-storms/index.html",
+    "/artworks/the-last-mooring-in-the-mist": "pages/artworks/the-last-mooring-in-the-mist/index.html",
+    "/artworks/the-ship-behind-the-fog-bell": "pages/artworks/the-ship-behind-the-fog-bell/index.html",
+    "/artworks/the-shipyard-at-low-tide": "pages/artworks/the-shipyard-at-low-tide/index.html",
+    "/artworks/the-clipper-in-a-grain-wind": "pages/artworks/the-clipper-in-a-grain-wind/index.html",
+    "/artworks/the-copper-citadel-at-the-sea-gate": "pages/artworks/the-copper-citadel-at-the-sea-gate/index.html",
+    "/artworks/the-palace-above-the-dry-dock": "pages/artworks/the-palace-above-the-dry-dock/index.html",
+    "/about/studio": "pages/about/studio/index.html",
+    "/admin/wireframe": "admin/wireframe/index.html"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "file": "index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Shop All",
+      "file": "shop-all/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Product — The Lantern That Outlasted the Gale",
+      "file": "product/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Page not found",
+      "file": "pages/404.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Something went wrong",
+      "file": "pages/500.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "About Aalishaan Studio",
+      "file": "pages/about/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Art Styles",
+      "file": "pages/art-styles/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Your Cart",
+      "file": "pages/cart/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Checkout",
+      "file": "pages/checkout/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Collections",
+      "file": "pages/collections/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Contact Aalishaan Studio",
+      "file": "pages/contact/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Wall Art FAQs",
+      "file": "pages/help/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Your order is confirmed",
+      "file": "pages/order/demo/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Cancellation Policy",
+      "file": "pages/policies/cancellation/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Cookie Policy",
+      "file": "pages/policies/cookies/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Privacy Policy",
+      "file": "pages/policies/privacy/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Refund Policy",
+      "file": "pages/policies/refunds/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Returns & Replacements Policy",
+      "file": "pages/policies/returns/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Shipping & Delivery Policy",
+      "file": "pages/policies/shipping/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Terms & Conditions",
+      "file": "pages/policies/terms/index.html",
+      "group": "Policies",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Track Your Aalishaan Studio Order",
+      "file": "pages/track/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Painted in Gold",
+      "file": "pages/collections/painted-in-gold/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Blossoms in Ink",
+      "file": "pages/collections/blossoms-in-ink/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Age of Sail",
+      "file": "pages/collections/the-age-of-sail/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Gilded Peaks",
+      "file": "pages/art-styles/gilded-peaks/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Rinpa Moon",
+      "file": "pages/art-styles/rinpa-moon/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Four Gentlemen",
+      "file": "pages/art-styles/four-gentlemen/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Scarlet Blossom",
+      "file": "pages/art-styles/scarlet-blossom/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Moonlit Blossom",
+      "file": "pages/art-styles/moonlit-blossom/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Hand-Printed Ukiyo-e",
+      "file": "pages/art-styles/hand-printed-ukiyo-e/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Mythic Voyage",
+      "file": "pages/art-styles/mythic-voyage/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Corsair Chronicles",
+      "file": "pages/art-styles/corsair-chronicles/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Ghostly Armada",
+      "file": "pages/art-styles/ghostly-armada/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Marquetry Voyage",
+      "file": "pages/art-styles/marquetry-voyage/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Neo-Classical Fantasy",
+      "file": "pages/art-styles/neo-classical-fantasy/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Bridge of Blue Stone",
+      "file": "pages/artworks/the-bridge-of-blue-stone/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Moon Between Two Peaks",
+      "file": "pages/artworks/the-moon-between-two-peaks/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Pine That Holds the Moon",
+      "file": "pages/artworks/the-pine-that-holds-the-moon/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Willow After Rain",
+      "file": "pages/artworks/willow-after-rain/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Bamboo After the Storm",
+      "file": "pages/artworks/bamboo-after-the-storm/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Cup Beneath the Plum",
+      "file": "pages/artworks/the-cup-beneath-the-plum/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Blossom Over the Closed Window",
+      "file": "pages/artworks/the-blossom-over-the-closed-window/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The First Warm Wall",
+      "file": "pages/artworks/the-first-warm-wall/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Branch Above Dark Water",
+      "file": "pages/artworks/the-branch-above-dark-water/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Window After Midnight",
+      "file": "pages/artworks/the-window-after-midnight/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Teahouse Shutters at Spring Dawn",
+      "file": "pages/artworks/the-teahouse-shutters-at-spring-dawn/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Bridge Under Falling Blossom",
+      "file": "pages/artworks/the-bridge-under-falling-blossom/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Harbour Chain Opens",
+      "file": "pages/artworks/the-harbour-chain-opens/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Galley Beyond the Breakwater",
+      "file": "pages/artworks/the-galley-beyond-the-breakwater/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Lantern That Outlasted the Gale",
+      "file": "pages/artworks/the-lantern-that-outlasted-the-gale/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Ship Between Two Storms",
+      "file": "pages/artworks/the-ship-between-two-storms/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Last Mooring in the Mist",
+      "file": "pages/artworks/the-last-mooring-in-the-mist/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Ship Behind the Fog Bell",
+      "file": "pages/artworks/the-ship-behind-the-fog-bell/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Shipyard at Low Tide",
+      "file": "pages/artworks/the-shipyard-at-low-tide/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Clipper in a Grain-Wind",
+      "file": "pages/artworks/the-clipper-in-a-grain-wind/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Copper Citadel at the Sea Gate",
+      "file": "pages/artworks/the-copper-citadel-at-the-sea-gate/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "The Palace Above the Dry Dock",
+      "file": "pages/artworks/the-palace-above-the-dry-dock/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "About the Studio",
+      "file": "pages/about/studio/index.html",
+      "group": "Storefront",
+      "status": "R13 + M1 / E1 development reference"
+    },
+    {
+      "title": "Admin wireframe - AF1",
+      "file": "admin/wireframe/index.html",
+      "group": "Admin wireframe",
+      "status": "W1 - retained reference"
+    },
+    {
+      "title": "Studio Admin prototype",
+      "file": "admin/index.html",
+      "group": "Admin",
+      "status": "A2 - 86400 UI edition / E10 development reference"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+/* Supplied R6 room and portrait artwork. Loaded only by Home. */
+body{--ivory:#fff;--white:#fff;background:#fff}
+.opening{background:#f2f1ee}
+.hero-scene,.hero-scene picture{aspect-ratio:1672/941}
+.hero-scene picture{mask-image:none}
+.hero-scene::before,[data-handoff="on"] .hero-scene::before{height:76%;background-image:url('../assets/site/responsive/page-hero-1600.webp');background-position:0 30%;background-size:600% 180%}
+.hero-scene::after{background:linear-gradient(transparent,#f2f1ee 4rem)}
+.hero-scene__frame{left:52.885%;top:12.5%;width:26.73%;height:auto;aspect-ratio:880/1160}
+.framed-art,.hero-scene__frame .framed-art{aspect-ratio:880/1160;height:auto}
+.framed-art__cutout{width:136.364%;left:-18.18%;top:-3.45%;height:auto}
+.anatomy__art{max-width:19rem;margin-inline:auto}
+.opening::after{background:linear-gradient(transparent,rgba(35,35,32,.65));inset:76% 0 0}
+@media(min-width:901px){
+ .hero-scene{width:min(92vw,calc((100svh - 112px)*1.777));top:calc(50% + 48px);mask-image:linear-gradient(to bottom,transparent,#000 6%,#000 96%,transparent),linear-gradient(to right,transparent,#000 4%,#000 96%,transparent);mask-composite:intersect}
+ .hero-copy{margin-left:clamp(20px,3vw,52px);max-width:36%}
+ .opening{background:#f2f1ee}
+}
+@media(max-width:900px){
+ .opening{height:auto;min-height:calc(330px + 104vw + 160px)}
+ .hero-scene{top:310px;left:-75%;width:185%;aspect-ratio:1672/941;transform:none}
+ .hero-scene__frame{left:52.885%;top:12.5%;width:26.73%;height:auto;aspect-ratio:880/1160}
+ .hero-scene::before{height:76%;background-image:url('../assets/site/responsive/page-hero-1200.webp');background-position:0 30%;background-size:600% 180%}
+ .hero-scene::after{height:180px}
+ .hero-panel{padding-top:6.6rem}
+ .opening::after{inset:72% 0 0;background:linear-gradient(transparent,rgba(35,35,32,.76) 28%,rgba(35,35,32,.86))}
+ .anatomy__art{max-width:19rem}
+}
+/* M2: keep the supplied room above the copy, with promises below both. */
+@media(max-width:900px){
+ .opening{min-height:0;height:auto;padding-bottom:2rem}
+ .opening{--mobile-room-height:min(104vw,max(180px,calc(100svh - 340px)))}
+ .hero-scene{top:76px;width:calc(var(--mobile-room-height) * 1.777);left:calc(50% - var(--mobile-room-height) * 1.177)}
+ .hero-scene::after{height:4rem}
+ .hero-panel{padding-top:calc(76px + var(--mobile-room-height));padding-bottom:1.5rem}
+ .hero-copy__lead{margin-top:.75rem}
+ .hero-copy__actions{margin-top:1rem}
+ .hero-copy{margin-inline:auto}
+ .opening::after{display:none}
+ .hero-truth{position:relative;left:auto;bottom:auto;transform:none;margin-inline:auto;color:var(--ink)}
+ .hero-truth li>span>span{color:var(--ink-soft)}
+ .anatomy__art{width:min(100%,19rem,calc((100svh - 210px) * .7586))}
+}
+
+/* M4: a continuous wall-to-materials lift, followed by natural scrolling. */
+.mobile-materials[hidden]{display:none}
+@media(max-width:900px){
+ [data-handoff="mobile"] .opening-sequence{height:200svh}
+ [data-handoff="mobile"] .opening-stage{position:sticky;top:0;height:100svh;isolation:isolate;overflow:clip;background:#fff}
+ [data-handoff="mobile"] .opening{position:absolute;inset:0;height:100%;padding-bottom:0;opacity:var(--room-opacity,1)}
+ [data-handoff="mobile"] .hero-panel{opacity:var(--copy-opacity,1)}
+ [data-handoff="mobile"] .hero-scene__frame{visibility:hidden}
+ [data-handoff="mobile"] .anatomy{position:absolute;inset:0;padding:100px 0 24px;opacity:var(--details-opacity,0);background:transparent}
+ [data-handoff="mobile"] .anatomy__head{margin-bottom:24px;opacity:1}
+ [data-handoff="mobile"] .anatomy__figure{display:block}
+ [data-handoff="mobile"] .anatomy__art{width:min(100%,19rem,calc((100svh - 260px) * .7586));margin:0 auto}
+ [data-handoff="mobile"] .travelling-art{position:absolute;z-index:4;visibility:visible;filter:drop-shadow(0 10px 16px #19181326)}
+ .anatomy__connectors{display:none}
+ .spec__title[data-number]::before{content:none}
+ .mobile-materials{padding:16px 0 56px;background:#fff}
+ .hero-truth{display:none}
+ .mobile-material-details{display:grid;gap:16px}
+ .mobile-material-details .anatomy__col{display:contents}
+ .mobile-material-details .spec{display:grid;grid-template-columns:96px minmax(0,1fr);gap:0;overflow:hidden;border:1px solid var(--line-soft);border-radius:4px;background:var(--ivory);align-items:stretch}
+ .mobile-material-details .spec__swatch{width:100%;height:100%;min-height:112px;border-radius:0;background:#fff}
+ .mobile-material-details .spec__swatch img{width:100%;height:100%;object-fit:cover}
+ .mobile-material-details .spec__swatch--size img{object-fit:contain}
+ .mobile-material-details .spec>span:last-child{padding:14px;align-self:center}
+ .mobile-material-details .spec__title{font-size:1.1rem;line-height:1.2}
+ .mobile-material-details .spec__line{font-size:14px;line-height:1.65}
+}

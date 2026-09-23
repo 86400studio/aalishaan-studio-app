@@ -1,0 +1,674 @@
+{
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-frame-antique-gold-be96609e-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-frame-antique-gold-be96609e-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-close-antique-gold-3f3c22f2-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-close-antique-gold-3f3c22f2-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-frame-white.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-frame-white-4fabbf7a-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-frame-white-4fabbf7a-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-close-white.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-close-white-2a6b88c7-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-close-white-2a6b88c7-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-frame-black.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-frame-black-827f51e9-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-frame-black-827f51e9-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-close-black.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-close-black-eb004a38-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-close-black-eb004a38-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-F-the-bridge-of-blue-stone/the-bridge-of-blue-stone-paper.png": {
+    "480": "assets/web-artworks/the-bridge-of-blue-stone-paper-8c844a25-480.webp",
+    "1200": "assets/web-artworks/the-bridge-of-blue-stone-paper-8c844a25-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/the-moon-between-two-peaks-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-2bd327c0-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-2bd327c0-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-frame-antique-gold-fe061c91-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-frame-antique-gold-fe061c91-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-e1cad9d0-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-e1cad9d0-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-frame-white.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-frame-white-94619c90-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-frame-white-94619c90-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-close-white.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-close-white-c6de88cd-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-close-white-c6de88cd-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-frame-black.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-frame-black-6542e571-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-frame-black-6542e571-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-close-black.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-close-black-f3c78e2d-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-close-black-f3c78e2d-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/1.%20Art%20Style%201%20-%20Gilded%20Peaks/41-B-the-moon-between-two-peaks/the-moon-between-two-peaks-paper.png": {
+    "480": "assets/web-artworks/the-moon-between-two-peaks-paper-6bb3f16e-480.webp",
+    "1200": "assets/web-artworks/the-moon-between-two-peaks-paper-6bb3f16e-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-frame-antique-gold-17262fba-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-frame-antique-gold-17262fba-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-6a69e58b-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-6a69e58b-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-frame-white.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-frame-white-97c700d6-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-frame-white-97c700d6-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-close-white.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-close-white-74dbe53b-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-close-white-74dbe53b-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-frame-black.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-frame-black-86cccf57-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-frame-black-86cccf57-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-close-black.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-close-black-c97bb10b-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-close-black-c97bb10b-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-F-the-pine-that-holds-the-moon/the-pine-that-holds-the-moon-paper.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-paper-215b560b-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-paper-215b560b-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/the-pine-that-holds-the-moon-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-247786ff-480.webp",
+    "1200": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-247786ff-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-frame-antique-gold.png": {
+    "480": "assets/web-artworks/willow-after-rain-frame-antique-gold-fb5d7883-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-frame-antique-gold-fb5d7883-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-close-antique-gold.png": {
+    "480": "assets/web-artworks/willow-after-rain-close-antique-gold-884bce41-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-close-antique-gold-884bce41-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-frame-white.png": {
+    "480": "assets/web-artworks/willow-after-rain-frame-white-6ff5d1b9-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-frame-white-6ff5d1b9-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-close-white.png": {
+    "480": "assets/web-artworks/willow-after-rain-close-white-0464d985-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-close-white-0464d985-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-frame-black.png": {
+    "480": "assets/web-artworks/willow-after-rain-frame-black-e92ea227-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-frame-black-e92ea227-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-close-black.png": {
+    "480": "assets/web-artworks/willow-after-rain-close-black-2071f69f-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-close-black-2071f69f-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/2.%20Art%20Style%202%20-%20Rinpa%20Moon/42-B-willow-after-rain/willow-after-rain-paper.png": {
+    "480": "assets/web-artworks/willow-after-rain-paper-5e779ef5-480.webp",
+    "1200": "assets/web-artworks/willow-after-rain-paper-5e779ef5-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-frame-white.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-frame-white-3ca9b7b8-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-frame-white-3ca9b7b8-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-close-white.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-close-white-b3ffc51a-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-close-white-b3ffc51a-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-frame-black.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-frame-black-364bbc03-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-frame-black-364bbc03-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-close-black.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-close-black-3dad7307-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-close-black-3dad7307-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-frame-antique-gold.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-frame-antique-gold-05d6ef16-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-frame-antique-gold-05d6ef16-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-close-antique-gold.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-close-antique-gold-a0d31f19-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-close-antique-gold-a0d31f19-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-F-bamboo-after-the-storm/bamboo-after-the-storm-paper.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-paper-4b20c822-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-paper-4b20c822-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/bamboo-after-the-storm-close-white.png": {
+    "480": "assets/web-artworks/bamboo-after-the-storm-close-white-9b671a4a-480.webp",
+    "1200": "assets/web-artworks/bamboo-after-the-storm-close-white-9b671a4a-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-frame-white.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-frame-white-81eaf5a8-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-frame-white-81eaf5a8-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-close-white.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-close-white-169d0723-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-close-white-169d0723-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-frame-black.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-frame-black-d5bc209f-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-frame-black-d5bc209f-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-close-black.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-close-black-5ddb1cff-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-close-black-5ddb1cff-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-frame-antique-gold-0f42dec6-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-frame-antique-gold-0f42dec6-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-close-antique-gold-ff121489-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-close-antique-gold-ff121489-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/1.%20Art%20Style%201%20-%20Four%20Gentlemen/38-B-the-cup-beneath-the-plum/the-cup-beneath-the-plum-paper.png": {
+    "480": "assets/web-artworks/the-cup-beneath-the-plum-paper-1664d872-480.webp",
+    "1200": "assets/web-artworks/the-cup-beneath-the-plum-paper-1664d872-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-frame-white.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-frame-white-53958ec6-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-frame-white-53958ec6-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-close-white.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-dabe3a70-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-dabe3a70-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-frame-black.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-frame-black-e1578944-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-frame-black-e1578944-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-close-black.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-close-black-9191b1b8-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-close-black-9191b1b8-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-frame-antique-gold-fc46e7e0-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-frame-antique-gold-fc46e7e0-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-close-antique-gold-f40720f6-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-close-antique-gold-f40720f6-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-F-the-blossom-over-the-closed-window/the-blossom-over-the-closed-window-paper.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-paper-36fdf879-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-paper-36fdf879-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/the-blossom-over-the-closed-window-close-white.png": {
+    "480": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-fb8b91bf-480.webp",
+    "1200": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-fb8b91bf-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-frame-white.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-frame-white-0c810512-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-frame-white-0c810512-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-close-white.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-close-white-db062230-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-close-white-db062230-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-frame-black.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-frame-black-1820523f-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-frame-black-1820523f-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-close-black.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-close-black-11c77d66-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-close-black-11c77d66-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-frame-antique-gold-231335d7-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-frame-antique-gold-231335d7-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-wall-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-first-warm-wall-close-antique-gold-38fdd113-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-wall-close-antique-gold-38fdd113-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/2.%20Art%20Style%202%20-%20Scarlet%20Blossom/39-B-the-first-warm-wall/the-first-warm-paper.png": {
+    "480": "assets/web-artworks/the-first-warm-paper-5335f2a5-480.webp",
+    "1200": "assets/web-artworks/the-first-warm-paper-5335f2a5-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-frame-white.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-frame-white-d7402d8c-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-frame-white-d7402d8c-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-close-white.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-close-white-0e0b61a7-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-close-white-0e0b61a7-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-frame-black.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-frame-black-059dafc0-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-frame-black-059dafc0-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-close-black.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-close-black-03b79cc1-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-close-black-03b79cc1-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-frame-antique-gold-4c5e1371-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-frame-antique-gold-4c5e1371-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-close-antique-gold-d4d5141f-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-close-antique-gold-d4d5141f-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-F-the-branch-above-dark-water/the-branch-above-dark-water-paper.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-paper-84406d1d-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-paper-84406d1d-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/the-branch-above-dark-water-close-white.png": {
+    "480": "assets/web-artworks/the-branch-above-dark-water-close-white-546beaae-480.webp",
+    "1200": "assets/web-artworks/the-branch-above-dark-water-close-white-546beaae-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-frame-white.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-frame-white-7460a868-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-frame-white-7460a868-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-close-white.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-close-white-5da9b424-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-close-white-5da9b424-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-frame-black.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-frame-black-3cff0074-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-frame-black-3cff0074-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-close-black.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-close-black-73a41cc7-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-close-black-73a41cc7-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-frame-antique-gold-47584c3d-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-frame-antique-gold-47584c3d-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-close-antique-gold-1aab254f-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-close-antique-gold-1aab254f-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/3.%20Art%20Style%203%20-%20Moonlit%20Blossom/40-B-the-window-after-midnight/the-window-after-midnight-paper.png": {
+    "480": "assets/web-artworks/the-window-after-midnight-paper-a248a6a2-480.webp",
+    "1200": "assets/web-artworks/the-window-after-midnight-paper-a248a6a2-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-frame-white.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-white-e27b1f92-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-white-e27b1f92-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-close-white.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-442cf163-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-442cf163-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-frame-black.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-black-a246ef86-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-black-a246ef86-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-close-black.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-black-1c5e68fe-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-black-1c5e68fe-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-antique-gold-0476cce1-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-antique-gold-0476cce1-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-teahouse-shutters-at-spring-dawn-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-antique-gold-269ebfea-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-antique-gold-269ebfea-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-F-the-teahouse-shutters-at-spring-dawn/the-bridge-under-falling-blossom-paper.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-paper-4eb4c74b-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-paper-4eb4c74b-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/the-teahouse-shutters-at-spring-dawn-close-white.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-21f97a10-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-21f97a10-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-frame-white.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-frame-white-7ed3aa75-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-frame-white-7ed3aa75-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-close-white.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-close-white-a1950fa5-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-close-white-a1950fa5-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-frame-black.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-frame-black-a2251843-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-frame-black-a2251843-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-close-black.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-close-black-c2198460-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-close-black-c2198460-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-frame-antique-gold-4862a364-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-frame-antique-gold-4862a364-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-bridge-under-falling-blossom-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-bridge-under-falling-blossom-close-antique-gold-184010ad-480.webp",
+    "1200": "assets/web-artworks/the-bridge-under-falling-blossom-close-antique-gold-184010ad-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/4.%20Art%20Style%204%20-%20Hand-Printed%20Ukiyo-e/29-B-the-bridge-under-falling-blossom/the-teahouse-shutters-at-spring-dawn-paper.png": {
+    "480": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-paper-0fdc1edb-480.webp",
+    "1200": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-paper-0fdc1edb-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-frame-antique-gold-abfe01d2-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-frame-antique-gold-abfe01d2-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-c5d4fa7e-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-c5d4fa7e-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-frame-white.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-frame-white-b7af48c1-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-frame-white-b7af48c1-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-close-white.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-close-white-17563d49-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-close-white-17563d49-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-frame-black.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-frame-black-6937c9a8-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-frame-black-6937c9a8-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-close-black.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-close-black-0cf3aa15-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-close-black-0cf3aa15-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-F-the-harbour-chain-opens/the-harbour-chain-opens-paper.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-paper-c87601d5-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-paper-c87601d5-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/the-harbour-chain-opens-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-604c1724-480.webp",
+    "1200": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-604c1724-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-antique-gold-c52d6988-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-antique-gold-c52d6988-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-close-antique-gold-472bbc35-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-close-antique-gold-472bbc35-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-frame-white.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-white-dc3c0b83-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-white-dc3c0b83-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-close-white.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-close-white-77eb2c07-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-close-white-77eb2c07-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-frame-black.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-black-982d0b18-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-black-982d0b18-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-close-black.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-close-black-7b2c9178-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-close-black-7b2c9178-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/1.%20Art%20Style%201%20-%20Mythic%20Voyage/13-B-the-galley-beyond-the-breakwater/the-galley-beyond-the-breakwater-paper.png": {
+    "480": "assets/web-artworks/the-galley-beyond-the-breakwater-paper-ee83203a-480.webp",
+    "1200": "assets/web-artworks/the-galley-beyond-the-breakwater-paper-ee83203a-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-frame-black.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-black-87c8a581-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-black-87c8a581-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-close-black.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-dbda7fbd-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-dbda7fbd-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-frame-white.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-white-e1a2a14f-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-white-e1a2a14f-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-close-white.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-white-cd899800-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-white-cd899800-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-antique-gold-e9ba6d74-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-antique-gold-e9ba6d74-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-antique-gold-f4383cad-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-antique-gold-f4383cad-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-F-the-lantern-that-outlasted-the-gale/the-lantern-that-outlasted-the-gale-paper.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-paper-4f68b057-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-paper-4f68b057-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/the-lantern-that-outlasted-the-gale-close-black.png": {
+    "480": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-90455d00-480.webp",
+    "1200": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-90455d00-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-frame-black.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-frame-black-fba303ba-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-frame-black-fba303ba-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-close-black.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-close-black-424add86-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-close-black-424add86-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-frame-white.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-frame-white-e848b182-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-frame-white-e848b182-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-close-white.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-close-white-d6bc1287-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-close-white-d6bc1287-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-frame-antique-gold-def7f6e9-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-frame-antique-gold-def7f6e9-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-close-antique-gold-8369366a-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-close-antique-gold-8369366a-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/2.%20Art%20Style%202%20-%20Corsair%20Chronicles/14-B-the-ship-between-two-storms/the-ship-between-two-storms-paper.png": {
+    "480": "assets/web-artworks/the-ship-between-two-storms-paper-220bf30b-480.webp",
+    "1200": "assets/web-artworks/the-ship-between-two-storms-paper-220bf30b-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-frame-black.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-frame-black-8585986f-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-frame-black-8585986f-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-close-black.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-6835f423-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-6835f423-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-frame-white.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-frame-white-43a95a05-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-frame-white-43a95a05-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-close-white.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-close-white-c7e58c72-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-close-white-c7e58c72-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-frame-antique-gold-9382e84c-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-frame-antique-gold-9382e84c-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-close-antique-gold-4e357671-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-close-antique-gold-4e357671-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-F-the-last-mooring-in-the-mist/the-last-mooring-in-the-mist-paper.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-paper-9384389c-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-paper-9384389c-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/the-last-mooring-in-the-mist-close-black.png": {
+    "480": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-9527ae6e-480.webp",
+    "1200": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-9527ae6e-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-frame-black.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-black-4a6edfa2-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-black-4a6edfa2-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-close-black.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-close-black-dfa560db-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-close-black-dfa560db-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-frame-white.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-white-86da03f8-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-white-86da03f8-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-close-white.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-close-white-d2ef40e3-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-close-white-d2ef40e3-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-antique-gold-f056443b-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-antique-gold-f056443b-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-close-antique-gold-d4c7067f-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-close-antique-gold-d4c7067f-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/3.%20Art%20Style%203%20-%20Ghostly%20Armada/15-B-the-ship-behind-the-fog-bell/the-ship-behind-the-fog-bell-paper.png": {
+    "480": "assets/web-artworks/the-ship-behind-the-fog-bell-paper-0b15f849-480.webp",
+    "1200": "assets/web-artworks/the-ship-behind-the-fog-bell-paper-0b15f849-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-frame-black.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-frame-black-9269e6ff-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-frame-black-9269e6ff-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-close-black.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-close-black-eb3bba60-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-close-black-eb3bba60-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-frame-white.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-frame-white-d8e88a99-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-frame-white-d8e88a99-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-close-white.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-close-white-bbe04600-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-close-white-bbe04600-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-frame-antique-gold-38089211-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-frame-antique-gold-38089211-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-close-antique-gold-4c0e777e-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-close-antique-gold-4c0e777e-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-F-the-shipyard-at-low-tide/the-shipyard-at-low-tide-paper.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-paper-5e16dd0d-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-paper-5e16dd0d-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/the-shipyard-at-low-tide-close-black.png": {
+    "480": "assets/web-artworks/the-shipyard-at-low-tide-close-black-e8961075-480.webp",
+    "1200": "assets/web-artworks/the-shipyard-at-low-tide-close-black-e8961075-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-frame-black.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-black-c82fb1d6-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-black-c82fb1d6-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-close-black.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-close-black-ce784207-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-close-black-ce784207-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-frame-white.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-white-c7597093-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-white-c7597093-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-close-white.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-close-white-6394d986-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-close-white-6394d986-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-antique-gold-10731466-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-antique-gold-10731466-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-close-antique-gold-0342e440-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-close-antique-gold-0342e440-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/4.%20Art%20Style%204%20-%20Marquetry%20Voyage/44-B-the-clipper-in-a-grain-wind/the-clipper-in-a-grain-wind-paper.png": {
+    "480": "assets/web-artworks/the-clipper-in-a-grain-wind-paper-87c54942-480.webp",
+    "1200": "assets/web-artworks/the-clipper-in-a-grain-wind-paper-87c54942-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-antique-gold-5fb3ab17-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-antique-gold-5fb3ab17-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-92d86f31-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-92d86f31-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-frame-white.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-white-4949101c-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-white-4949101c-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-close-white.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-white-acf4967b-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-white-acf4967b-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-frame-black.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-black-ee535189-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-black-ee535189-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-close-black.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-black-785a6c06-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-black-785a6c06-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-F-the-copper-citadel-at-the-sea-gate/the-copper-citadel-at-the-sea-gate-paper.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-paper-166ebf9c-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-paper-166ebf9c-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/the-copper-citadel-at-the-sea-gate-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-a39ba224-480.webp",
+    "1200": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-a39ba224-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-frame-antique-gold.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-frame-antique-gold-4a44a026-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-frame-antique-gold-4a44a026-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-close-antique-gold.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-close-antique-gold-91ae1cd9-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-close-antique-gold-91ae1cd9-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-frame-white.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-frame-white-05808d49-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-frame-white-05808d49-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-close-white.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-close-white-b0874470-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-close-white-b0874470-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-frame-black.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-frame-black-25cf83f9-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-frame-black-25cf83f9-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-close-black.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-close-black-e1fee2ae-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-close-black-e1fee2ae-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/5.%20Art%20Style%205%20-%20Neo-Classical%20Fantasy/09-B-the-palace-above-the-dry-dock/the-palace-above-the-dry-dock-paper.png": {
+    "480": "assets/web-artworks/the-palace-above-the-dry-dock-paper-ee33a1c7-480.webp",
+    "1200": "assets/web-artworks/the-palace-above-the-dry-dock-paper-ee33a1c7-1200.webp"
+  },
+  "assets/catalogue/1.%20Collection%206%20-%20Painted%20in%20Gold/painted-in-gold-cover.png": {
+    "480": "assets/web-artworks/painted-in-gold-cover-a215fdc6-480.webp",
+    "1200": "assets/web-artworks/painted-in-gold-cover-a215fdc6-1200.webp"
+  },
+  "assets/catalogue/2.%20Collection%207%20-%20Blossoms%20in%20Ink/blossoms-in-ink-cover.png": {
+    "480": "assets/web-artworks/blossoms-in-ink-cover-09c08fab-480.webp",
+    "1200": "assets/web-artworks/blossoms-in-ink-cover-09c08fab-1200.webp"
+  },
+  "assets/catalogue/3.%20Collection%209%20-%20The%20Age%20of%20Sail/the-age-of-sail-cover.png": {
+    "480": "assets/web-artworks/the-age-of-sail-cover-7ce2f08b-480.webp",
+    "1200": "assets/web-artworks/the-age-of-sail-cover-7ce2f08b-1200.webp"
+  }
+}

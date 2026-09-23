@@ -1,0 +1,371 @@
+{
+  "expanded_layouts": [
+    {
+      "width": 1440,
+      "route": "orders",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "products?id=ART-001",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "products?id=ART-001&tab=files",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "customers",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "support",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "reports",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "staff",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "connections",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "settings/rules",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "settings/guides",
+      "no_page_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "help?view=coverage",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "orders",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "products?id=ART-001",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "products?id=ART-001&tab=files",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "customers",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "support",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "reports",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "staff",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "connections",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "settings/rules",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "settings/guides",
+      "no_page_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "help?view=coverage",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "orders",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "products?id=ART-001",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "products?id=ART-001&tab=files",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "customers",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "support",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "reports",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "staff",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "connections",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "settings/rules",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "settings/guides",
+      "no_page_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "help?view=coverage",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "orders",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "products?id=ART-001",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "products?id=ART-001&tab=files",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "customers",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "support",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "reports",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "staff",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "connections",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "settings/rules",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "settings/guides",
+      "no_page_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "help?view=coverage",
+      "no_page_overflow": true
+    }
+  ],
+  "drawer_layouts": [
+    {
+      "width": 1440,
+      "route": "products",
+      "action": "[data-action=art-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "staff",
+      "action": "[data-action=staff-add]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "support",
+      "action": "[data-action=case-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "products?id=ART-001&tab=images",
+      "action": "[data-action=public-upload]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "staff",
+      "action": "[data-action=backup-restore]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 1440,
+      "route": "customers",
+      "action": "[data-action=customer-edit]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "products",
+      "action": "[data-action=art-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "staff",
+      "action": "[data-action=staff-add]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "support",
+      "action": "[data-action=case-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "products?id=ART-001&tab=images",
+      "action": "[data-action=public-upload]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "staff",
+      "action": "[data-action=backup-restore]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 768,
+      "route": "customers",
+      "action": "[data-action=customer-edit]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "products",
+      "action": "[data-action=art-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "staff",
+      "action": "[data-action=staff-add]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "support",
+      "action": "[data-action=case-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "products?id=ART-001&tab=images",
+      "action": "[data-action=public-upload]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "staff",
+      "action": "[data-action=backup-restore]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 390,
+      "route": "customers",
+      "action": "[data-action=customer-edit]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "products",
+      "action": "[data-action=art-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "staff",
+      "action": "[data-action=staff-add]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "support",
+      "action": "[data-action=case-new]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "products?id=ART-001&tab=images",
+      "action": "[data-action=public-upload]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "staff",
+      "action": "[data-action=backup-restore]",
+      "no_horizontal_overflow": true
+    },
+    {
+      "width": 320,
+      "route": "customers",
+      "action": "[data-action=customer-edit]",
+      "no_horizontal_overflow": true
+    }
+  ],
+  "errors": []
+}
