@@ -32,7 +32,7 @@ Status legend: Not Started · In Progress · Blocked (say why) · Ready for Revi
 | Sprint | Status | Branch | PR | Merged date | Notes |
 |---|---|---|---|---|---|
 | Setup Gate | In Progress | | | | S0.0 started 2026-09-23; S0.0–S0.2; exits when the S0.2 PR is merged and smoke-tested |
-| S0.0 Kickoff: decisions lock & governing docs | In Progress | `claude/s0.0-kickoff-decisions` | | | Started 2026-09-23. The first setup PR (docs pack + prototype text sources; Code Check not yet required — D-26); its actual number and URL are recorded here when it is opened. Records: `docs/sprint-prompts/S0.0-kickoff-decisions.md`, `docs/code-reviews/S0.0-kickoff-decisions-review.md` |
+| S0.0 Kickoff: decisions lock & governing docs | In Progress | `claude/s0.0-kickoff-decisions` | | | Started 2026-09-23. The first setup PR (docs pack + prototype text sources; Code Check not yet required — D-26); its actual number and URL are recorded here when it is opened. Content commit `c00846c6f765df74f028a60310eee5e64dbdde1a` on base `5d98958`; the final head is supplied in the review handoff. Records: `docs/sprint-prompts/S0.0-kickoff-decisions.md`, `docs/code-reviews/S0.0-kickoff-decisions-review.md` |
 | S0.1 Scaffold, Code Check, security headers, Vercel Preview & Sentry | Not Started | | | | Branch `claude/s0.1-setup-scaffold`; may land as S0.1a/S0.1b (D-25) |
 | S0.2 Supabase isolation, migration baseline & proof harness | Not Started | | | | May land as S0.2a/S0.2b (D-25) |
 | Stage 0 — fully working barebones store | Not Started | | | | S1.1–S1.9 |
