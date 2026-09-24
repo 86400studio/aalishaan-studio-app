@@ -58,7 +58,7 @@ There is no direct-push exception for the scaffold or docs pack.
 
 - [x] CI = the **Code Check** per `docs/TECHNICAL-INTEGRITY.md` (locked package manager/version, the six named checks) plus secret scanning; the owner enables branch protection on `main` requiring it (2-minute setting, clicks in that file). (S0.1, 2026-09-24: `.github/workflows/code-check.yml` with the blocking full-history gitleaks step, and `.github/dependabot.yml`, written and checked locally; first run on PR #3 (run 36002643091) succeeded; the owner required "Code Check" in the `main` ruleset (read back 2026-09-24); PR #3 was BLOCKED while the next run was pending and mergeable once it passed.)
 - [x] Connect `Vercel` to GitHub. The supplied profile is Vercel; another host must provide equivalent isolated PR Previews.
-- [ ] Confirm PR branches create Previews and only `main` deploys Production.
+- [x] Confirm PR branches create Previews and only `main` deploys Production. (S0.1, 2026-09-24: each PR #3 commit got a Preview; Production was built from `main` @ `d416bfb` after the merge.)
 - [x] Record env names/scopes; the owner sets values in the provider dashboard. Never copy Production credentials into Preview.
 - [ ] Copy `ENVIRONMENT-PARITY.md` to `docs/`; fill its infrastructure and environment matrix (§3–§4), mark unused services N/A, and complete applicable setup steps in §6. Record later feature proofs as pending until those features exist; do not invent PASS results to finish setup.
 - [x] Prove the Preview pipeline on `claude/s0.1-setup-scaffold` before merge. (2026-09-24: PR #3 Preview for `3f07d66`, protected, six headers, route and Sentry alert proven — S0.1 record, "Preview record".)
@@ -78,8 +78,8 @@ There is no direct-push exception for the scaffold or docs pack.
 - [x] Commit/push only if the owner explicitly authorizes both actions.
 - [x] Open the setup PR; CI passes.
 - [x] Test the deployed Preview and record its tested head SHA.
-- [ ] Codex reviews the immutable merge-base-to-head range and returns Approve.
-- [ ] The owner confirms the head has not changed, merges, and runs the Production smoke test.
+- [x] Codex reviews the immutable merge-base-to-head range and returns Approve. (S0.1: APPROVE for `ce41b34..9d9a0a8`, 2026-09-24.)
+- [ ] The owner confirms the reviewed head is still the PR head (`docs/WORKFLOW.md` §7; the only exception is a later commit that only appends the returned review record, with its reviewed head and documentation-only scope recorded — AGENTS.md), merges, and runs the Production smoke test. (S0.1: not met as written. Reviewed head `9d9a0a8`; `a8fb3f5` appended the returned review record — within the exception; `cc82ae9` then recorded the approval in `PROJECT-STATUS.md`, `ROADMAP.md` and the sprint record before the merge — outside the exception and not independently reviewed; the Code Check passed on it (run 36016924009) and `/close` returned GO; the owner merged PR #3 on 2026-09-24 as `d416bfb` and ran the Production smoke. Recorded as `PROJECT-STATUS.md` §10 #11, with the §11 rule that prevents a repeat; re-checked at the S0.2 merge, which must land at its reviewed head or at the single later commit that only appends its returned review record.)
 
 ## Exit condition
 
