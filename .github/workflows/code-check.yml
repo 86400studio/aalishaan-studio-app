@@ -1,0 +1,95 @@
+# The Code Check (docs/TECHNICAL-INTEGRITY.md): runs on every pull request and is the required status check on
+# main. The job name "Code Check" is the check context the main ruleset requires. Every step must pass; there is
+# no path filter, no continue-on-error and no optional step, so a skipped or red step can never read as green.
+name: Code Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: code-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  code-check:
+    name: Code Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # No build-time telemetry: PR checks never contact Sentry, Vercel or any other provider.
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out the full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: No secrets in the Git history (gitleaks, redacted)
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          # Git's empty tree as the attribute source: no committed .gitattributes (for example `-diff`) can
+          # hide a file's content from the diff gitleaks reads.
+          GIT_ATTR_SOURCE: 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+        run: |
+          # The scanner's default rules apply to every commit of every fetched branch, merge commits included.
+          # A repository file cannot relax them: an exclusion would need its own recorded decision and a change
+          # to this workflow.
+          for file in .gitleaks.toml .gitleaksignore; do
+            if [ -e "$file" ]; then
+              echo "::error::$file is not allowed; secret-scan exclusions need a recorded decision."
+              exit 1
+            fi
+          done
+          # Prove this runner's Git honours GIT_ATTR_SOURCE (Git 2.42+) before relying on it.
+          probe="$RUNNER_TEMP/attr-probe"
+          git init -q "$probe"
+          printf '*.txt -diff\n' > "$probe/.gitattributes"
+          printf 'visible\n' > "$probe/probe.txt"
+          git -C "$probe" add .
+          git -C "$probe" -c user.name=ci -c user.email=ci@localhost commit -qm probe
+          if ! git -C "$probe" log -p -1 | grep -qx '+visible'; then
+            echo "::error::This runner's Git does not honour GIT_ATTR_SOURCE; the secret scan cannot be trusted."
+            exit 1
+          fi
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --ignore-gitleaks-allow --exit-code 1 \
+            --log-opts="--all --full-history --diff-filter=tuxdb -m" .
+
+      - name: Set up pnpm (version from packageManager)
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node.js (major from .nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install with the committed lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Types are sound
+        run: pnpm typecheck
+
+      - name: Code passes lint
+        run: pnpm lint
+
+      - name: Formatting is clean
+        run: pnpm format:check
+
+      - name: Unit tests pass
+        run: pnpm test:unit
+
+      - name: Production build succeeds
+        run: pnpm build
+
+      - name: No critical known vulnerabilities
+        run: pnpm audit --prod --audit-level=critical

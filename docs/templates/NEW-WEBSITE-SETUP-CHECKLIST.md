@@ -48,15 +48,15 @@ There is no direct-push exception for the scaffold or docs pack.
 
 ## 5. Scaffold on the setup branch
 
-- [ ] Scaffold only the locked `Next.js (App Router) + TypeScript strict + Tailwind CSS + pnpm on Vercel, with Supabase (Postgres, Auth, Storage, RLS), Razorpay and Shiprocket` with `pnpm`; do not add optional product features.
-- [ ] Create `.env.example` with names and unmistakably fake placeholders only.
+- [x] Scaffold only the locked `Next.js (App Router) + TypeScript strict + Tailwind CSS + pnpm on Vercel, with Supabase (Postgres, Auth, Storage, RLS), Razorpay and Shiprocket` with `pnpm`; do not add optional product features. (S0.1, 2026-09-24: `pnpm create next-app@16.3.6` — App Router, TypeScript, Tailwind, ESLint, `src/`, empty — generated in a scratch directory and only the allowed files copied in; Supabase arrives in S0.2, Razorpay and Shiprocket later — `docs/sprint-prompts/S0.1-setup-scaffold.md`.)
+- [ ] Create `.env.example` with names and unmistakably fake placeholders only. (S0.1: the names-only file is prepared, but the agent's permission settings deny it access to `.env*` paths, so the owner adds it — S0.1 record.)
 - [ ] The owner may create the local live env file outside the AI workflow. Agents never open, print, copy, or edit it.
-- [ ] Verify the live env filename is ignored without opening it (for example, `git check-ignore .env.local`) and is not tracked or staged.
-- [ ] Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
+- [x] Verify the live env filename is ignored without opening it (for example, `git check-ignore .env.local`) and is not tracked or staged. (S0.1, 2026-09-24: `.env.local` and `.env.production` ignored by `.gitignore:7`; no `.env*` file tracked or in history.)
+- [x] Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`. (S0.1, 2026-09-24, locally: all pass, with `pnpm format:check`, `pnpm test:unit` (51 tests) and `pnpm audit --prod --audit-level=critical`; the Code Check repeats them on the PR.)
 
 ## 6. Configure CI and the deployed Preview
 
-- [ ] CI = the **Code Check** per `docs/TECHNICAL-INTEGRITY.md` (locked package manager/version, the six named checks) plus secret scanning; the owner enables branch protection on `main` requiring it (2-minute setting, clicks in that file).
+- [ ] CI = the **Code Check** per `docs/TECHNICAL-INTEGRITY.md` (locked package manager/version, the six named checks) plus secret scanning; the owner enables branch protection on `main` requiring it (2-minute setting, clicks in that file). (S0.1, 2026-09-24: `.github/workflows/code-check.yml` with the blocking full-history gitleaks step, and `.github/dependabot.yml`, written and checked locally; the first run, the required-check setting and the blocked-then-green proof follow the push.)
 - [ ] Connect `Vercel` to GitHub. The supplied profile is Vercel; another host must provide equivalent isolated PR Previews.
 - [ ] Confirm PR branches create Previews and only `main` deploys Production.
 - [ ] Record env names/scopes; the owner sets values in the provider dashboard. Never copy Production credentials into Preview.

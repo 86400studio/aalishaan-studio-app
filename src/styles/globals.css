@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/*
+ * S0.1 holding page only. The docs/DESIGN.md §2 tokens and the self-hosted Charsen / Instrument Sans faces
+ * are ported in S1.3; until then the page uses the documented values below and the documented fallback
+ * font stacks, with no font download.
+ */
+
+/*
+ * DESIGN.md §2: effective storefront page background; --ink; the Instrument Sans fallback stack; the Body
+ * type size (1rem at ≤ 47.9375rem).
+ */
+body {
+  background: #fff;
+  color: #191813;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 47.9375rem) {
+  body {
+    font-size: 1rem;
+  }
+}
+
+/* DESIGN.md §2: the Charsen fallback stack and the Display / h1 type size. */
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.85rem, 5.4vw, 4.75rem);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 1.02;
+}

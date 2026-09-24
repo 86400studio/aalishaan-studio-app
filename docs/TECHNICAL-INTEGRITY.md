@@ -30,22 +30,30 @@ Line-level professionalism rule for the builder: no `any`, no `@ts-ignore`, no `
 
 Runs automatically on **every pull request** from S0.1, the sprint that adds it; the S0.0 docs-and-reference PR comes before it exists (decision D-26). About three robot-minutes. You never trigger it, tune it, or maintain it.
 
+As built at S0.1 (2026-09-24) — the file in the repository is authoritative; this is its shape:
+
 ```yaml
 name: Code Check
 on:
   pull_request:
+permissions:
+  contents: read
 jobs:
   code-check:
-    name: Code Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    name: Code Check            # the exact context the main ruleset requires
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24   # one Node major, pinned at S0.1 (lean 24) — the same major as engines and .nvmrc
-          cache: pnpm
+      - uses: actions/checkout@<full SHA> # v7.0.1 — fetch-depth: 0 (full history), persist-credentials: false
+      - name: No secrets in the Git history (gitleaks, redacted)
+        # gitleaks 8.30.1 linux binary, sha256-verified, run with GIT_ATTR_SOURCE = git's empty tree (a committed
+        # .gitattributes cannot hide content; the step first proves the runner's Git honours it) and
+        # `--log-opts="--all --full-history --diff-filter=tuxdb -m"` (every commit of every fetched branch, merge
+        # commits included); `--redact`, `--ignore-gitleaks-allow`; a .gitleaks.toml or .gitleaksignore fails the job
+      - uses: pnpm/action-setup@<full SHA> # v6.1.0 — pnpm version from package.json packageManager
+      - uses: actions/setup-node@<full SHA> # v7.0.0 — node-version-file: .nvmrc (24), cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Types are sound
         run: pnpm typecheck
@@ -61,19 +69,21 @@ jobs:
         run: pnpm audit --prod --audit-level=critical
 ```
 
+The secret scan is a step of the same required job, so a finding blocks the merge exactly as a failed check does; findings are printed redacted. Dependabot (`.github/dependabot.yml`) proposes weekly updates for the root pnpm dependencies and the pinned Actions, never for `prototype/`.
+
 The contract behind it: the root `package.json` defines the scripts `typecheck` (`tsc --noEmit`), `lint`, `format:check` (`prettier --check .`), `test:unit`, `test` and `build` — Claude Code sets these up once, in S0.1. In plain words:
 
 - **`test:unit` is required, never optional.** It runs the Vitest unit tests — fast, no network, no secrets, never the Playwright specs in `tests/e2e/`. An empty suite fails the check instead of passing silently (no `--passWithNoTests`), so the PR that adds this workflow also adds its first real unit test.
 - **`pnpm test` and `test:unit` never drift.** `pnpm test` always runs `test:unit` first: at S0.1 they are the same run; from S0.2 `pnpm test` also runs the integration tests against TEST (`TECH-ARCHITECTURE.md` §2). `pnpm test:e2e` (Playwright, from S0.2) runs against the Preview, not in this check. So from S0.2 a green Code Check does not replace a local `pnpm test` run, and the S0.2 prompt decides where its denied-state scaffold runs in CI — as hermetic guard tests inside `test:unit`, or as a separate required job that uses the TEST secrets.
-- **The frozen `prototype/` is never formatted or linted.** `.prettierignore` and the ESLint ignore list both name `prototype/`, so no check — and no automatic fix — can rewrite its checksummed bytes (`prototype/admin/CONTENTS-SHA256.txt`, `prototype/data/development-baseline.json`). `.prettierignore` also names the records kept verbatim (`docs/sprint-prompts/`, `docs/code-reviews/`); whether the other Markdown docs are formatted once or ignored is decided in the S0.1 prompt.
-- **One Node major, written three times.** `engines` in the root `package.json`, `.nvmrc` and `node-version` above name the same major — lean 24, matching the local toolchain, pinned by S0.1. The pnpm version comes from the `packageManager` field.
+- **The frozen `prototype/` is never formatted or linted.** `.prettierignore` and the ESLint ignore list both name `prototype/`, so no check — and no automatic fix — can rewrite its checksummed bytes (`prototype/admin/CONTENTS-SHA256.txt`, `prototype/data/development-baseline.json`). `.prettierignore` also names the records kept verbatim (`docs/sprint-prompts/`, `docs/code-reviews/`); S0.1 chose to leave the rest of the documentation as written, so `docs/`, the root `README.md`, `CLAUDE.md`, `AGENTS.md` and `.claude/` are ignored too, and Prettier checks the application, tests and configuration only.
+- **One Node major, written twice and read once.** `engines` in the root `package.json` (`24.x`, which Vercel also reads) and `.nvmrc` (`24`) name the same major; the Code Check reads `.nvmrc` (`node-version-file`), so CI cannot drift from it. The pnpm version comes from the `packageManager` field (pnpm 10.34.5 at S0.1 — `TECH-ARCHITECTURE.md` §2).
 
 ## Setup (once per site — new build or retrofit, identical)
 
 On this project the protection is set in two steps (decision D-26): `main` is protected before the first PR, but the Code Check can only be required once it exists. The S0.0 docs-and-reference PR therefore merges under PR-required protection without a Code Check, and its record marks the check N/A — never as run or passed. Independent review still applies.
 
 - [x] **You (at S0.0, before the first PR):** GitHub → the repo → **Settings → Rules → Rulesets → New branch ruleset** → enforcement **Active**, bypass list empty, target the default branch (`main`) → tick **"Restrict deletions"**, **"Block force pushes"** and **"Require a pull request before merging"** (required approvals 0 — nobody can approve their own PR, and the independent review is recorded in `docs/code-reviews/`) → create. Do not require a status check yet: "Code Check" does not exist until S0.1, and a required check that never runs would lock the first PR. (Done 2026-09-23: ruleset "main protection", read back from GitHub — S0.0 record.)
-- [ ] **Claude Code (one normal PR at S0.1, or the S0.1a PR when S0.1 is split — decision D-25):** strict `tsconfig`, ESLint + Prettier configs that exclude `prototype/`, the scripts above with the first real unit test, `engines` + `.nvmrc`, and the workflow file. No product behavior rides along.
+- [ ] **Claude Code (one normal PR at S0.1, or the S0.1a PR when S0.1 is split — decision D-25):** strict `tsconfig`, ESLint + Prettier configs that exclude `prototype/`, the scripts above with the first real unit test, `engines` + `.nvmrc`, and the workflow file. No product behavior rides along. *(2026-09-24: all of it exists on `claude/s0.1-setup-scaffold` and passes locally — the six commands green, 51 unit tests, an empty suite proven to fail; S0.1 runs as one PR. The PR itself waits for commit/push authorisation, so this box stays open.)*
 - [ ] **You (2 minutes, at S0.1, after the Code Check has run once on that PR):** edit the same `main` ruleset → tick **"Require status checks to pass"** → add **"Code Check"** → save.
 - [ ] **You + Claude Code (verify once, on that S0.1 PR):** the "Code Check" shows as **Required**; push one more commit and confirm the merge button is blocked while the check runs and unlocks only when it goes ✅. An unverified gate is the same as no gate.
 

@@ -1,0 +1,22 @@
+# Dependency updates for the app at the repository root and for the pinned GitHub Actions. The frozen
+# prototype/ reference (its own package.json) is never updated.
+version: 2
+updates:
+  - package-ecosystem: npm # pnpm projects use the npm ecosystem
+    directory: /
+    exclude-paths:
+      - prototype/**
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

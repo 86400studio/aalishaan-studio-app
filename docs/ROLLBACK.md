@@ -74,4 +74,24 @@ cannot recreate deleted rows, undo externally-triggered side effects, or guarant
 - Never run down-SQL as a reflex or claim it restores data it did not preserve.
 - Never skip the revert PR after an emergency promote — `main` must be corrected either way.
 
+---
+
+## Drill record — Vercel Instant Rollback
+
+Setup requires one real rollback on a harmless deployment (S0.1; rehearsed again at S3.4). A written procedure is not a drill; nothing below is filled until it has happened.
+
+**Plan facts (Vercel Hobby, read 2026-09-24):** Hobby can roll back only to the *immediately previous* production deployment; only deployments that were once assigned to Production are eligible (a PR Preview never is, and is never promoted instead); after a rollback Vercel stops auto-assigning new `main` deployments to Production until the rollback is undone ("Undo Rollback" on the Production tile, or `vercel promote <deployment>`). Sources: vercel.com/docs/instant-rollback, vercel.com/docs/deployments/rollback-production-deployment.
+
+**S0.1 procedure (after the owner merges the S0.1 PR):**
+
+1. Production deployment **A** = the build of the S0.1 merge commit on `main`; smoke-test it first (holding page, six headers through the protection bypass, denied diagnostic route).
+2. Create a second eligible deployment **B** from the same `main` commit: Vercel → Deployments → A → ⋮ → **Redeploy** (to Production). Smoke-test B.
+3. Roll back: Vercel → Deployments → A → **Instant Rollback** (A is the immediately previous production deployment). Confirm the Production URL now serves A (deployment ID in the Vercel dashboard) and re-run the smoke test.
+4. Restore: **Undo Rollback** / promote B so Production is B again and auto-assignment from `main` is back on. Re-run the smoke test.
+5. Record below. A host rollback restores application artifacts only — there is no database yet, and later it never restores data (Step 4 above).
+
+| Date / time (UTC) | Actor | From deployment → to deployment (IDs) | Commit SHAs | Result | Active deployment at the end | Smoke results |
+|---|---|---|---|---|---|---|
+| Pending — S0.1, after merge | Owner (Vercel dashboard), recorded by Claude Code | — | — | — | — | — |
+
 Next step → re-land the fix via the normal workflow in `docs/WORKFLOW.md`.

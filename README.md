@@ -12,7 +12,9 @@ Live at: `[DOMAIN]` — to be confirmed by the owner (open decision D-04 in `doc
 | `docs/` | The governing docs pack: state, scope, process, architecture, design, security, QA, launch, rollback, handoff, templates and records. |
 | `.claude/skills/` | Claude Code skills: `/sprint-prompt`, `/close`, `/browser-qa`, `/activate-testing`, `/handle-error`. |
 | *(on GitHub)* | https://github.com/86400studio/aalishaan-studio-app — the source of truth: public, on the owner's own account `86400studio` (D-02); `main` protected by a branch ruleset (D-26; verified 2026-09-23 — S0.0 record). A clone is a reduced checkout by design (D-07): `prototype/assets/` other than `fonts/` and `brand/` is git-ignored, so the prototype's imagery is absent there and the full `node prototype/scripts/development-baseline.cjs` check passes only on the original full-asset workspace; the pinned imagery reference is the published prototype commit `b24dce1b…`. `prototype/.gitattributes` keeps the Admin bytes unchanged (`admin/** -text`, D-36), so `prototype/admin/CONTENTS-SHA256.txt` keeps verifying on a fresh checkout; the fresh-checkout result is in the S0.0 record. |
-| *(created in Setup sprint S0.1)* | The application at this root: Next.js app, `supabase/migrations/`, `tests/e2e/`, `.github/workflows/code-check.yml`, `.env.example`. |
+| `src/`, `tests/unit/`, root configs *(Setup sprint S0.1)* | The application at this root: a Next.js 16 App Router scaffold — `src/app/` (the noindex holding page, `robots.txt`, the React error fallback and the temporary `POST /api/sentry-test` route), `src/lib/` (security headers, the route's server-only guard), `src/styles/globals.css`, Sentry hooks in `src/instrumentation*.ts`; Vitest unit tests in `tests/unit/`; `package.json` / `pnpm-lock.yaml` (pnpm 10.34.5, Node 24), `next.config.ts`, `tsconfig.json`, ESLint / Prettier / Vitest / PostCSS configs. |
+| `.github/` *(S0.1)* | `workflows/code-check.yml` — the required Code Check (six checks plus a blocking secret scan) — and `dependabot.yml`. |
+| *(later setup sprints)* | `supabase/migrations/` and `tests/e2e/` (S0.2). |
 
 ## Stack
 
@@ -23,27 +25,35 @@ If the code and docs disagree, report the mismatch; update docs only in an autho
 
 ## Local development
 
+Needs Node 24 (`.nvmrc`) and pnpm — the exact version comes from `packageManager` in `package.json` (pnpm 10.34.5; a newer pnpm hands over to it automatically).
+
 ```bash
-pnpm install --frozen-lockfile        # install (scripts exist from S0.1)
-pnpm dev                              # dev server → http://localhost:3000
+pnpm install --frozen-lockfile        # install exactly what pnpm-lock.yaml records
+pnpm dev                              # dev server → http://localhost:3000 (the S0.1 holding page)
+pnpm build && pnpm start              # production build and server
 ```
 
-Checks (run before reporting a change ready — all applicable commands must pass):
+Checks (run before reporting a change ready — all applicable commands must pass; the Code Check runs the same on every PR):
 
 ```bash
 pnpm typecheck      # tsc --noEmit
-pnpm lint           # eslint
-pnpm test           # vitest (unit/integration); pnpm test:e2e runs the Playwright suite in tests/e2e/
+pnpm lint           # eslint --max-warnings=0 .
+pnpm format:check   # prettier --check . (pnpm format writes)
+pnpm test:unit      # vitest run — tests/unit/, hermetic: no network, no secrets
+pnpm test           # runs test:unit (from S0.2 also the integration tests; pnpm test:e2e runs Playwright from S0.2)
 pnpm build          # next build
+pnpm audit --prod --audit-level=critical
 ```
 
-These scripts exist once S0.1 has scaffolded the app; until then the only runnable thing in this repository is the prototype: `cd prototype && npm start`, then http://localhost:8000/ for the storefront and http://localhost:8000/admin/ for the final Admin (hard-refresh once after install). The final Admin's evidence is `prototype/admin/TEST-RESULTS.md` and `prototype/admin/tests/`; its 13 state-guard groups re-run with `node admin/tests/check-state.cjs` from `prototype/`.
+No environment value is needed to run any of this: without a Sentry DSN the SDK stays off, and the temporary diagnostic route stays disabled without `SENTRY_TEST_TOKEN`. `prototype/` is never linted, formatted, type-checked or tested by these scripts.
+
+The frozen prototype still runs on its own: `cd prototype && npm start`, then http://localhost:8000/ for the storefront and http://localhost:8000/admin/ for the final Admin (hard-refresh once after install). The final Admin's evidence is `prototype/admin/TEST-RESULTS.md` and `prototype/admin/tests/`; its 13 state-guard groups re-run with `node admin/tests/check-state.cjs` from `prototype/`.
 
 ## Environment variables
 
 - The authorized owner creates `.env.local` from `.env.example` outside the AI workflow.
 - The live env file is gitignored — never open, print, copy, edit, or commit it. `.env.example` carries names + safe placeholders only.
-- Deployed values live in Vercel's secret/environment settings, scoped per environment (Production, Preview, Development).
+- Deployed values live in Vercel's secret/environment settings, scoped per environment (Production, Preview, Development). The owner enters them by name; the names in use from S0.1 are `SALES_MODE` (`off` everywhere), `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and the temporary `SENTRY_TEST_TOKEN` (`docs/TECH-ARCHITECTURE.md` §6).
 - Full rules (public vs server-only, redeploy-after-change): `docs/ENV-VARS-SAFETY.md`; environment assignments and proofs: `docs/ENVIRONMENT-PARITY.md`.
 
 **Never do this:** commit a secret, put a server-only value behind a public env prefix,

@@ -81,7 +81,9 @@ Why rotation comes first: git history, forks, caches, and screenshots are foreve
 | Rate limiting (public writes, staff login) | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Private | TEST database outside Production |
 | Worker route authentication (`/api/jobs/run`) | `CRON_SECRET` | Private | All environments |
 | Checkout enablement (`off` / `test` / `live`, with `business_rules.sales_open`) | `SALES_MODE` | Private (server-only config, not a secret) | `off` everywhere until S3.4 (Preview `test` from S1.6) |
-| Error tracking and source maps | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | Private / Public / build-only | Dev project outside Production; Prod project in Production |
+| Error tracking and source maps | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | Private / Public / build-only | One Sentry project for every environment (D-23); events are tagged `development` / `preview` / `production` from Vercel's `VERCEL_ENV`. The owner enters the DSN in Vercel Preview and Production (Development optional); `SENTRY_AUTH_TOKEN` only in the Preview and Production build scopes |
+| Source-map upload target | `SENTRY_ORG` / `SENTRY_PROJECT` | Build-only, not secret | Vercel Preview and Production builds (S0.1) |
+| Temporary Sentry test route (S0.1 → removed by S0.2) | `SENTRY_TEST_TOKEN` | Private (server-only) | A distinct value in Preview and in Production, at least 32 random characters, entered by the owner; revoked when S0.2 removes the route |
 | Launch Gate and morning-check harness; Preview protection bypass | `PLAYWRIGHT_BASE_URL` / `VERCEL_AUTOMATION_BYPASS_SECRET` | Private (CI / server-only) | GitHub Actions secrets and local shell only |
 
 These are this project's names (`TECH-ARCHITECTURE.md` §6 is authoritative and `PROJECT-STATUS.md` §9 mirrors it; names are proposed until S0.1/S0.2 make them real). Never fill a value into this document.

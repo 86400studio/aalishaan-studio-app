@@ -76,8 +76,8 @@ Record facts from approved configuration evidence; do not assume a service is al
 | Project and approved architecture | Aalishaan Studio; `TECH-ARCHITECTURE.md` (D-01 lean confirmed 2026-09-23 at kickoff sprint S0.0; locked when the S0.0 PR merges) |
 | Actual production origin | not deployed yet — Pending (Setup sprint S0.1) |
 | Intended domain and canonical host | TBD — open decision D-04 (owner confirms the production domain; the approved copy uses the `aalishaanstudio.com` mail domain); pending DNS |
-| Hosting project and production branch | Vercel / `aalishaan-studio-app` — Pending (S0.1); `main` |
-| Preview hosts and protection | `aalishaan-studio-app-*.vercel.app` (project-scoped) — Pending (S0.1); protection decided at S0.1 (lean: enabled, with the sanctioned automation bypass for the Launch Gate suite) |
+| Hosting project and production branch | Vercel / `aalishaan-studio-app` — Pending the owner's import (S0.1; the app scaffold exists on `claude/s0.1-setup-scaffold` since 2026-09-24, not yet pushed); Git root `.` (the repository root — no Root Directory), production branch `main`, Node 24.x from `engines`, pnpm 10.34.5 from `packageManager` |
+| Preview hosts and protection | `aalishaan-studio-app-*.vercel.app` (project-scoped) — Pending (S0.1). Selected policy (S0.1, 2026-09-24): Vercel Authentication with the **All Deployments** scope, included on Hobby since 2026-09-09 (vercel.com/changelog/protect-production-deployments-for-free-on-every-plan), so Preview and Production are both protected; Protection Bypass for Automation (also included on Hobby) for header probes. A new project starts on Standard Protection, which leaves production domains public — the owner switches it. Configured/verified state recorded in §12 P10 |
 | Database/auth TEST and PROD | Pending (S0.2) — `aalishaan-studio-test` / `aalishaan-studio-prod`; public refs recorded in `PROJECT-STATUS.md` §9 |
 | Payment testing environment and live account | Razorpay Test Mode (local/Preview) / Razorpay Live Mode (Production only) — Pending (S1.6/S1.7; live at S3.3) |
 | Sandbox/live webhook destinations and API versions | Pending — `/api/webhooks/razorpay` and `/api/webhooks/shiprocket` on the candidate Preview (sandbox) and on Production (live); API versions recorded at S1.7 (Razorpay) and S2.10 (Shiprocket) |
@@ -107,7 +107,10 @@ CI/test configuration. Match application names to `TECH-ARCHITECTURE.md` §6. Th
 | `TURNSTILE_SECRET_KEY` / `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Server-only / Public | Test keys | Test keys | Live keys |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Server-only | TEST database | TEST database | PROD database |
 | `CRON_SECRET` | Server-only | Local value | Preview value | Production value |
-| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | Server / Public / build-only | One project, env `development` | One project, env `preview` | One project, env `production` |
+| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` | Server / Public / build-only | One project, env `development` (DSN optional; no `SENTRY_AUTH_TOKEN`) | One project, env `preview` | One project, env `production` |
+| `SENTRY_ORG` / `SENTRY_PROJECT` (S0.1) | Build-only, not secret | — | Sentry slugs (for the source-map upload) | Sentry slugs |
+| `SENTRY_TEST_TOKEN` (S0.1, temporary) | Server-only | Optional local value | Preview-only value | Production-only value — distinct from Preview; route and token removed/revoked by S0.2 |
+| Sentry environment tag | Derived from `VERCEL_ENV` (server at runtime; browser inlined at build by `next.config.ts`) — never `NODE_ENV` | `development` | `preview` | `production` |
 | `SALES_MODE` | Server-only config (`off` / `test` / `live`) | `test` (or `off`) | `test` from S1.6 | `off` until S3.4, then `live` |
 | `PLAYWRIGHT_BASE_URL` | CI variable / local shell | Local origin | Validated Preview origin | Production only for the morning check |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | GitHub Actions secret / local shell only — sent only to the validated Preview origin | — | Preview bypass | Production bypass only while Deployment Protection is on (D-03) |
@@ -125,7 +128,7 @@ must return to the correct environment. Record the intended Preview metadata/noi
 Use only the storage required by the provider; no server secret becomes public. A names-only listing
 proves scopes, not that a value belongs to TEST — the owner checks provenance and §12 checks behavior.
 
-**Per dependency status:** Supabase TEST/PROD — Pending (S0.2; proofs P1, P8, P8b, P11) · Vercel Preview/Production — Pending (S0.1; P10) · Razorpay sandbox/live — Pending (S1.6/S1.7; P4–P6, C1, C2, C15, C16; live at S3.3) · Shiprocket test/live — Pending (S2.9/S2.10; P6; live at S3.3) · Transactional email — Pending (S1.8; P7, C7) · Turnstile/Upstash — Pending (S1.6 checkout, S1.9 track, S2.12 newsletter, S2.13 contact, S2.21 waiting-list join; C10) · Sentry — Pending (S0.1; **D-23: this record ratifies installing Sentry at S0.1 instead of the error-tracking module's before-launch timing; confirmed 2026-09-23 at S0.0**). No proof is prefilled as PASS.
+**Per dependency status:** Supabase TEST/PROD — Pending (S0.2; proofs P1, P8, P8b, P11) · Vercel Preview/Production — Pending (S0.1; P10) · Razorpay sandbox/live — Pending (S1.6/S1.7; P4–P6, C1, C2, C15, C16; live at S3.3) · Shiprocket test/live — Pending (S2.9/S2.10; P6; live at S3.3) · Transactional email — Pending (S1.8; P7, C7) · Turnstile/Upstash — Pending (S1.6 checkout, S1.9 track, S2.12 newsletter, S2.13 contact, S2.21 waiting-list join; C10) · Sentry — code in place on the S0.1 branch (2026-09-24), Preview/Production events and alerts Pending (S0.1; **D-23: this record ratifies installing Sentry at S0.1 instead of the error-tracking module's before-launch timing; confirmed 2026-09-23 at S0.0**). No proof is prefilled as PASS.
 
 ## 5. Findings — only when observed
 
@@ -386,6 +389,12 @@ feature list. Production-only checks belong to launch, not the prerequisites for
 
 For each applicable proof record: `[ID] · [PASS/FAIL/PENDING/N/A] · [DATE] · [CANDIDATE SHA] ·
 [DEPLOYMENT/CALLBACK SHA] · [SANITIZED EVIDENCE LINK] · [OWNER/NEXT ACTION]`.
+**S0.1 records** (candidate head not yet pushed — Git policy NO/NO, 2026-09-24):
+
+- `P10 · PENDING · — · candidate SHA pending · deployment pending · — · owner imports the Vercel project, selects All Deployments protection and a bypass secret; Claude records the protected-page response, the bypassed app response (six headers) and Preview isolation for the candidate head. Production half: Pending until launch (protected by design until S3.4)`
+- `P12 · PENDING · — · candidate SHA pending · deployment pending · — · owner inspects names and scopes only: SALES_MODE=off in Development, Preview and Production; NEXT_PUBLIC_SENTRY_DSN / SENTRY_DSN in Preview and Production; SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT for Preview and Production builds; distinct SENTRY_TEST_TOKEN values in Preview and Production; no other provider value set`
+- P1–P9, P11, P13: N/A at S0.1 — no database, auth, payment, email, form or webhook exists yet (S0.2 onward).
+
 Use existing CI, Preview and project records; do not duplicate full reports here. Negative controls
 match the specific test identity/event, not total production counts that legitimate users can change.
 If an authorized read is unavailable, record the proof as blocked/partial rather than inventing evidence.
