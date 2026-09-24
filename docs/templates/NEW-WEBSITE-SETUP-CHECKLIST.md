@@ -48,20 +48,20 @@ There is no direct-push exception for the scaffold or docs pack.
 
 ## 5. Scaffold on the setup branch
 
-- [ ] Scaffold only the locked `Next.js (App Router) + TypeScript strict + Tailwind CSS + pnpm on Vercel, with Supabase (Postgres, Auth, Storage, RLS), Razorpay and Shiprocket` with `pnpm`; do not add optional product features.
-- [ ] Create `.env.example` with names and unmistakably fake placeholders only.
+- [x] Scaffold only the locked `Next.js (App Router) + TypeScript strict + Tailwind CSS + pnpm on Vercel, with Supabase (Postgres, Auth, Storage, RLS), Razorpay and Shiprocket` with `pnpm`; do not add optional product features. (S0.1, 2026-09-24: `pnpm create next-app@16.3.6` — App Router, TypeScript, Tailwind, ESLint, `src/`, empty — generated in a scratch directory and only the allowed files copied in; Supabase arrives in S0.2, Razorpay and Shiprocket later — `docs/sprint-prompts/S0.1-setup-scaffold.md`.)
+- [x] Create `.env.example` with names and unmistakably fake placeholders only. (S0.1, 2026-09-24: added by the owner — the agent's permission settings deny it `.env*` paths — and committed in `0d27806`; its Git blob is identical to the prepared names-only content — S0.1 record, "Owner actions received".)
 - [ ] The owner may create the local live env file outside the AI workflow. Agents never open, print, copy, or edit it.
-- [ ] Verify the live env filename is ignored without opening it (for example, `git check-ignore .env.local`) and is not tracked or staged.
-- [ ] Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`.
+- [x] Verify the live env filename is ignored without opening it (for example, `git check-ignore .env.local`) and is not tracked or staged. (S0.1, 2026-09-24: `.env.local` and `.env.production` ignored by `.gitignore:7`; no `.env*` file tracked or in history.)
+- [x] Run `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm build`. (S0.1, 2026-09-24, locally: all pass, with `pnpm format:check`, `pnpm test:unit` (51 tests) and `pnpm audit --prod --audit-level=critical`; the Code Check repeats them on the PR.)
 
 ## 6. Configure CI and the deployed Preview
 
-- [ ] CI = the **Code Check** per `docs/TECHNICAL-INTEGRITY.md` (locked package manager/version, the six named checks) plus secret scanning; the owner enables branch protection on `main` requiring it (2-minute setting, clicks in that file).
-- [ ] Connect `Vercel` to GitHub. The supplied profile is Vercel; another host must provide equivalent isolated PR Previews.
+- [x] CI = the **Code Check** per `docs/TECHNICAL-INTEGRITY.md` (locked package manager/version, the six named checks) plus secret scanning; the owner enables branch protection on `main` requiring it (2-minute setting, clicks in that file). (S0.1, 2026-09-24: `.github/workflows/code-check.yml` with the blocking full-history gitleaks step, and `.github/dependabot.yml`, written and checked locally; first run on PR #3 (run 36002643091) succeeded; the owner required "Code Check" in the `main` ruleset (read back 2026-09-24); PR #3 was BLOCKED while the next run was pending and mergeable once it passed.)
+- [x] Connect `Vercel` to GitHub. The supplied profile is Vercel; another host must provide equivalent isolated PR Previews.
 - [ ] Confirm PR branches create Previews and only `main` deploys Production.
-- [ ] Record env names/scopes; the owner sets values in the provider dashboard. Never copy Production credentials into Preview.
+- [x] Record env names/scopes; the owner sets values in the provider dashboard. Never copy Production credentials into Preview.
 - [ ] Copy `ENVIRONMENT-PARITY.md` to `docs/`; fill its infrastructure and environment matrix (§3–§4), mark unused services N/A, and complete applicable setup steps in §6. Record later feature proofs as pending until those features exist; do not invent PASS results to finish setup.
-- [ ] Prove the Preview pipeline on `claude/s0.1-setup-scaffold` before merge.
+- [x] Prove the Preview pipeline on `claude/s0.1-setup-scaffold` before merge. (2026-09-24: PR #3 Preview for `3f07d66`, protected, six headers, route and Sentry alert proven — S0.1 record, "Preview record".)
 
 ## 7. Optional data/auth profile
 
@@ -73,11 +73,11 @@ There is no direct-push exception for the scaffold or docs pack.
 
 ## 8. Pass the setup PR through the full chain
 
-- [ ] Review the changed-file list; only setup, scaffold, and governing-doc files changed.
-- [ ] Local checks pass and no live env file or secret-like value is in the diff.
-- [ ] Commit/push only if the owner explicitly authorizes both actions.
-- [ ] Open the setup PR; CI passes.
-- [ ] Test the deployed Preview and record its tested head SHA.
+- [x] Review the changed-file list; only setup, scaffold, and governing-doc files changed.
+- [x] Local checks pass and no live env file or secret-like value is in the diff.
+- [x] Commit/push only if the owner explicitly authorizes both actions.
+- [x] Open the setup PR; CI passes.
+- [x] Test the deployed Preview and record its tested head SHA.
 - [ ] Codex reviews the immutable merge-base-to-head range and returns Approve.
 - [ ] The owner confirms the head has not changed, merges, and runs the Production smoke test.
 
