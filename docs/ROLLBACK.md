@@ -8,7 +8,7 @@ then a correct `main`, then a fixed root cause. Never improvise on `main`.
 | Situation | Action |
 |---|---|
 | Production broken, cause known | **Revert the PR on `main`** — the default fix |
-| Production broken, users affected NOW | Run `Vercel Instant Rollback (Deployments → last good deployment → Promote to Production)`, then still correct `main` |
+| Production broken, users affected NOW | Run `Vercel Instant Rollback (project Overview → Production Deployment tile → Instant Rollback, or Deployments → ⋮ → Instant Rollback; on Hobby only the immediately previous production deployment)`, then still correct `main` |
 | A DB migration shipped with the break | Code rollback alone is NOT enough — see step 4 |
 | Tempted to fix-forward directly on `main` | **Don't.** Branch, fix, and go through the full workflow |
 
@@ -24,7 +24,7 @@ then a correct `main`, then a fixed root cause. Never improvise on `main`.
 
 ## Step 2 — INSTANT RESTORE (if users are affected)
 
-- [ ] Run the recorded `Vercel Instant Rollback (Deployments → last good deployment → Promote to Production)` to restore the previous good artifact.
+- [ ] Run the recorded `Vercel Instant Rollback (project Overview → Production Deployment tile → Instant Rollback, or Deployments → ⋮ → Instant Rollback; on Hobby only the immediately previous production deployment)` to restore the previous good artifact.
 - [ ] Confirm the live site works again.
 
 This is a stopgap, not the fix — `main` still needs the revert (Step 3).
@@ -32,7 +32,8 @@ This is a stopgap, not the fix — `main` still needs the revert (Step 3).
 ## Step 3 — Fix the source of truth
 
 - [ ] On GitHub, open the merged PR that caused the break → **Revert** → merge the revert PR.
-- [ ] Confirm the new production deployment (from the reverted `main`) is good.
+- [ ] If Step 2 was used: after an Instant Rollback, Vercel stops assigning new `main` deployments to Production. Once the deployment built from the reverted `main` is Ready, open the project Overview → Production Deployment tile → **Undo Rollback**, select that new deployment (not the broken one) and confirm — or run `vercel promote <its URL>`. Either promotes it and turns automatic assignment back on.
+- [ ] Confirm the production domain now serves the new production deployment (from the reverted `main`) and that it is good.
 
 GitHub remains the source of truth: after the dust settles, **production must equal `main`** again.
 A promoted old deployment with a poisoned `main` means the next merge re-ships the bug.
@@ -92,6 +93,8 @@ Setup requires one real rollback on a harmless deployment (S0.1; rehearsed again
 
 | Date / time (UTC) | Actor | From deployment → to deployment (IDs) | Commit SHAs | Result | Active deployment at the end | Smoke results |
 |---|---|---|---|---|---|---|
-| Pending — S0.1, after merge | Owner (Vercel dashboard), recorded by Claude Code | — | — | — | — | — |
+| 2026-09-24, 16:07:05 UTC (GitHub deployment status) | Owner (Vercel dashboard), recorded by Claude Code | Redeploy: A `qts5y2d3e` (Vercel `5uCHvg2Vv`, GitHub deployment `6641010256`) → new **B** `64m890ydl` | `d416bfb` → `d416bfb` (merge of PR #3) | B built and became Current (screenshot) | B | not run on B by itself (same commit as A, whose smoke passed at 15:59 UTC) |
+| 2026-09-24, between 16:07:05 and 16:12 UTC | Owner | **Instant Rollback**: B `64m890ydl` → A `qts5y2d3e` (the immediately previous production deployment, the only Hobby target) | `d416bfb` | PASS — A shown as Production with the rollback icon, B with a red "Production" badge and a crossed-circle icon (screenshots) | A | `302` without bypass; `200` with the six headers + noindex through the bypass; test route denied `404` (owner script) |
+| 2026-09-24, between 16:12 and 16:14 UTC | Owner | **Undo Rollback** (project Overview): A → B | `d416bfb` | PASS — B carries the Production badge again (screenshot); the undo also restores automatic assignment of new `main` deployments | **B `64m890ydl`** (retained) | `302` for `/` and a missing path (Claude, 16:14:35 UTC, no credential); owner mobile view clean; the bypass probes were not re-run after the undo (same commit as A) |
 
 Next step → re-land the fix via the normal workflow in `docs/WORKFLOW.md`.

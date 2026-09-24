@@ -12,6 +12,6 @@ The sequence of sprints lives in `docs/ROADMAP.md`; the active one is named in `
 
 Owner-selected workflow (2026-09-23): GPT-6 Astra Codex prepares sprint prompts and independently reviews Claude Code's completed implementation; Claude implements and fixes findings; the owner merges. Prompt preparation does not authorize implementation or constitute its review.
 
-Current prepared prompt: [S0.1 — Setup scaffold](S0.1-setup-scaffold.md), with its [Codex review brief](../code-reviews/S0.1-setup-scaffold-review.md). Prepared and checked 2026-09-24; implementation Not Started.
+Latest sprint: [S0.1 — Setup scaffold](S0.1-setup-scaffold.md), Done 2026-09-24 (PR #3; closeout on `docs/s0.1-closeout`). Its [review record](../code-reviews/S0.1-setup-scaffold-review.md) contains the returned verdict. Next: S0.2 — to be prepared with `/sprint-prompt S0.2`.
 
 Previous sprint: [S0.0 — Kickoff: decisions lock & governing docs](S0.0-kickoff-decisions.md), Done (PR #1; closeout PR #2). Its [review record](../code-reviews/S0.0-kickoff-decisions-review.md) contains the returned verdicts.

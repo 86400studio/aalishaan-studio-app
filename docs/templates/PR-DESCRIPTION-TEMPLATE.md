@@ -48,7 +48,7 @@ Why this matters: naming what you didn't change stops reviewers filing false pos
 
 ## Rollback note
 
-[How to revert safely: normally a revert PR + redeploy, or `Vercel Instant Rollback (Deployments → last good deployment → Promote to Production)` for immediate restoration. If this PR includes a DB migration, note that host rollback does NOT restore the DB and a down migration does NOT restore lost data—cite the schema rollback and data-recovery record [MIGRATION_NUMBER].]
+[How to revert safely: normally a revert PR + redeploy, or `Vercel Instant Rollback (project Overview → Production Deployment tile → Instant Rollback, or Deployments → ⋮ → Instant Rollback; on Hobby only the immediately previous production deployment)` for immediate restoration. If this PR includes a DB migration, note that host rollback does NOT restore the DB and a down migration does NOT restore lost data—cite the schema rollback and data-recovery record [MIGRATION_NUMBER].]
 
 ---
 

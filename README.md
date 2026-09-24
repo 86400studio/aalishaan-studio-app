@@ -92,4 +92,4 @@ merging. Full process with per-stage checklists: `docs/WORKFLOW.md`.
 ## Deploy
 
 Vercel builds every PR into an isolated Preview and deploys Production only from `main`.
-Host rollback action: Vercel Instant Rollback (Deployments → last good deployment → Promote to Production). Then fix GitHub's source of truth through the normal workflow; see `docs/ROLLBACK.md`. Host rollback does not restore database data.
+Host rollback action: Vercel Instant Rollback (project Overview → Production Deployment tile → Instant Rollback, or Deployments → ⋮ → Instant Rollback; on Hobby only the immediately previous production deployment). Then fix GitHub's source of truth through the normal workflow; see `docs/ROLLBACK.md`. Host rollback does not restore database data.
