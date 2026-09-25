@@ -47,7 +47,7 @@ Many websites need no database. Select Supabase only when the approved architect
 
 ### B1. Create TWO projects
 
-- [ ] Create `aalishaan-studio-test` (development + Preview) and `aalishaan-studio-prod` (Production). **Never share one database across environments.**
+- [ ] Create `aalishaan-studio-test` (development + Preview) and `aalishaan-studio-prod` (Production). **Never share one database across environments.** (Owner — pending at 2026-09-25; the S0.2 code refuses to run privileged paths until both refs are configured and distinct.)
 - [ ] Record project names/refs (never keys) in the project status doc.
 
 ### B2. The key boundary
@@ -67,7 +67,7 @@ Server-only secrets—the secret key (`sb_secret_*` / `service_role`), database 
 
 ### B3. Auth & sessions
 
-- [ ] Use Supabase's current integration pattern for the locked framework (for example, its SSR package where server rendering is used): separate public/browser and trusted server clients, with correct session refresh.
+- [ ] Use Supabase's current integration pattern for the locked framework (for example, its SSR package where server rendering is used): separate public/browser and trusted server clients, with correct session refresh. (S0.2, 2026-09-25: the two clients exist without an SSR/auth package — `src/lib/supabase/browser.ts` reads the two public values only; `src/lib/server/supabase.ts` is `server-only`, session-less and identity-checked. Session handling, refresh and the redirect allow-list arrive with staff auth at S1.2.)
 - [ ] Set a separate Site URL and redirect allow-list for each project: TEST permits localhost and this project's Preview hosts; PROD permits only approved production callback URLs. Use exact production paths and narrowly scoped Preview patterns; see `ENVIRONMENT-PARITY.md` §7.6.
 - [ ] Confirm auth emails use the template's dynamic redirect variable, not a hardcoded site URL — otherwise Preview signups get sent to Production.
 
@@ -79,7 +79,7 @@ Why this matters: RLS is the last line of defense when application code gets a c
 
 ### B5. Migration workflow
 
-- [ ] Every schema change lives in the repo as numbered SQL: up-SQL + a paired `.down.sql` + the RLS policies, all in the same PR.
+- [ ] Every schema change lives in the repo as numbered SQL: up-SQL + a paired `.down.sql` + the RLS policies, all in the same PR. (S0.2 layout, 2026-09-25: `supabase/migrations/NNNN_name.sql` + `supabase/rollbacks/NNNN_name.down.sql` — the down file deliberately outside forward discovery — + `docs/database-changes/<sprint>-<change>.md`; the first change, `0000_init`, is drafted and unapplied; CLI usage in `supabase/README.md`.)
 - [ ] Apply through the project's approved migration procedure: **TEST first → verify per role → owner approval → PROD**. Do not let an AI agent apply a Production migration without explicit authorization.
 - [ ] Keep changes backwards-compatible so code and schema can deploy independently — a hosting rollback does NOT roll back the database.
 
@@ -91,6 +91,8 @@ Why this matters: RLS is the last line of defense when application code gets a c
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(never write here)* | PROD publishable key | TEST publishable key | Public |
 | `NEXT_PUBLIC_SITE_URL` | *(never write here)* | `https://[DOMAIN]` | Preview origin (or unset) | Public |
 | `SUPABASE_SECRET_KEY` *(only if truly needed)* | *(never write here)* | PROD secret | TEST secret | Server-only, Sensitive |
+| `SUPABASE_TEST_PROJECT_REF` / `SUPABASE_PROD_PROJECT_REF` (S0.2) | *(the two refs — non-secret identifiers, recorded by name in `PROJECT-STATUS.md` §9)* | both refs | both refs | Server-only configuration |
+| `S0_2_PROOF_TOKEN` (S0.2 only; removed by S1.1) | *(never write here)* | **absent** | Preview only (not Development) | Server-only, Sensitive |
 
 ⚠️ **The Value column stays blank forever.** Real values live only in an ignored local env file and the Vercel dashboard. Agents do not open or copy them. Never fill values into this or any committed file.
 

@@ -60,16 +60,16 @@ There is no direct-push exception for the scaffold or docs pack.
 - [x] Connect `Vercel` to GitHub. The supplied profile is Vercel; another host must provide equivalent isolated PR Previews.
 - [x] Confirm PR branches create Previews and only `main` deploys Production. (S0.1, 2026-09-24: each PR #3 commit got a Preview; Production was built from `main` @ `d416bfb` after the merge.)
 - [x] Record env names/scopes; the owner sets values in the provider dashboard. Never copy Production credentials into Preview.
-- [ ] Copy `ENVIRONMENT-PARITY.md` to `docs/`; fill its infrastructure and environment matrix (§3–§4), mark unused services N/A, and complete applicable setup steps in §6. Record later feature proofs as pending until those features exist; do not invent PASS results to finish setup.
+- [ ] Copy `ENVIRONMENT-PARITY.md` to `docs/`; fill its infrastructure and environment matrix (§3–§4), mark unused services N/A, and complete applicable setup steps in §6. Record later feature proofs as pending until those features exist; do not invent PASS results to finish setup. (S0.2, 2026-09-25: §3–§4 carry the S0.2 names and the TEST/PROD split; the project rows stay Pending until the owner creates them; the §12 S0.2 proofs are Blocked or Pending, none prefilled.)
 - [x] Prove the Preview pipeline on `claude/s0.1-setup-scaffold` before merge. (2026-09-24: PR #3 Preview for `3f07d66`, protected, six headers, route and Sentry alert proven — S0.1 record, "Preview record".)
 
 ## 7. Optional data/auth profile
 
-- [ ] Record `None` if the approved architecture has no database or auth.
-- [ ] If Supabase is selected, follow `docs/SUPABASE-VERCEL-SETUP.md`: isolated non-production and Production projects, public/publishable values only in browser code, RLS before user data.
-- [ ] If a coding agent will use **Supabase MCP**, follow `docs/SUPABASE-MCP-SAFETY.md`: connect non-production first; production MCP stays disconnected unless a read-only exception is explicitly approved and recorded.
-- [ ] If another provider is selected, document its equivalent isolation, access controls, migrations, and recovery plan in `TECH-ARCHITECTURE.md`.
-- [ ] Follow `docs/ENVIRONMENT-PARITY.md` §7 for the selected data/auth profile: use reviewed migrations for new projects; capture an existing production schema only when its baseline is missing. Verify isolation before any Preview writes; complete feature-specific proofs with the sprint that introduces that feature.
+- [x] Record `None` if the approved architecture has no database or auth. — N/A: Supabase is selected (D-05).
+- [ ] If Supabase is selected, follow `docs/SUPABASE-VERCEL-SETUP.md`: isolated non-production and Production projects, public/publishable values only in browser code, RLS before user data. (S0.2, 2026-09-25: the browser client reads only the two public values, the privileged client is `server-only` behind an enforced import boundary, and `0000_init` enables RLS with no policy before any data lands; the two projects are the owner's pending prerequisite — ticked when they exist and the baseline is verified on TEST.)
+- [ ] If a coding agent will use **Supabase MCP**, follow `docs/SUPABASE-MCP-SAFETY.md`: connect non-production first; production MCP stays disconnected unless a read-only exception is explicitly approved and recorded. (S0.2: Profile A prepared; `.mcp.json` gets its `supabase-dev` entry when the owner supplies the TEST ref; no production MCP.)
+- [x] If another provider is selected, document its equivalent isolation, access controls, migrations, and recovery plan in `TECH-ARCHITECTURE.md`. — N/A: Supabase.
+- [ ] Follow `docs/ENVIRONMENT-PARITY.md` §7 for the selected data/auth profile: use reviewed migrations for new projects; capture an existing production schema only when its baseline is missing. Verify isolation before any Preview writes; complete feature-specific proofs with the sprint that introduces that feature. (S0.2, 2026-09-25: the reviewed migration `0000_init` is the baseline for both new projects; isolation is verified before any Preview write by `pnpm db:test:preflight` and the proof route's own guards; the proofs run when the projects exist.)
 
 ## 8. Pass the setup PR through the full chain
 

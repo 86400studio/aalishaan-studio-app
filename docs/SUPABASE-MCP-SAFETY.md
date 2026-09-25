@@ -174,7 +174,7 @@ Fall back to the manual workflow and notify the owner.
 
 | Item | Project value |
 |---|---|
-| Non-production project ref | Pending — recorded in `PROJECT-STATUS.md` §9 when `aalishaan-studio-test` is created (Setup sprint S0.2) |
+| Non-production project ref | `kivaatbvxifunilxoxde` — `aalishaan-studio-test`, created by the owner 2026-09-25 and recorded in `PROJECT-STATUS.md` §9. The `supabase-dev` entry was added to `.mcp.json` the same day with exactly the §6 command (`project_ref=kivaatbvxifunilxoxde&features=database,debugging,docs`, no credential, the file holds this one entry), checked line by line; the owner's browser OAuth (`/mcp`, manual tool approval kept on) and `claude mcp list` follow in the next session before any tool call |
 | Production project ref | Pending — recorded when `aalishaan-studio-prod` is created (Setup sprint S0.2); never connected to MCP under Profile A |
 | Operating profile | A — no production MCP |
 | Allowed feature groups | `database,debugging,docs` |

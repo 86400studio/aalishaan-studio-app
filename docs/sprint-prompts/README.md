@@ -12,6 +12,6 @@ The sequence of sprints lives in `docs/ROADMAP.md`; the active one is named in `
 
 Owner-selected workflow (2026-09-23): GPT-6 Astra Codex prepares sprint prompts and independently reviews Claude Code's completed implementation; Claude implements and fixes findings; the owner merges. Prompt preparation does not authorize implementation or constitute its review.
 
-Latest sprint: [S0.1 — Setup scaffold](S0.1-setup-scaffold.md), Done 2026-09-24 (PR #3; closeout on `docs/s0.1-closeout`). Its [review record](../code-reviews/S0.1-setup-scaffold-review.md) contains the returned verdict. Next: S0.2 — to be prepared with `/sprint-prompt S0.2`.
+Latest sprint: [S0.2 — Supabase isolation, migration baseline & proof harness](S0.2-supabase-proof-harness.md), prepared 2026-09-25 and **In Progress** the same day on `claude/s0.2-supabase-proof-harness` (uncommitted; one PR). Its paired [review brief](../code-reviews/S0.2-supabase-proof-harness-review.md) holds no verdict yet; the database record is [`docs/database-changes/S0.2-0000-init.md`](../database-changes/S0.2-0000-init.md).
 
-Previous sprint: [S0.0 — Kickoff: decisions lock & governing docs](S0.0-kickoff-decisions.md), Done (PR #1; closeout PR #2). Its [review record](../code-reviews/S0.0-kickoff-decisions-review.md) contains the returned verdicts.
+Previous sprints: [S0.1 — Setup scaffold](S0.1-setup-scaffold.md), Done 2026-09-24 (PR #3; closeout PR #4 `815431d`, record PR #5 `235dedc`) — its [review record](../code-reviews/S0.1-setup-scaffold-review.md) contains the returned verdicts; [S0.0 — Kickoff: decisions lock & governing docs](S0.0-kickoff-decisions.md), Done (PR #1; closeout PR #2) — its [review record](../code-reviews/S0.0-kickoff-decisions-review.md) contains the returned verdicts.
