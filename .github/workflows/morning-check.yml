@@ -1,0 +1,58 @@
+# The morning check (docs/testing-setup/templates/MORNING-CHECK-TEMPLATE.md): the daily watch on the live site.
+#
+# COMMITTED DISABLED at S0.2 (docs/ROADMAP.md S0.2): there is no schedule, and the one job is unconditionally
+# skipped, so neither the manual trigger nor any event can run a probe or consume a secret. This file is a
+# keepalive for nothing — the Free-plan Supabase projects stay active through the owner-recorded manual
+# health check (docs/PROJECT-STATUS.md §9), not through this workflow.
+#
+# Lifecycle: S3.2 selects the owner-approved 5–7 safe `@morning` specs; S3.4 enables this workflow — it adds
+# the schedule below, removes the `if: false`, adds the repository variable PRODUCTION_URL and a production
+# target mode to the harness (tests/e2e/harness/target.ts accepts only Preview and local targets at S0.2),
+# and the owner verifies the failure e-mail once. Never before, and never with the Preview bypass or a
+# privileged provider secret. Proposed schedule, as a comment until S3.4:
+#   schedule:
+#     - cron: "30 1 * * *"   # 01:30 UTC = 07:00 IST (GitHub cron is UTC)
+name: Morning Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  morning-check:
+    name: Morning Check (disabled until S3.4)
+    # Unconditionally disabled: a dispatched run is recorded as skipped and executes no step.
+    if: ${{ false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      # The same pinned toolchain as the Code Check (Node from .nvmrc, pnpm from packageManager).
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm (version from packageManager)
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Set up Node.js (major from .nvmrc)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install with the committed lockfile
+        run: pnpm install --frozen-lockfile
+
+      # S3.4 replaces this step with the owner-approved selection, for example:
+      #   run: pnpm exec playwright install --with-deps chromium
+      #   run: pnpm exec playwright test --grep "@morning"
+      #   env:
+      #     PLAYWRIGHT_BASE_URL: ${{ vars.PRODUCTION_URL }}
+      # No spec is tagged @morning and no production target mode exists at S0.2.
+      - name: Placeholder — no test path exists until S3.4
+        run: echo "Morning Check is committed disabled (S0.2); enabled at S3.4 after the S3.2 selection."

@@ -49,6 +49,8 @@ cannot recreate deleted rows, undo externally-triggered side effects, or guarant
 - [ ] If data was changed or deleted, use the migration's approved data-recovery plan (verified backup/PITR or a deliberate forward repair). The down-SQL alone is not recovery.
 - [ ] A human owner approves any production schema or data recovery action and records the result. Never improvise a production edit during the incident.
 
+**Database recovery limits as of S0.2 (2026-09-25):** the only migration is the additive baseline `0000_init` (`supabase/migrations/0000_init.sql`; its paired down file `supabase/rollbacks/0000_init.down.sql` lives outside forward discovery and is never run by `db push`). The S0.1 holding page and every S0.2 route work with or without it (`GET /api/health` reports `schema_missing` without it), so a host rollback leaves the baseline in place and needs no schema action. The down file deletes every `system_checks` row and cannot restore them, and the Free plan (D-05) keeps no backup — the plan is to keep the additive schema and forward-fix (`docs/database-changes/S0.2-0000-init.md` → "Rollback plan").
+
 ## Step 5 — Verify with a smoke test
 
 - [ ] The previously broken page/flow works on the live domain.

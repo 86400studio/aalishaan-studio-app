@@ -73,7 +73,8 @@ describe(
       });
       for (const path of [
         "/",
-        "/api/sentry-test",
+        "/api/health",
+        "/api/setup-proof",
         "/robots.txt",
         "/favicon.ico",
         "/_next/static/chunks/main.js",

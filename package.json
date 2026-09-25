@@ -15,16 +15,24 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:unit": "vitest run",
-    "test": "pnpm run test:unit"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test": "pnpm run test:unit && pnpm run test:integration",
+    "test:e2e": "playwright test",
+    "test:preview-proof": "node scripts/testing/preview-proof.mjs",
+    "db:test:preflight": "node scripts/testing/preflight.mjs",
+    "db:test:seed": "node scripts/testing/seed.mjs",
+    "db:test:reset": "node scripts/testing/reset.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "10.75.2",
+    "@supabase/supabase-js": "2.117.1",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.13.6",
     "@types/react": "19.2.18",
@@ -32,6 +40,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.6",
     "prettier": "3.9.9",
+    "supabase": "2.117.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "8.3.0",

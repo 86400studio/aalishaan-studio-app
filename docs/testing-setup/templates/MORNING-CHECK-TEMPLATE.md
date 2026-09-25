@@ -14,6 +14,8 @@
 
 ## The workflow file → `.github/workflows/morning-check.yml`
 
+> **As installed at S0.2 (2026-09-25):** the committed file is the disabled scaffold — `workflow_dispatch` only, the job `if: ${{ false }}`, the schedule kept as a comment, the toolchain pinned like the Code Check (Node from `.nvmrc` = 24, not the `node-version: 20` of the generic block below; actions pinned by SHA), and no test or secret-consuming step. The `MORNING_TEST_EMAIL` / `MORNING_TEST_PASSWORD` account waits for staff auth (S1.2) and the owner-approved selection (S3.2); a production target mode is added to the harness then (at S0.2 it accepts only a verified Preview or a local origin). S3.4 enables the workflow, adds `PRODUCTION_URL`, and verifies the failure e-mail. The generic block below stays as the reference shape.
+
 ```yaml
 name: Morning Check
 on:

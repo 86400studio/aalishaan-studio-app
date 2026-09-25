@@ -125,7 +125,7 @@ Run the exact commands defined by the repo and filled task prompt:
 
 1. Typecheck: pnpm typecheck
 2. Lint: pnpm lint
-3. Tests: pnpm test (Vitest unit/integration; `pnpm test:e2e` runs the Playwright suite in `tests/e2e/` when the sprint touches a flow)
+3. Tests: `pnpm test:unit` (hermetic Vitest, `tests/unit/`; the Code Check runs it) and `pnpm test` (`test:unit`, then `pnpm test:integration` — the real TEST-project integration tests in `tests/integration/`, run in the owner-authorised trusted local process against the verified TEST target; it fails, never skips, when that target is missing). `pnpm test:e2e` runs the Playwright suite in `tests/e2e/` (desktop and mobile-390 projects, both required) against the verified Preview named by `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_CANDIDATE_SHA` when the sprint touches a flow. Convention (S0.2): every protected boundary ships at least one allowed-state and at least one denied-state automated test, and a denied case asserts that no write happened.
 4. Production build: pnpm build
 5. Task-specific and manual checks: the sprint prompt's manual/Preview checks — `/browser-qa` evidence at 320 / 768 / 1440 for UI sprints (Admin sprints at 1440 / 1024 / 768 / 390 / 320 against the final Admin — `docs/ROADMAP.md` exit gate, `docs/DESIGN.md` §8), denied-state tests for every protected boundary, and the ENVIRONMENT-PARITY proofs the sprint affects
 
