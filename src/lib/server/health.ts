@@ -21,19 +21,21 @@ import {
  *    here claims they passed;
  * 2. the **public client of this very build** — `createBrowserSupabaseClient()` with the build-inlined
  *    `NEXT_PUBLIC_*` values, the same factory and values the browser bundle carries (session features off,
- *    which never changes the key, the URL or the read) — reads the same table and must be *denied at the
- *    table*: permission denied (the baseline's grant-level denial), or an RLS-filtered empty result that is
- *    only accepted when the privileged read saw at least one row (an empty array on an empty table proves
- *    nothing). That proves the deployment's publishable key and URL are accepted by the project the
- *    privileged client verified (P1, the public half, on the deployed candidate — Codex round 1) and that
- *    anonymous access to the baseline is closed. A key the gateway rejects, or a public read that returns
- *    rows, is unhealthy.
+ *    which never changes the key, the URL or the read) — must point at the project the privileged identity
+ *    verified, then reads the same table and must be *denied at the table*: Postgres permission denied
+ *    (the baseline's grant-level denial), or an explicit empty array that is only accepted when the
+ *    privileged read saw at least one row. Nothing else counts (Codex rounds 1 and 2): a schema-missing
+ *    answer cannot be denial once the privileged read proved the table exists, and a malformed success
+ *    body proves nothing. That proves the deployment's publishable key and URL are accepted by the intended
+ *    project (P1, the public half, on the deployed candidate) and that anonymous access to the baseline is
+ *    closed.
  *
  * `503 {"status":"unavailable","reason":…}` with one of a fixed set of reasons: configuration missing or
  * pointing at the wrong project, the baseline schema missing (Production before the owner applies
- * 0000_init), a query failing or timing out, the public pair not configured, the publishable key rejected,
- * the public client able to read rows, or public denial unproven. Never rows, refs, keys or upstream
- * bodies; never a write on GET; `Cache-Control: no-store`. Worst case two sequential 2.5 s reads.
+ * 0000_init), a query failing or timing out, the public pair not configured or pointing at another project,
+ * the publishable key rejected, the public client able to read rows, or public denial unproven. Never rows,
+ * refs, keys or upstream bodies; never a write on GET; `Cache-Control: no-store`. Worst case two sequential
+ * 2.5 s reads.
  */
 
 export const HEALTH_QUERY_TIMEOUT_MS = 2500;
@@ -62,6 +64,7 @@ export type HealthReason =
   | "schema_missing"
   | "query_failed"
   | "public_not_configured"
+  | "public_identity_mismatch"
   | "public_key_rejected"
   | "public_access_open"
   | "public_denial_unproven";
@@ -99,8 +102,9 @@ function configReason(
 type PublicOutcome = "accepted" | HealthReason;
 
 /**
- * Classifies the public client's bounded read. Accepted means the key reached the database and the table
- * refused it — or RLS filtered out rows that the privileged read proved exist.
+ * Classifies the public client's bounded read, taken after the privileged read proved the table exists.
+ * Accepted means the key reached the database and the table refused it — or RLS returned an explicit
+ * empty array while the privileged read had proved there was something to hide.
  */
 export function classifyPublicRead(
   outcome: {
@@ -113,15 +117,18 @@ export function classifyPublicRead(
   const { data, error } = outcome;
   if (error) {
     const code = typeof error.code === "string" ? error.code : "";
-    if (PUBLIC_DENIED_CODES.has(code) || SCHEMA_MISSING_CODES.has(code))
-      return "accepted";
+    if (PUBLIC_DENIED_CODES.has(code)) return "accepted";
     // The gateway refuses an unknown key before PostgREST runs: an HTTP 401/403 without a Postgres code.
     if (code === "" && (outcome.status === 401 || outcome.status === 403))
       return "public_key_rejected";
+    // The privileged read has just proved the table exists, so a "missing table" answer to the public
+    // client establishes nothing (Codex round 2).
+    if (SCHEMA_MISSING_CODES.has(code)) return "public_denial_unproven";
     return "query_failed";
   }
-  if (Array.isArray(data) && data.length > 0) return "public_access_open";
-  // An empty array is denial only when there was something to hide.
+  // Only an explicit empty array can be an RLS-filtered denial; anything else is malformed.
+  if (!Array.isArray(data)) return "public_denial_unproven";
+  if (data.length > 0) return "public_access_open";
   return privilegedRowsSeen > 0 ? "accepted" : "public_denial_unproven";
 }
 
@@ -146,15 +153,21 @@ export async function checkHealth(
           : "query_failed",
       };
     }
-    privilegedRowsSeen = Array.isArray(data) ? data.length : 0;
+    // A success without an explicit array is malformed; it cannot prove the secret key read the table.
+    if (!Array.isArray(data))
+      return { status: "unavailable", reason: "query_failed" };
+    privilegedRowsSeen = data.length;
   } catch {
     return { status: "unavailable", reason: "query_failed" };
   }
 
-  // The public half: this build's own public client must be accepted by the project and denied at the table.
+  // The public half: this build's own public client must point at the verified project, be accepted by it
+  // and be denied at the table.
   const pub = deps.createPublicClient();
   if (!pub.ok)
     return { status: "unavailable", reason: "public_not_configured" };
+  if (pub.projectRef !== created.identity.projectRef)
+    return { status: "unavailable", reason: "public_identity_mismatch" };
   try {
     const outcome = await pub.client
       .from("system_checks")

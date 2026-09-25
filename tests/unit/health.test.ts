@@ -176,6 +176,20 @@ describe("checkHealth — the privileged read", () => {
     });
   });
 
+  it("reports query_failed for a malformed success body (not an array) and never reaches the public client", async () => {
+    const { created } = privilegedOk({
+      data: { message: "not an array" },
+      error: null,
+      status: 200,
+    });
+    const d = deps(created);
+    expect(await checkHealth(d)).toEqual({
+      status: "unavailable",
+      reason: "query_failed",
+    });
+    expect(d.createPublicClient).not.toHaveBeenCalled();
+  });
+
   it("reports query_failed when the query throws or times out", async () => {
     const { client } = fakeClient(() =>
       Promise.reject(new Error("AbortError")),
@@ -237,24 +251,6 @@ describe("checkHealth — the public half: this build's public client must be ac
       { data: [], error: null, status: 200 },
       ONE_ROW,
     ],
-    [
-      "a table the public role cannot see (PGRST205)",
-      {
-        data: null,
-        error: { code: "PGRST205", message: "not in schema cache" },
-        status: 404,
-      },
-      ONE_ROW,
-    ],
-    [
-      "a relation the public role cannot see (42P01)",
-      {
-        data: null,
-        error: { code: "42P01", message: "relation does not exist" },
-        status: 404,
-      },
-      ONE_ROW,
-    ],
   ])("accepts %s as healthy", async (_label, outcome, privileged) => {
     const { created } = privilegedOk(privileged);
     const { pub } = publicOk(outcome);
@@ -287,7 +283,39 @@ describe("checkHealth — the public half: this build's public client must be ac
       "public_denial_unproven",
     ],
     [
-      'a timeout (postgrest-js maps AbortSignal.timeout to code "23", status 0)',
+      "a schema-missing answer (PGRST205) although the privileged read proved the table exists",
+      {
+        data: null,
+        error: { code: "PGRST205", message: "not in schema cache" },
+        status: 404,
+      },
+      ONE_ROW,
+      "public_denial_unproven",
+    ],
+    [
+      "a schema-missing answer (42P01) although the privileged read proved the table exists",
+      {
+        data: null,
+        error: { code: "42P01", message: "relation does not exist" },
+        status: 404,
+      },
+      ONE_ROW,
+      "public_denial_unproven",
+    ],
+    [
+      "a malformed success body (not an array) even when the privileged read saw a row",
+      { data: { message: "not an array" }, error: null, status: 200 },
+      ONE_ROW,
+      "public_denial_unproven",
+    ],
+    [
+      "a null success body",
+      { data: null, error: null, status: 200 },
+      ONE_ROW,
+      "public_denial_unproven",
+    ],
+    [
+      "an error carrying a non-Postgres code with status 0 (postgrest-js itself reports a timeout or abort as an empty code)",
       { data: null, error: { code: "23", message: "TimeoutError" }, status: 0 },
       ONE_ROW,
       "query_failed",
@@ -328,6 +356,19 @@ describe("checkHealth — the public half: this build's public client must be ac
     },
   );
 
+  it("reports public_identity_mismatch, without any public read, when this build's public URL points at another project", async () => {
+    const { created } = privilegedOk();
+    const { client, calls } = fakeClient(PUBLIC_DENIED);
+    const result = await checkHealth(
+      deps(created, { ok: true, client, projectRef: PROD_REF }),
+    );
+    expect(result).toEqual({
+      status: "unavailable",
+      reason: "public_identity_mismatch",
+    });
+    expect(calls).toEqual([]);
+  });
+
   it("reports query_failed when the public query throws", async () => {
     const { created } = privilegedOk();
     const { pub } = publicOk(() => Promise.reject(new Error("AbortError")));
@@ -352,6 +393,15 @@ describe("checkHealth — the public half: this build's public client must be ac
     expect(
       classifyPublicRead({ data: null, error: { code: "XX000" } }, 1),
     ).toBe("query_failed");
+    expect(
+      classifyPublicRead({ data: null, error: { code: "PGRST205" } }, 1),
+    ).toBe("public_denial_unproven");
+    expect(classifyPublicRead({ data: { rows: [] }, error: null }, 1)).toBe(
+      "public_denial_unproven",
+    );
+    expect(classifyPublicRead({ data: null, error: null }, 1)).toBe(
+      "public_denial_unproven",
+    );
   });
 });
 
