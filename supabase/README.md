@@ -4,7 +4,8 @@ Supabase CLI **2.117.0** (`pnpm exec supabase`, a devDependency; the platform bi
 nothing is downloaded at install). Two owner-held projects: **TEST** `aalishaan-studio-test` (Local and
 Preview) and **PROD** `aalishaan-studio-prod` (Production); refs by name in `docs/PROJECT-STATUS.md` §9.
 Rules: `docs/WORKFLOW.md` → Database change protocol, `docs/SUPABASE-VERCEL-SETUP.md` Part B,
-`docs/SUPABASE-MCP-SAFETY.md` (Profile A: no PROD MCP, ever). One record per change in
+`docs/SUPABASE-MCP-SAFETY.md` (Profile B since D-40, 2026-09-25: `supabase-dev` on TEST; `supabase-prod-readonly`
+may only verify — no agent writes to PROD through any channel). One record per change in
 `docs/database-changes/`.
 
 ## Layout

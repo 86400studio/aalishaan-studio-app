@@ -14,7 +14,8 @@
  *   3. the local TEST target is resolved and probed (both keys accepted, auth healthy, 0000_init present,
  *      anonymous read denied or empty);
  *   4. a fresh run marker is chosen and confirmed absent in TEST; the owner's read-only PROD negative
- *      control is printed (they run it in the PROD SQL editor under Profile A — never through MCP);
+ *      control is printed (run read-only: the owner in the PROD SQL editor, or the builder through the
+ *      read-only supabase-prod-readonly connection of D-40 — never a writable production connection);
  *   5. without `--apply` the run stops here (dry run). With `--apply`: create → read → independent
  *      privileged read in TEST from this process → cleanup → independent read confirms absence. The
  *      `finally` block re-checks TEST whenever a create was attempted — even when its response was lost —
@@ -167,7 +168,7 @@ async function main() {
     throw new ProofFailure("marker collision; run again");
   log(`4. Run marker ${marker} — absent in TEST before the run.`);
   log(
-    "   Owner PROD negative control (read-only, PROD SQL editor, Profile A — never through MCP; run after step 5 creates the marker and again after cleanup):\n" +
+    "   PROD negative control (read-only: the owner in the PROD SQL editor, or the builder through supabase-prod-readonly — D-40; run after step 5 creates the marker and again after cleanup):\n" +
       "     select to_regclass('public.system_checks') as table_present;\n" +
       `     select count(*) as marker_rows from public.system_checks where check_key = '${marker}';  -- only when table_present is not null`,
   );
