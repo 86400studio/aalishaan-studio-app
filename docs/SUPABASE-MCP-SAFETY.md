@@ -175,9 +175,9 @@ Fall back to the manual workflow and notify the owner.
 | Item | Project value |
 |---|---|
 | Non-production project ref | `kivaatbvxifunilxoxde` — `aalishaan-studio-test`, created by the owner 2026-09-25 and recorded in `PROJECT-STATUS.md` §9. The `supabase-dev` entry was added to `.mcp.json` the same day with exactly the §6 command (`project_ref=kivaatbvxifunilxoxde&features=database,debugging,docs`, no credential, the file holds this one entry), checked line by line; the owner's browser OAuth (`/mcp`, manual tool approval kept on) and `claude mcp list` follow in the next session before any tool call |
-| Production project ref | Pending — recorded when `aalishaan-studio-prod` is created (Setup sprint S0.2); never connected to MCP under Profile A |
-| Operating profile | A — no production MCP |
-| Allowed feature groups | `database,debugging,docs` |
+| Production project ref | `mttuqbpfdhzhnsjsmjcf` — `aalishaan-studio-prod`, created by the owner 2026-09-25 (PROJECT-STATUS §9). Connected **read-only** the same day under Profile B by owner decision D-40 as `supabase-prod-readonly` (`read_only=true&features=database,docs`, no credential in `.mcp.json`); the owner's browser OAuth and the §7 refused-write check follow before any tool call |
+| Operating profile | B — owner-approved read-only production exception (PROJECT-STATUS §8a D-40, 2026-09-25). Owner: the account holder. Reason: verify by read-only SQL what the owner applied to PROD by hand, and run the read-only PROD negative controls of the proofs. Feature groups: `database,docs`. Data classification at approval: no customer or business data in PROD (S0.2). Removal condition: reviewed at S1.1 Gate 0 and S3.1 Gate 0; deleted unless re-approved with a data classification. The agent never writes to production through any channel (§4) |
+| Allowed feature groups | `supabase-dev`: `database,debugging,docs` · `supabase-prod-readonly`: `database,docs` |
 | SQL/migration folder | `supabase/migrations/` |
 | Data classification | Confidential — customer contact/address data, order and payment references, finance documents, private print masters and evidence |
 | Production exception owner/date/reason | N/A — no exception approved |
