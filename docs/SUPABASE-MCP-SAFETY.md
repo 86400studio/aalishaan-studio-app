@@ -98,13 +98,13 @@ claude mcp add --scope project --transport http supabase-dev \
   "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_DEV_PROJECT_REF}&features=database,debugging,docs"
 ```
 
-Optional approved production read-only exception:
+Optional approved production read-only exception — `database,docs` only: `debugging` (logs, advisors) is not needed for verification and is outside the D-40 scope (2026-09-25):
 
 ```bash
 SUPABASE_PROD_PROJECT_REF="replace-with-production-project-ref"
 
 claude mcp add --scope project --transport http supabase-prod-readonly \
-  "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROD_PROJECT_REF}&read_only=true&features=database,debugging,docs"
+  "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROD_PROJECT_REF}&read_only=true&features=database,docs"
 ```
 
 Then, in a regular terminal:
@@ -119,7 +119,7 @@ Do not commit `.mcp.json` until you have manually verified, line by line, that:
 
 - the placeholders are gone;
 - each server has the correct `project_ref`;
-- production has `read_only=true`;
+- production has `read_only=true` and exactly `features=database,docs`;
 - no credentials or authorization headers appear;
 - server names make the environment unmistakable;
 - only approved feature groups are enabled.
@@ -175,7 +175,7 @@ Fall back to the manual workflow and notify the owner.
 | Item | Project value |
 |---|---|
 | Non-production project ref | `kivaatbvxifunilxoxde` — `aalishaan-studio-test`, created by the owner 2026-09-25 and recorded in `PROJECT-STATUS.md` §9. The `supabase-dev` entry was added to `.mcp.json` the same day with exactly the §6 command (`project_ref=kivaatbvxifunilxoxde&features=database,debugging,docs`, no credential, the file holds this one entry), checked line by line; the owner's browser OAuth is done and `claude mcp list` shows it Connected (2026-09-25 night, manual tool approval on); the §7 checks ran the same night — the schema listing (only `public.system_checks`), one synthetic `fixture:mcp-guardrail` row inserted and deleted, the refs differ — S0.2 record → "Checks run" |
-| Production project ref | `mttuqbpfdhzhnsjsmjcf` — `aalishaan-studio-prod`, created by the owner 2026-09-25 (PROJECT-STATUS §9). Connected **read-only** the same day under Profile B by owner decision D-40 as `supabase-prod-readonly` (`read_only=true&features=database,docs`, no credential in `.mcp.json`); the owner's browser OAuth is done and `claude mcp list` shows it Connected (2026-09-25 night); first use the same night, read-only: `to_regclass('public.system_checks')` → null and the migration list (none). The §7 refused-write probe was **not** run by the builder — its tool-permission gate denied issuing the statement to the production connection (S0.2 record → Deviation 18); `read_only=true` stands as the recorded guardrail until the owner runs that probe |
+| Production project ref | `mttuqbpfdhzhnsjsmjcf` — `aalishaan-studio-prod`, created by the owner 2026-09-25 (PROJECT-STATUS §9). Connected **read-only** the same day under Profile B by owner decision D-40 as `supabase-prod-readonly` (`read_only=true&features=database,docs`, no credential in `.mcp.json`); the owner's browser OAuth is done and `claude mcp list` shows it Connected (2026-09-25 night); first use the same night, read-only: `to_regclass('public.system_checks')` → null and the migration list (none). The §7 refused-write probe was run on 2026-09-25 at 22:10 IST with the owner's approval of that one tool call and **refused** — SQLSTATE 25006, "cannot execute CREATE TABLE in a read-only transaction" (`create temporary table s0_2_probe (x int)` through `execute_sql`; nothing created); the `read_only=true` guardrail is proven, not assumed |
 | Operating profile | B — owner-approved read-only production exception (PROJECT-STATUS §8a D-40, 2026-09-25). Owner: the account holder. Reason: verify by read-only SQL what the owner applied to PROD by hand, and run the read-only PROD negative controls of the proofs. Feature groups: `database,docs`. Data classification at approval: no customer or business data in PROD (S0.2). Removal condition: reviewed at S1.1 Gate 0 and S3.1 Gate 0; deleted unless re-approved with a data classification. The agent never writes to production through any channel (§4) |
 | Allowed feature groups | `supabase-dev`: `database,debugging,docs` · `supabase-prod-readonly`: `database,docs` |
 | SQL/migration folder | `supabase/migrations/` |

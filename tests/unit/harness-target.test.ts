@@ -23,6 +23,8 @@ import {
   redact,
 } from "../../scripts/testing/lib/http.mjs";
 import {
+  ANON_DENIED_STATUSES,
+  anonReadDenied,
   probeIdentity,
   probeProblems,
   resolveTestTarget,
@@ -834,7 +836,9 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
     secretKey: SECRET,
   };
 
-  function fakeFetch(plan: Record<string, { status: number; body?: unknown }>) {
+  type Plan = Record<string, { status: number; body?: unknown; text?: string }>;
+
+  function fakeFetch(plan: Plan) {
     const seen: FetchCall[] = [];
     const fetchImpl = vi.fn(
       async (input: string | URL | Request, init?: RequestInit) => {
@@ -846,39 +850,50 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
           plan[`${key}|${keyHeader === SECRET ? "secret" : "public"}`] ??
           plan[key];
         if (!entry) return new Response("nope", { status: 500 });
+        if (entry.text !== undefined)
+          return new Response(entry.text, {
+            status: entry.status,
+            headers: { "content-type": "text/html" },
+          });
         return jsonResponse(entry.body ?? {}, entry.status);
       },
     );
     return { fetchImpl: fetchImpl as unknown as typeof fetch, seen };
   }
 
-  it("reports both keys accepted, auth healthy, baseline present and the anonymous read denied", async () => {
-    const { fetchImpl, seen } = fakeFetch({
-      "/rest/v1/": {
-        status: 200,
-        body: { openapi: "3.0", paths: { "/system_checks": {} } },
-      },
-      "/auth/v1/health": { status: 200, body: { name: "GoTrue" } },
-      "/rest/v1/system_checks?select=id&limit=1|secret": {
-        status: 200,
-        body: [{ id: "row-1" }],
-      },
-      "/rest/v1/system_checks?select=id&limit=1|public": {
-        status: 401,
-        body: { code: "42501" },
-      },
-    });
+  /** A healthy post-apply TEST: the secret key sees one row, the anonymous read is permission-denied. */
+  const HEALTHY: Plan = {
+    "/rest/v1/|secret": { status: 200, body: { openapi: "3.0" } },
+    "/rest/v1/|public": {
+      status: 401,
+      body: { message: "Secret API key required" },
+    },
+    "/auth/v1/health": { status: 200, body: { name: "GoTrue" } },
+    "/rest/v1/system_checks?select=id&limit=1|secret": {
+      status: 200,
+      body: [{ id: "row-1" }],
+    },
+    "/rest/v1/system_checks?select=id&limit=1|public": {
+      status: 401,
+      body: { code: "42501" },
+    },
+  };
+
+  it("reports both keys accepted, auth healthy, the baseline present with a visible row and the anonymous read denied", async () => {
+    const { fetchImpl, seen } = fakeFetch(HEALTHY);
     const probe = await probeIdentity(target, { fetchImpl });
     expect(probe).toMatchObject({
       publicKeyAccepted: true,
       secretKeyAccepted: true,
       authHealthy: true,
       baseline: "present",
+      baselineRows: 1,
       anonRead: { status: 401, rows: null },
     });
     expect(JSON.stringify(probe)).not.toContain("row-1");
     expect(JSON.stringify(probe)).not.toContain("GoTrue");
     expect(probeProblems(probe)).toEqual([]);
+    expect(ANON_DENIED_STATUSES).toEqual([401, 403]);
     for (const call of seen) {
       expect(new URL(call.url).origin).toBe(TEST_URL);
       expect(call.init?.redirect).toBe("manual");
@@ -886,16 +901,34 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
     }
   });
 
+  it("reports an absent baseline (404) and a rejected secret key (401) with names-only problems; a pre-apply 404 counts as denial", async () => {
+    const { fetchImpl } = fakeFetch({
+      ...HEALTHY,
+      "/rest/v1/|secret": { status: 401 },
+      "/rest/v1/system_checks?select=id&limit=1|secret": {
+        status: 404,
+        body: { code: "PGRST205" },
+      },
+      "/rest/v1/system_checks?select=id&limit=1|public": { status: 404 },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.baseline).toBe("absent");
+    expect(probe.baselineRows).toBeNull();
+    expect(probe.secretKeyAccepted).toBe(false);
+    expect(anonReadDenied(probe)).toBe(true);
+    const problems = probeProblems(probe);
+    expect(problems.join("; ")).toMatch(/SUPABASE_SECRET_KEY is not accepted/);
+    expect(problems.join("; ")).toMatch(/system_checks is absent/);
+    expect(
+      probeProblems(probe, { requireBaseline: false }).join("; "),
+    ).not.toMatch(/absent/);
+  });
+
   it("proves the publishable key on the auth health endpoint, not on the secret-only REST root", async () => {
     // The gateway answers "Secret API key required" to a publishable key on /rest/v1/ (verified live
     // 2026-09-25); that must not read as a rejected key.
     const { fetchImpl } = fakeFetch({
-      "/rest/v1/|public": {
-        status: 401,
-        body: { message: "Secret API key required" },
-      },
-      "/rest/v1/|secret": { status: 200 },
-      "/auth/v1/health": { status: 200 },
+      ...HEALTHY,
       "/rest/v1/system_checks?select=id&limit=1|secret": { status: 404 },
       "/rest/v1/system_checks?select=id&limit=1|public": { status: 404 },
     });
@@ -908,17 +941,12 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
 
   it("names the publishable key when the auth endpoint rejects it while the secret key is healthy", async () => {
     const { fetchImpl } = fakeFetch({
-      "/rest/v1/": { status: 200 },
+      ...HEALTHY,
       "/auth/v1/health|public": {
         status: 401,
         body: { message: "Invalid API key" },
       },
       "/auth/v1/health|secret": { status: 200 },
-      "/rest/v1/system_checks?select=id&limit=1|secret": {
-        status: 200,
-        body: [],
-      },
-      "/rest/v1/system_checks?select=id&limit=1|public": { status: 401 },
     });
     const probe = await probeIdentity(target, { fetchImpl });
     expect(probe.publicKeyAccepted).toBe(false);
@@ -930,36 +958,9 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
     expect(problems).not.toMatch(/Auth health/);
   });
 
-  it("reports an absent baseline (404) and a rejected key (401) with names-only problems", async () => {
-    const { fetchImpl } = fakeFetch({
-      "/rest/v1/|public": { status: 200 },
-      "/rest/v1/|secret": { status: 401 },
-      "/auth/v1/health": { status: 200 },
-      "/rest/v1/system_checks?select=id&limit=1|secret": {
-        status: 404,
-        body: { code: "PGRST205" },
-      },
-      "/rest/v1/system_checks?select=id&limit=1|public": { status: 404 },
-    });
-    const probe = await probeIdentity(target, { fetchImpl });
-    expect(probe.baseline).toBe("absent");
-    expect(probe.secretKeyAccepted).toBe(false);
-    const problems = probeProblems(probe);
-    expect(problems.join("; ")).toMatch(/SUPABASE_SECRET_KEY is not accepted/);
-    expect(problems.join("; ")).toMatch(/system_checks is absent/);
-    expect(
-      probeProblems(probe, { requireBaseline: false }).join("; "),
-    ).not.toMatch(/absent/);
-  });
-
   it("flags an anonymous read that returns rows as an RLS failure", async () => {
     const { fetchImpl } = fakeFetch({
-      "/rest/v1/": { status: 200 },
-      "/auth/v1/health": { status: 200 },
-      "/rest/v1/system_checks?select=id&limit=1|secret": {
-        status: 200,
-        body: [{ id: 1 }],
-      },
+      ...HEALTHY,
       "/rest/v1/system_checks?select=id&limit=1|public": {
         status: 200,
         body: [{ id: 1 }],
@@ -970,10 +971,23 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
     expect(probeProblems(probe).join("; ")).toMatch(/RLS or grants are wrong/);
   });
 
-  it("treats an empty anonymous result as denied (RLS-filtered), not as a failure", async () => {
+  it("accepts an empty anonymous 200 only when the secret key saw a row (RLS filtered something)", async () => {
     const { fetchImpl } = fakeFetch({
-      "/rest/v1/": { status: 200 },
-      "/auth/v1/health": { status: 200 },
+      ...HEALTHY,
+      "/rest/v1/system_checks?select=id&limit=1|public": {
+        status: 200,
+        body: [],
+      },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.anonRead).toEqual({ status: 200, rows: 0 });
+    expect(anonReadDenied(probe)).toBe(true);
+    expect(probeProblems(probe)).toEqual([]);
+  });
+
+  it("refuses an empty anonymous 200 on an empty table — it proves nothing", async () => {
+    const { fetchImpl } = fakeFetch({
+      ...HEALTHY,
       "/rest/v1/system_checks?select=id&limit=1|secret": {
         status: 200,
         body: [],
@@ -984,8 +998,123 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
       },
     });
     const probe = await probeIdentity(target, { fetchImpl });
-    expect(probe.anonRead).toEqual({ status: 200, rows: 0 });
-    expect(probeProblems(probe)).toEqual([]);
+    expect(probe.baseline).toBe("present");
+    expect(probe.baselineRows).toBe(0);
+    expect(anonReadDenied(probe)).toBe(false);
+    const problems = probeProblems(probe).join("; ");
+    expect(problems).toMatch(/empty HTTP 200 while system_checks has no row/);
+    expect(problems).toMatch(/denial not established/);
+    expect(problems).not.toMatch(/RLS or grants are wrong/);
+  });
+
+  it.each([
+    ["an HTTP 500", { status: 500, body: { message: "boom" } }],
+    [
+      "an HTTP 200 whose body is a JSON object, not an array",
+      { status: 200, body: { message: "not an array" } },
+    ],
+    [
+      "an HTTP 200 whose body is not JSON at all",
+      { status: 200, text: "<html>maintenance</html>" },
+    ],
+    ["an HTTP 302 redirect", { status: 302 }],
+  ])(
+    "fails the preflight when the anonymous read answers %s (denial not established)",
+    async (_label, entry) => {
+      const { fetchImpl } = fakeFetch({
+        ...HEALTHY,
+        "/rest/v1/system_checks?select=id&limit=1|public": entry,
+      });
+      const probe = await probeIdentity(target, { fetchImpl });
+      expect(anonReadDenied(probe)).toBe(false);
+      const problems = probeProblems(probe).join("; ");
+      expect(problems).toMatch(/denial not established/);
+      expect(problems).toContain(`HTTP ${entry.status}`);
+      expect(problems).not.toMatch(/RLS or grants are wrong/);
+      expect(problems).not.toContain("maintenance");
+    },
+  );
+
+  it("refuses a 404 while the secret key sees the table", async () => {
+    const { fetchImpl } = fakeFetch({
+      ...HEALTHY,
+      "/rest/v1/system_checks?select=id&limit=1|public": { status: 404 },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.baseline).toBe("present");
+    expect(anonReadDenied(probe)).toBe(false);
+    expect(probeProblems(probe).join("; ")).toMatch(
+      /HTTP 404 although the secret key sees the table/,
+    );
+  });
+
+  it.each([[401], [403]])(
+    "accepts an HTTP %s anonymous answer as denial whatever the table holds",
+    async (status) => {
+      const { fetchImpl } = fakeFetch({
+        ...HEALTHY,
+        "/rest/v1/system_checks?select=id&limit=1|secret": {
+          status: 200,
+          body: [],
+        },
+        "/rest/v1/system_checks?select=id&limit=1|public": { status },
+      });
+      const probe = await probeIdentity(target, { fetchImpl });
+      expect(anonReadDenied(probe)).toBe(true);
+      expect(probeProblems(probe)).toEqual([]);
+    },
+  );
+
+  it("fails, whatever the caller requires, when the secret-key read of system_checks answers neither 200 nor 404", async () => {
+    const { fetchImpl } = fakeFetch({
+      ...HEALTHY,
+      "/rest/v1/system_checks?select=id&limit=1|secret": {
+        status: 500,
+        body: { message: "boom" },
+      },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.baseline).toBe("unknown");
+    expect(probe.baselineStatus).toBe(500);
+    const problems = probeProblems(probe, { requireBaseline: false }).join(
+      "; ",
+    );
+    expect(problems).toMatch(/could not be read with SUPABASE_SECRET_KEY/);
+    expect(problems).toMatch(/HTTP 500/);
+    expect(problems).not.toContain("boom");
+  });
+
+  it("anonReadDenied decides from the recorded facts alone", () => {
+    const facts = (
+      anonRead: { status: number; rows: number | null },
+      baseline: "present" | "absent" | "unknown" = "present",
+      baselineRows: number | null = 1,
+    ) => ({ anonRead, baseline, baselineRows });
+    for (const status of [0, 204, 206, 301, 307, 500])
+      expect(anonReadDenied(facts({ status, rows: null })), `${status}`).toBe(
+        false,
+      );
+    expect(anonReadDenied(facts({ status: 200, rows: null }))).toBe(false);
+    expect(anonReadDenied(facts({ status: 200, rows: 0 }, "present", 1))).toBe(
+      true,
+    );
+    expect(anonReadDenied(facts({ status: 200, rows: 0 }, "present", 0))).toBe(
+      false,
+    );
+    expect(
+      anonReadDenied(facts({ status: 200, rows: 0 }, "present", null)),
+    ).toBe(false);
+    expect(anonReadDenied(facts({ status: 404, rows: null }, "absent"))).toBe(
+      true,
+    );
+    expect(anonReadDenied(facts({ status: 404, rows: null }, "present"))).toBe(
+      false,
+    );
+    for (const status of [401, 403])
+      expect(
+        anonReadDenied(facts({ status, rows: null }, "present", 0)),
+        `${status}`,
+      ).toBe(true);
   });
 });
 

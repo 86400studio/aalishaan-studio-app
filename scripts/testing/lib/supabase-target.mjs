@@ -20,6 +20,15 @@ export const TARGET_NAMES = Object.freeze([
 ]);
 
 /**
+ * The HTTP answers that establish anonymous denial on their own: PostgREST's permission denied (the
+ * baseline's grant-level denial). A 404 counts only while the secret key does not see the table either
+ * (pre-apply), and an empty 200 only when the secret key saw at least one row (RLS filtered something).
+ * Everything else — a 500, a redirect, an unparseable 200, an empty 200 on an empty table — proves nothing
+ * and fails the preflight (Codex round 1, finding 1, and the follow-up review of the fix).
+ */
+export const ANON_DENIED_STATUSES = Object.freeze([401, 403]);
+
+/**
  * @param {string | undefined} value
  * @returns {value is string}
  */
@@ -131,6 +140,8 @@ export function resolveTestTarget(env) {
  *   secretKeyAccepted: boolean,
  *   authHealthy: boolean,
  *   baseline: "present" | "absent" | "unknown",
+ *   baselineStatus: number,
+ *   baselineRows: number | null,
  *   anonRead: { status: number, rows: number | null },
  *   statuses: Record<string, number>,
  * }} IdentityProbe
@@ -147,8 +158,9 @@ export function resolveTestTarget(env) {
  *   proves that key is accepted by this project; the same endpoint with the secret key is the health
  *   fact itself (P11, including the Free-plan pause) — kept apart so a rejected publishable key never
  *   reads as an outage;
- * - a bounded read of `system_checks` with the secret key reports whether the 0000_init baseline exists;
- *   the same read with the publishable key must be denied or empty (never rows).
+ * - a bounded read of `system_checks` with the secret key reports whether the 0000_init baseline exists
+ *   and how many rows (0 or 1) it saw; the same read with the publishable key must be denied (see
+ *   `anonReadDenied`) — never rows.
  *
  * An opaque key is never decoded; only statuses and row counts are kept — never a body.
  * @param {TestTarget} target
@@ -219,7 +231,8 @@ export async function probeIdentity(target, options = {}) {
 
   /** @type {"present" | "absent" | "unknown"} */
   let baseline = "unknown";
-  if (baselineRead.status === 200) baseline = "present";
+  if (baselineRead.status === 200 && baselineRead.rows !== null)
+    baseline = "present";
   else if (baselineRead.status === 404) baseline = "absent";
 
   return {
@@ -227,9 +240,24 @@ export async function probeIdentity(target, options = {}) {
     secretKeyAccepted: secretRoot.status === 200,
     authHealthy: authSecret.status === 200,
     baseline,
+    baselineStatus: baselineRead.status,
+    baselineRows: baseline === "present" ? baselineRead.rows : null,
     anonRead: { status: anonRead.status, rows: anonRead.rows },
     statuses,
   };
+}
+
+/**
+ * Whether the anonymous read positively establishes denial: permission denied (401/403); a 404 only while
+ * the secret key does not see the table either; an empty 200 only when the secret key saw at least one row.
+ * @param {Pick<IdentityProbe, "anonRead" | "baseline" | "baselineRows">} probe
+ */
+export function anonReadDenied(probe) {
+  const { status, rows } = probe.anonRead;
+  if (ANON_DENIED_STATUSES.includes(status)) return true;
+  if (status === 404) return probe.baseline !== "present";
+  if (status === 200 && rows === 0) return (probe.baselineRows ?? 0) >= 1;
+  return false;
 }
 
 /**
@@ -253,15 +281,33 @@ export function probeProblems(probe, options = {}) {
     problems.push(
       "the TEST project's Auth health endpoint did not answer 200 (paused project or outage — resume it in the Supabase dashboard and retry)",
     );
-  if (options.requireBaseline !== false && probe.baseline !== "present")
+  // "absent" is the one legitimate pre-apply state; "unknown" (any other answer to the secret-key read) is
+  // never acceptable, whatever the caller requires.
+  if (probe.baseline === "unknown")
     problems.push(
-      probe.baseline === "absent"
-        ? "system_checks is absent: apply 0000_init to TEST first (docs/database-changes/S0.2-0000-init.md)"
-        : "system_checks could not be read with SUPABASE_SECRET_KEY",
+      `system_checks could not be read with SUPABASE_SECRET_KEY (HTTP ${probe.baselineStatus}) — stop and investigate`,
     );
-  if (probe.anonRead.status === 200 && (probe.anonRead.rows ?? 0) > 0)
+  else if (options.requireBaseline !== false && probe.baseline === "absent")
+    problems.push(
+      "system_checks is absent: apply 0000_init to TEST first (docs/database-changes/S0.2-0000-init.md)",
+    );
+  const anon = probe.anonRead;
+  if (anon.status === 200 && (anon.rows ?? 0) > 0)
     problems.push(
       "the publishable key can read system_checks rows — RLS or grants are wrong; stop and fix the baseline",
     );
+  else if (!anonReadDenied(probe)) {
+    let detail = `HTTP ${anon.status}`;
+    if (anon.status === 200 && anon.rows === 0)
+      detail =
+        "an empty HTTP 200 while system_checks has no row the secret key can see — the publishable key can SELECT the table, which the baseline forbids at the grant level (fix the grants; a seeded row would only reveal whether RLS filters)";
+    else if (anon.status === 200)
+      detail = "HTTP 200 with a body that is not a JSON array";
+    else if (anon.status === 404)
+      detail = "HTTP 404 although the secret key sees the table";
+    problems.push(
+      `anonymous read of system_checks answered ${detail} — denial not established (expected 401 or 403, a 404 before the apply, or an empty 200 with a visible row); stop and investigate`,
+    );
+  }
   return problems;
 }

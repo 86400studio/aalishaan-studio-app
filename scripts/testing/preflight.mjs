@@ -10,6 +10,7 @@
  */
 import { loadLocalEnv } from "./lib/env.mjs";
 import {
+  anonReadDenied,
   probeIdentity,
   probeProblems,
   resolveTestTarget,
@@ -50,18 +51,20 @@ async function main() {
   ];
   for (const [label, ok] of rows)
     console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
+  // "absent" is the one legitimate pre-apply state; "unknown" fails whatever the caller requires.
+  const baselineVerdict =
+    probe.baseline === "present"
+      ? "PASS"
+      : probe.baseline === "absent"
+        ? "INFO"
+        : "FAIL";
   console.log(
-    `  ${probe.baseline === "present" ? "PASS" : "INFO"}  system_checks baseline: ${probe.baseline}${probe.baseline === "absent" ? " (0000_init not applied yet)" : ""}`,
+    `  ${baselineVerdict}  system_checks baseline: ${probe.baseline}${probe.baseline === "absent" ? " (0000_init not applied yet)" : probe.baseline === "present" ? ` (${probe.baselineRows ?? 0} row(s) visible to the secret key)` : ` (HTTP ${probe.baselineStatus})`}`,
   );
   const anon = probe.anonRead;
-  const anonVerdict =
-    anon.status === 200
-      ? (anon.rows ?? 0) > 0
-        ? "FAIL"
-        : "PASS"
-      : anon.status === 401 || anon.status === 403 || anon.status === 404
-        ? "PASS"
-        : "INFO";
+  // Denial must be positively established (401/403; a 404 only before the apply; an empty 200 only with a
+  // row the secret key can see); anything else is a FAIL, never an INFO (Codex round 1, finding 1).
+  const anonVerdict = anonReadDenied(probe) ? "PASS" : "FAIL";
   console.log(
     `  ${anonVerdict}  anonymous read of system_checks: HTTP ${anon.status}${anon.rows === null ? "" : `, ${anon.rows} row(s)`}`,
   );
