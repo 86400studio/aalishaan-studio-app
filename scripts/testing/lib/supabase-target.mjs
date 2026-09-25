@@ -137,11 +137,20 @@ export function resolveTestTarget(env) {
  */
 
 /**
- * Read-only probes against the resolved TEST project. The REST root with each key proves that the key is
- * accepted by exactly this project's gateway (an opaque key is never decoded); the Auth health endpoint
- * proves the project is up (P11, including the Free-plan pause); a bounded read of `system_checks` with
- * the secret key reports whether the 0000_init baseline exists; the same read with the publishable key
- * must be denied or empty. Only statuses and row counts are kept — never a body.
+ * Read-only probes against the resolved TEST project, each proving one fact by the gateway's own rules
+ * for the current key format (verified against a live project on 2026-09-25):
+ *
+ * - the REST root (`/rest/v1/`, the OpenAPI document) is **secret-only** — it answers "Secret API key
+ *   required" to a publishable key — so a `200` there proves the secret key is accepted by exactly this
+ *   project (P1 provenance) and is a real secret key;
+ * - the Auth health endpoint needs an API key (`401` without one), so a `200` with the publishable key
+ *   proves that key is accepted by this project; the same endpoint with the secret key is the health
+ *   fact itself (P11, including the Free-plan pause) — kept apart so a rejected publishable key never
+ *   reads as an outage;
+ * - a bounded read of `system_checks` with the secret key reports whether the 0000_init baseline exists;
+ *   the same read with the publishable key must be denied or empty (never rows).
+ *
+ * An opaque key is never decoded; only statuses and row counts are kept — never a body.
  * @param {TestTarget} target
  * @param {{ fetchImpl?: typeof fetch, timeoutMs?: number }} [options]
  * @returns {Promise<IdentityProbe>}
@@ -182,20 +191,20 @@ export async function probeIdentity(target, options = {}) {
     return { status: response.status, rows };
   }
 
-  const publicRoot = await probe(
-    "rest root (publishable key)",
-    "/rest/v1/",
-    target.publishableKey,
-  );
   const secretRoot = await probe(
-    "rest root (secret key)",
+    "rest root (secret key; secret-only endpoint)",
     "/rest/v1/",
     target.secretKey,
   );
-  const auth = await probe(
-    "auth health",
+  const authPublic = await probe(
+    "auth health (publishable key)",
     "/auth/v1/health",
     target.publishableKey,
+  );
+  const authSecret = await probe(
+    "auth health (secret key)",
+    "/auth/v1/health",
+    target.secretKey,
   );
   const baselineRead = await probe(
     "system_checks (secret key)",
@@ -214,9 +223,9 @@ export async function probeIdentity(target, options = {}) {
   else if (baselineRead.status === 404) baseline = "absent";
 
   return {
-    publicKeyAccepted: publicRoot.status === 200,
+    publicKeyAccepted: authPublic.status === 200,
     secretKeyAccepted: secretRoot.status === 200,
-    authHealthy: auth.status === 200,
+    authHealthy: authSecret.status === 200,
     baseline,
     anonRead: { status: anonRead.status, rows: anonRead.rows },
     statuses,

@@ -886,6 +886,50 @@ describe("probeIdentity / probeProblems — statuses only, never bodies", () => 
     }
   });
 
+  it("proves the publishable key on the auth health endpoint, not on the secret-only REST root", async () => {
+    // The gateway answers "Secret API key required" to a publishable key on /rest/v1/ (verified live
+    // 2026-09-25); that must not read as a rejected key.
+    const { fetchImpl } = fakeFetch({
+      "/rest/v1/|public": {
+        status: 401,
+        body: { message: "Secret API key required" },
+      },
+      "/rest/v1/|secret": { status: 200 },
+      "/auth/v1/health": { status: 200 },
+      "/rest/v1/system_checks?select=id&limit=1|secret": { status: 404 },
+      "/rest/v1/system_checks?select=id&limit=1|public": { status: 404 },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.publicKeyAccepted).toBe(true);
+    expect(probe.secretKeyAccepted).toBe(true);
+    expect(probe.authHealthy).toBe(true);
+    expect(probeProblems(probe, { requireBaseline: false })).toEqual([]);
+  });
+
+  it("names the publishable key when the auth endpoint rejects it while the secret key is healthy", async () => {
+    const { fetchImpl } = fakeFetch({
+      "/rest/v1/": { status: 200 },
+      "/auth/v1/health|public": {
+        status: 401,
+        body: { message: "Invalid API key" },
+      },
+      "/auth/v1/health|secret": { status: 200 },
+      "/rest/v1/system_checks?select=id&limit=1|secret": {
+        status: 200,
+        body: [],
+      },
+      "/rest/v1/system_checks?select=id&limit=1|public": { status: 401 },
+    });
+    const probe = await probeIdentity(target, { fetchImpl });
+    expect(probe.publicKeyAccepted).toBe(false);
+    expect(probe.authHealthy).toBe(true);
+    const problems = probeProblems(probe).join("; ");
+    expect(problems).toMatch(
+      /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not accepted/,
+    );
+    expect(problems).not.toMatch(/Auth health/);
+  });
+
   it("reports an absent baseline (404) and a rejected key (401) with names-only problems", async () => {
     const { fetchImpl } = fakeFetch({
       "/rest/v1/|public": { status: 200 },

@@ -38,9 +38,15 @@ async function main() {
 
   const probe = await probeIdentity(target.target);
   const rows = [
-    ["publishable key accepted by /rest/v1/", probe.publicKeyAccepted],
-    ["secret key accepted by /rest/v1/", probe.secretKeyAccepted],
-    ["auth health (/auth/v1/health)", probe.authHealthy],
+    [
+      "publishable key accepted (auth health with the publishable key)",
+      probe.publicKeyAccepted,
+    ],
+    [
+      "secret key accepted (REST root, a secret-only endpoint)",
+      probe.secretKeyAccepted,
+    ],
+    ["auth health (/auth/v1/health with the secret key)", probe.authHealthy],
   ];
   for (const [label, ok] of rows)
     console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
