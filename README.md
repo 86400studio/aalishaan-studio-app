@@ -12,9 +12,10 @@ Live at: `[DOMAIN]` — to be confirmed by the owner (open decision D-04 in `doc
 | `docs/` | The governing docs pack: state, scope, process, architecture, design, security, QA, launch, rollback, handoff, templates and records. |
 | `.claude/skills/` | Claude Code skills: `/sprint-prompt`, `/close`, `/browser-qa`, `/activate-testing`, `/handle-error`. |
 | *(on GitHub)* | https://github.com/86400studio/aalishaan-studio-app — the source of truth: public, on the owner's own account `86400studio` (D-02); `main` protected by a branch ruleset (D-26; verified 2026-09-23 — S0.0 record). A clone is a reduced checkout by design (D-07): `prototype/assets/` other than `fonts/` and `brand/` is git-ignored, so the prototype's imagery is absent there and the full `node prototype/scripts/development-baseline.cjs` check passes only on the original full-asset workspace; the pinned imagery reference is the published prototype commit `b24dce1b…`. `prototype/.gitattributes` keeps the Admin bytes unchanged (`admin/** -text`, D-36), so `prototype/admin/CONTENTS-SHA256.txt` keeps verifying on a fresh checkout; the fresh-checkout result is in the S0.0 record. |
-| `src/`, `tests/unit/`, root configs *(Setup sprint S0.1)* | The application at this root: a Next.js 16 App Router scaffold — `src/app/` (the noindex holding page, `robots.txt`, the React error fallback and the temporary `POST /api/sentry-test` route), `src/lib/` (security headers, the route's server-only guard), `src/styles/globals.css`, Sentry hooks in `src/instrumentation*.ts`; Vitest unit tests in `tests/unit/`; `package.json` / `pnpm-lock.yaml` (pnpm 10.34.5, Node 24), `next.config.ts`, `tsconfig.json`, ESLint / Prettier / Vitest / PostCSS configs. |
-| `.github/` *(S0.1)* | `workflows/code-check.yml` — the required Code Check (six checks plus a blocking secret scan) — and `dependabot.yml`. |
-| *(later setup sprints)* | `supabase/migrations/` and `tests/e2e/` (S0.2). |
+| `src/`, `tests/unit/`, root configs *(Setup sprints S0.1–S0.2)* | The application at this root: a Next.js 16 App Router scaffold — `src/app/` (the noindex holding page, `robots.txt`, the React error fallback, `GET /api/health` and the Preview-only S0.2 proof route `POST /api/setup-proof`), `src/lib/security-headers.ts`, `src/lib/supabase/` (the public configuration and browser client factory), `src/lib/server/` (`server-only`: the privileged Supabase client, the health check, the proof handler), `src/styles/globals.css`, Sentry hooks in `src/instrumentation*.ts`; Vitest unit tests in `tests/unit/`; `package.json` / `pnpm-lock.yaml` (pnpm 10.34.5, Node 24), `next.config.ts`, `tsconfig.json`, ESLint (with the S0.2 import-boundary rules) / Prettier / Vitest / Playwright / PostCSS configs. |
+| `.github/` *(S0.1–S0.2)* | `workflows/code-check.yml` — the required Code Check (six checks plus a blocking secret scan) —, `workflows/morning-check.yml` (committed **disabled** at S0.2; enabled at S3.4) and `dependabot.yml`. |
+| `supabase/` *(S0.2)* | The Supabase CLI configuration, `migrations/` (forward files — `0000_init.sql` is the additive baseline), `rollbacks/` (the paired down files, outside forward discovery) and its `README.md`; one record per change in `docs/database-changes/`. |
+| `scripts/testing/`, `tests/integration/`, `tests/e2e/` *(S0.2)* | The proof harness: the read-only TEST preflight, the D-22 seed/reset skeletons and the deployed-Preview proof runner (`scripts/testing/`, dry runs by default); the real TEST integration tests (`tests/integration/`); the Playwright smoke and its safe harness (`tests/e2e/`, desktop + mobile-390). |
 
 ## Stack
 
@@ -40,12 +41,17 @@ pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint --max-warnings=0 .
 pnpm format:check   # prettier --check . (pnpm format writes)
 pnpm test:unit      # vitest run — tests/unit/, hermetic: no network, no secrets
-pnpm test           # runs test:unit (from S0.2 also the integration tests; pnpm test:e2e runs Playwright from S0.2)
+pnpm test           # test:unit, then test:integration — the real TEST-project suite; fails (never skips) without the verified TEST target
+pnpm test:e2e       # Playwright smoke (desktop + mobile-390) against the verified Preview: PLAYWRIGHT_BASE_URL + PLAYWRIGHT_CANDIDATE_SHA + the bypass secret
+pnpm db:test:preflight   # read-only TEST target, provenance and health check (names and statuses only)
+pnpm test:preview-proof  # the bounded Preview write/read/cleanup proof; a dry run without --apply
+pnpm db:test:seed / pnpm db:test:reset   # D-22 fixture skeletons (synthetic rows, own namespace only); dry runs without --apply
+pnpm exec supabase --version   # the pinned Supabase CLI (2.117.0) — see supabase/README.md
 pnpm build          # next build
 pnpm audit --prod --audit-level=critical
 ```
 
-No environment value is needed to run any of this: without a Sentry DSN the SDK stays off, and the temporary diagnostic route stays disabled without `SENTRY_TEST_TOKEN`. `prototype/` is never linted, formatted, type-checked or tested by these scripts.
+No environment value is needed for typecheck, lint, format, `test:unit`, build or audit: without a Sentry DSN the SDK stays off, `GET /api/health` reports `unavailable` and the proof route denies everything. `pnpm test:integration`, `pnpm test:e2e` and the harness commands need the verified TEST project or Preview named by environment variables and fail closed without them (`docs/ENVIRONMENT-PARITY.md` §10). `prototype/` is never linted, formatted, type-checked or tested by these scripts.
 
 The frozen prototype still runs on its own: `cd prototype && npm start`, then http://localhost:8000/ for the storefront and http://localhost:8000/admin/ for the final Admin (hard-refresh once after install). The final Admin's evidence is `prototype/admin/TEST-RESULTS.md` and `prototype/admin/tests/`; its 13 state-guard groups re-run with `node admin/tests/check-state.cjs` from `prototype/`.
 
@@ -53,7 +59,7 @@ The frozen prototype still runs on its own: `cd prototype && npm start`, then ht
 
 - The authorized owner creates `.env.local` from `.env.example` outside the AI workflow.
 - The live env file is gitignored — never open, print, copy, edit, or commit it. `.env.example` carries names + safe placeholders only.
-- Deployed values live in Vercel's secret/environment settings, scoped per environment (Production, Preview, Development). The owner enters them by name; the names in use from S0.1 are `SALES_MODE` (`off` everywhere), `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` and the temporary `SENTRY_TEST_TOKEN` (`docs/TECH-ARCHITECTURE.md` §6).
+- Deployed values live in Vercel's secret/environment settings, scoped per environment (Production, Preview, Development). The owner enters them by name; the names in use from S0.1 are `SALES_MODE` (`off` everywhere), `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`; from S0.2 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_TEST_PROJECT_REF`, `SUPABASE_PROD_PROJECT_REF` and, in Preview only, `S0_2_PROOF_TOKEN`; the harness inputs `PLAYWRIGHT_BASE_URL`, `PLAYWRIGHT_CANDIDATE_SHA`, `PLAYWRIGHT_TARGET_MODE` and `VERCEL_AUTOMATION_BYPASS_SECRET` live in the shell or GitHub Actions, never in Vercel; the temporary `SENTRY_TEST_TOKEN` was retired at S0.2 (`docs/TECH-ARCHITECTURE.md` §6).
 - Full rules (public vs server-only, redeploy-after-change): `docs/ENV-VARS-SAFETY.md`; environment assignments and proofs: `docs/ENVIRONMENT-PARITY.md`.
 
 **Never do this:** commit a secret, put a server-only value behind a public env prefix,

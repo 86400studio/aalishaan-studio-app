@@ -18,3 +18,6 @@ build/
 coverage/
 next-env.d.ts
 pnpm-lock.yaml
+
+# Supabase CLI link cache (git-ignored by supabase/.gitignore; written by `supabase link`)
+supabase/.temp/
