@@ -20,7 +20,7 @@ You are my senior implementation engineer for the Aalishaan Studio website. CLAU
 
 ## Sprint / Branch
 - Sprint: [SPRINT_ID] — [SPRINT_NAME]
-- Branch: [BRANCH_NAME], created from current main.
+- Branch: [BRANCH_NAME], created from current main; resume it if prompt preparation already created it.
 - Confirm the branch and inspect git status before editing. Preserve existing user changes.
 
 ## Scope and files
@@ -34,9 +34,10 @@ Allowed to change (implementation):
 - [Exact style/component/page-body path.]
 - [Exact style/component/page-body path.]
 
-Bookkeeping allowed only when this sprint closes:
-- docs/PROJECT-STATUS.md
-- docs/ROADMAP.md
+Bookkeeping (before review, on this branch; review, merge and Production smoke stay pending until evidenced):
+- docs/PROJECT-STATUS.md, docs/ROADMAP.md, docs/sprint-prompts/README.md.
+- docs/sprint-prompts/[SPRINT_ID]-[SLUG].md and docs/code-reviews/[SPRINT_ID]-[SLUG]-review.md.
+- Previous-sprint reconciliation (WORKFLOW §8; delete if none), evidenced facts from the merged PR only (reviewed-head CI/Preview and §12 proof results, merge, any human PROD apply with its read-only verification, smoke): [previous sprint record; database change record or N/A; ENVIRONMENT-PARITY.md §12 or N/A].
 
 If another file is needed, stop and explain why before editing it.
 
@@ -96,7 +97,11 @@ work, or skip hooks.
 5. Risks, conflicts, and follow-ups.
 6. Branch and actual commit/push status; include SHA/message if committed, otherwise suggest a message.
 7. Roadmap/status bookkeeping completed or still required.
+8. After all implementation steps, checks, pre-review records and candidate Preview verification are complete, deliver the filled Codex review prompt with the actual immutable merge-base/head SHAs, changed paths and CI/Preview evidence; otherwise report the missing gates without inventing a review target.
 ~~~
 
 Before merge: include approved before/after visual evidence (screenshots at 320/768/1440 plus applicable states, via Playwright MCP or the Agent Browser CLI per `docs/BROWSER-TOOLS.md` — the `/browser-qa` skill runs this), test Vercel Preview, and obtain independent review
 against immutable merge-base and head SHAs. Substantive changes after review require refreshed evidence and re-review.
+Use one sprint branch/PR: `/sprint-prompt save` before review, `/close` before merge, then record merge and
+Production smoke in the merged PR; carry later repository tracker updates into the next authorized sprint
+branch. Do not create a routine closeout PR (WORKFLOW §8).

@@ -1,7 +1,9 @@
 # Codex Review Brief — [SPRINT_ID] — [SLUG]
 
-> Save the filled brief at docs/code-reviews/[SPRINT_ID]-[SLUG]-review.md before review.
-> Append the reviewer's returned record; the reviewer does not edit the repository.
+> Use after implementation, checks, pre-review records and candidate Preview verification are complete.
+> Commit review context at docs/code-reviews/[SPRINT_ID]-[SLUG]-review.md before freezing the candidate;
+> deliver this filled SHA-pinned brief in the handoff without a new commit just to record its own SHA.
+> Append only the reviewer's returned record after review; the reviewer does not edit the repository.
 
 You are the independent, findings-only reviewer for this PR. AGENTS.md governs this review. Do not edit,
 stage, commit, push, merge, install dependencies, or run migrations. Review issues introduced by the pinned

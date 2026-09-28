@@ -43,10 +43,14 @@ criterion.
 - [ ] Complete the prompt record with shipped scope, checks/results, deviations, and follow-ups.
 - [ ] Update docs/PROJECT-STATUS.md and docs/ROADMAP.md when allowed by the sprint file list.
 - [ ] Open the PR and test Vercel Preview.
+- [ ] Produce the filled Codex review prompt only after implementation, checks, records and candidate Preview verification; use actual SHAs and CI/Preview evidence in the handoff.
 - [ ] Run independent review against immutable merge-base and head SHAs.
 - [ ] After any substantive fix, refresh Preview evidence and repeat review.
 
 The merged prompt file is the permanent sprint record. Do not wait until after merge to create or complete it.
+Run `/sprint-prompt save` before review and `/close` before merge on the same sprint branch. Keep future
+gates pending. Post-merge smoke evidence belongs in the merged PR, with repository tracker reconciliation
+in the next authorized sprint branch; no routine closeout PR (WORKFLOW §8).
 
 ## Variants
 
