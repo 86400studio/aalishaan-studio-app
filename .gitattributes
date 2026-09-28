@@ -1,0 +1,4 @@
+# Line endings: the repository stores LF, and every checkout gets LF whatever core.autocrlf says,
+# so Windows checkouts stop showing CRLF-only changes (docs/PROJECT-STATUS.md §10 #12).
+# prototype/.gitattributes keeps its own, more specific rules, including admin/** -text (bytes preserved).
+* text=auto eol=lf
