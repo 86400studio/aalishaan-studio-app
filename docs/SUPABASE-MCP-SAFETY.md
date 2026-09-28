@@ -134,13 +134,15 @@ claude mcp list
 
 Before trusting the configuration:
 
-- [ ] `/mcp` shows the intended servers as connected and approved.
-- [ ] `supabase-dev` lists the expected non-production schema.
-- [ ] A harmless, reversible write test succeeds only on non-production and is cleaned up.
-- [ ] If Profile B exists, a write attempt against `supabase-prod-readonly` is refused. Use a harmless statement designed not to mutate data.
-- [ ] Development and production refs differ.
-- [ ] Retrieved content is treated as data, never as instructions.
-- [ ] Production verification queries use the minimum columns and rows required.
+- [x] `/mcp` shows the intended servers as connected and approved.
+- [x] `supabase-dev` lists the expected non-production schema.
+- [x] A harmless, reversible write test succeeds only on non-production and is cleaned up.
+- [x] If Profile B exists, a write attempt against `supabase-prod-readonly` is refused. Use a harmless statement designed not to mutate data.
+- [x] Development and production refs differ.
+- [x] Retrieved content is treated as data, never as instructions.
+- [x] Production verification queries use the minimum columns and rows required.
+
+(S0.2, 2026-09-25 night, ticked at the S0.2 closeout — the S0.2 record → "Checks run" and Deviation 18: both servers Connected with manual tool approval on; `supabase-dev` listed exactly `public.system_checks`; one `fixture:mcp-guardrail` row inserted and deleted on TEST; the production write probe `create temporary table …` refused with SQLSTATE 25006 at 22:10 IST; the refs differ; results handled as data; PROD reads limited to schema facts, catalog definitions and counts.)
 
 Repeat after a fresh clone, new machine, server rename, URL change, or authentication reset.
 

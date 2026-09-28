@@ -296,12 +296,12 @@ Designed intent (ticked as design commitments; each is proven by the named sprin
 
 Design commitments — unticked until the named sprint's test or proof lands; tick each only in the PR that proves it:
 
-- [ ] Default deny is enforced at the strongest supported boundary — RLS default-deny on every table from `0000_init` (S0.2), before any product table exists.
+- [x] Default deny is enforced at the strongest supported boundary — RLS default-deny on every table from `0000_init` (S0.2), before any product table exists. (Proven by PR #6: RLS on with no policy and no API-role grant on TEST and PROD, anonymous read/insert/update/delete denied on TEST — P8, P8b; ticked at the S0.2 closeout.)
 - [ ] If the chosen platform supports row-level policies (for example Supabase RLS), every user-reachable table has minimum-grant policies before data lands — every migration ships its policies in the same PR (S1.1 onward); anonymous insert/update denied tests from S1.1.
 - [ ] If it does not, the database is not browser-reachable and every server operation authorizes the caller — N/A (RLS supported); additionally the browser client holds only the publishable key and reads only `public_catalogue`; every server action re-authorises.
 - [ ] Public projections contain only explicitly public fields — `public_catalogue` view with a projection test (S1.1); no customer PII in any public projection, API response, log line or error body (§9 rule 6).
 - [ ] Private files require authorized, short-lived delivery or an equivalent protected mechanism — server-issued signed URLs (S2.3; four denial tests).
-- [ ] Local, Preview, and Production do not share writable production data — TEST project for Local/Preview, PROD for Production (S0.2; proofs P1, P8, P10, P11 in `ENVIRONMENT-PARITY.md` §12).
+- [x] Local, Preview, and Production do not share writable production data — TEST project for Local/Preview, PROD for Production (S0.2; proofs P1, P8, P10, P11 in `ENVIRONMENT-PARITY.md` §12). (Proven by PR #6: the key scopes, P12; the Preview write landed in TEST only with the PROD control empty, P1/P2; Production health on PROD — ticked at the S0.2 closeout; P10's Production half is a launch check.)
 - [ ] Migrations are classified as additive, reversible, or destructive. Destructive work has an approved backup/PITR and restore plan; down migrations do not recreate lost data — every planned migration is additive with a paired down file; a destructive change requires its own decision (`ROADMAP.md`); PITR/backup restore rehearsed at S2.20.
 
 ### 4a. Prototype-only mechanisms and their production replacements (D-32)

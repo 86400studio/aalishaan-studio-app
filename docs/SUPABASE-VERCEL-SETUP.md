@@ -48,7 +48,7 @@ Many websites need no database. Select Supabase only when the approved architect
 ### B1. Create TWO projects
 
 - [x] Create `aalishaan-studio-test` (development + Preview) and `aalishaan-studio-prod` (Production). **Never share one database across environments.** (Owner — done 2026-09-25: `aalishaan-studio-test` = `kivaatbvxifunilxoxde`, `aalishaan-studio-prod` = `mttuqbpfdhzhnsjsmjcf`, refs in `PROJECT-STATUS.md` §9; the S0.2 code refuses to run privileged paths unless both refs are configured and distinct.)
-- [ ] Record project names/refs (never keys) in the project status doc.
+- [x] Record project names/refs (never keys) in the project status doc. (2026-09-25: `PROJECT-STATUS.md` §9 — names and refs only.)
 
 ### B2. The key boundary
 
@@ -79,9 +79,9 @@ Why this matters: RLS is the last line of defense when application code gets a c
 
 ### B5. Migration workflow
 
-- [ ] Every schema change lives in the repo as numbered SQL: up-SQL + a paired `.down.sql` + the RLS policies, all in the same PR. (S0.2 layout, 2026-09-25: `supabase/migrations/NNNN_name.sql` + `supabase/rollbacks/NNNN_name.down.sql` — the down file deliberately outside forward discovery — + `docs/database-changes/<sprint>-<change>.md`; the first change, `0000_init`, is applied and verified on TEST 2026-09-25 and pending on PROD — the human apply before the merge; CLI usage in `supabase/README.md`.)
-- [ ] Apply through the project's approved migration procedure: **TEST first → verify per role → owner approval → PROD**. Do not let an AI agent apply a Production migration without explicit authorization.
-- [ ] Keep changes backwards-compatible so code and schema can deploy independently — a hosting rollback does NOT roll back the database.
+- [x] Every schema change lives in the repo as numbered SQL: up-SQL + a paired `.down.sql` + the RLS policies, all in the same PR. (Held for `0000_init` at S0.2; every later migration repeats it.) (S0.2 layout, 2026-09-25: `supabase/migrations/NNNN_name.sql` + `supabase/rollbacks/NNNN_name.down.sql` — the down file deliberately outside forward discovery — + `docs/database-changes/<sprint>-<change>.md`; the first change, `0000_init`, is applied and verified on TEST 2026-09-25 and on PROD 2026-09-27 — the owner's CLI apply before the merge, verified read-only; CLI usage in `supabase/README.md`.)
+- [x] Apply through the project's approved migration procedure: **TEST first → verify per role → owner approval → PROD**. Do not let an AI agent apply a Production migration without explicit authorization. (Held for `0000_init`: TEST on 2026-09-25 under the owner's written authorisation, verified per role (P8b); PROD applied by the owner by CLI on 2026-09-27 after the Codex APPROVE; the agent only read PROD, through `supabase-prod-readonly` — `docs/database-changes/S0.2-0000-init.md`. Every later migration repeats it.)
+- [x] Keep changes backwards-compatible so code and schema can deploy independently — a hosting rollback does NOT roll back the database. (Held for `0000_init`, which is additive — the S0.1 code ignores the table; every later migration repeats it.)
 
 ### B6. Wire Vercel env vars to Supabase
 
@@ -96,7 +96,7 @@ Why this matters: RLS is the last line of defense when application code gets a c
 
 ⚠️ **The Value column stays blank forever.** Real values live only in an ignored local env file and the Vercel dashboard. Agents do not open or copy them. Never fill values into this or any committed file.
 
-- [ ] Preview + Development point at the **TEST** project; Production points at the **PROD** project.
+- [x] Preview + Development point at the **TEST** project; Production points at the **PROD** project. (S0.2: the owner's 23-variable screenshot, P12; the Preview proof landed in TEST only, P1/P2; Production's `/api/health` answered `ok` on PROD at `9b09212` — `ENVIRONMENT-PARITY.md` §12.)
 - [ ] After wiring: invite a TEST staff user from a Preview deploy and confirm the confirmation email links back to the **Preview** origin, and the new user appears in the **TEST** project — not PROD.
 
 Next step → read `docs/ENV-VARS-SAFETY.md` before handling any secret, then run `docs/SECURITY-CHECKLIST.md` before launch.
