@@ -5,10 +5,13 @@ have been tested. The copy-paste brief is templates/CODEX-REVIEW-PROMPT-TEMPLATE
 
 ## Prepare the review
 
-- [ ] Create docs/code-reviews/[SPRINT_ID]-[SLUG]-review.md and place the filled review brief in it.
+- [ ] Before freezing the candidate, commit review context (intent, scope, hunt list; verdict pending) at
+      docs/code-reviews/[SPRINT_ID]-[SLUG]-review.md. After CI and the Preview pass, deliver the filled
+      SHA-pinned brief in the handoff, not in a new commit (`docs/WORKFLOW.md` §6).
 - [ ] Fill the repo, PR, branch, sprint record, expected changed paths, and explicit non-goals.
-- [ ] Record immutable [MERGE_BASE_SHA] and [HEAD_SHA]; a branch name or main..branch is not an exact range.
-- [ ] Record CI results and tested Vercel Preview evidence for that head SHA.
+- [ ] State immutable [MERGE_BASE_SHA] and [HEAD_SHA] in the handoff brief; a branch name or main..branch is
+      not an exact range.
+- [ ] State CI results and tested Vercel Preview evidence for that head SHA in the handoff brief and the PR.
 - [ ] Supply exact read-only typecheck, lint, test, and build commands.
 - [ ] List owner-authorized exceptions and the database/migration state when relevant.
 
