@@ -24,7 +24,7 @@
     "db:test:reset": "node scripts/testing/reset.mjs"
   },
   "dependencies": {
-    "@sentry/nextjs": "10.75.2",
+    "@sentry/nextjs": "11.0.0",
     "@supabase/supabase-js": "2.117.1",
     "next": "16.3.6",
     "react": "19.2.8",
