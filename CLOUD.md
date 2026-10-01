@@ -52,11 +52,11 @@ One sprint = one branch = one PR, wherever it runs. After the hand-off, the spri
 
 For the first cloud session on this repo, add: *"Run CLOUD.md §5 first and report it."*
 
-**The hand-off (Claude, in the cloud).** The last cloud action, whether the build is done or blocked: add this section to the sprint record `docs/sprint-prompts/[SPRINT_ID]-[SLUG].md`, directly above its final `Review: Pending · Merge: Pending · Production smoke: Pending` line, commit it, push, and repeat it as the final message:
+**The hand-off (Claude, in the cloud).** The last cloud action, whether the build is done or blocked: add this section to the sprint record `docs/sprint-prompts/[SPRINT_ID]-[SLUG].md`, directly above its final `Review: Pending · Merge: Pending · Production smoke: Pending` line, commit it, push, and repeat it as the final message, followed by the SHA of that pushed hand-off commit:
 
 ```
 ## Hand-off to VS Code
-- Branch: <name> · Last commit: <sha> · Draft PR: #<n>
+- Branch: <name> · Last commit before this hand-off: <sha> · Draft PR: #<n>
 - Cloud session: <link from: echo "https://claude.ai/code/${CLAUDE_CODE_REMOTE_SESSION_ID/#cse_/session_}">
 - Done in the cloud: <steps completed; files changed>
 - Checks: typecheck <result> · lint <result> · tests <result or N/A> · build <result, route count>
@@ -77,7 +77,7 @@ If the session asks you a question mid-build, answer it there and let it continu
 
 > Pick up sprint `[SPRINT_ID]` per CLOUD.md §3. Commit: YES · Push: YES (sprint branch only).
 
-Claude then: `git fetch origin` → `git switch <branch from the hand-off>` → `git pull --ff-only` → confirms `git rev-parse HEAD` equals the hand-off's last commit → reads the hand-off section → works the pending items in order, then the normal chain. If the head differs, stop and report — never reset or force anything.
+Claude then: `git fetch origin` → `git switch <branch from the hand-off>` → `git pull --ff-only` → reads the hand-off section → confirms `HEAD` is the hand-off commit: `git rev-parse HEAD~1` equals the hand-off's last commit → works the pending items in order, then the normal chain. If that check fails, stop and report — never reset or force anything.
 
 **One place at a time.** While a cloud session works on the sprint, don't touch that branch in VS Code, and the other way round. A push rejected as out of date means the other place pushed: pull, then continue — never force-push, never discard either side.
 

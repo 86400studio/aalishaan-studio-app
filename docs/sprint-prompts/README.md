@@ -19,8 +19,9 @@ No routine closeout PR (WORKFLOW §8); fixes after review still require re-revie
 
 Active sprint: [S0.3 — Cloud readiness](S0.3-cloud-readiness.md), inserted 2026-09-30 by the owner ahead of S1.1 (D-41) and
 implemented the same day on `claude/s0.3-cloud-readiness` (one docs-only PR — PR #15): `CLOUD.md` at the repo root and item 7
-of `CLAUDE.md`, so the build leg of every sprint can run in a Claude Code cloud session and hand back to VS Code. Review, merge
-and Production smoke are pending. Its paired [review record](../code-reviews/S0.3-cloud-readiness-review.md) holds the review context.
+of `CLAUDE.md`, so the build leg of every sprint can run in a Claude Code cloud session and hand back to VS Code. Codex round 1
+returned REQUEST CHANGES, corrected with the owner's approval; the round-2 review, merge and Production smoke are pending. Its
+paired [review record](../code-reviews/S0.3-cloud-readiness-review.md) holds the review context and the round-1 record.
 
 Prepared next, queued behind S0.3: [S1.1 — Core schema, money model & catalogue seed](S1.1-core-schema.md), 2026-09-28, prepared on
 `claude/s1.1-core-schema` (from `cd25f44`, after the workflow-only PR #9) and submitted to `main` first through a planning-only PR
