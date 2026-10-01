@@ -71,6 +71,7 @@ or paste real values into any committed file.
 |---|---|
 | `CLAUDE.md` (root) | *How does the primary AI build engine behave here?* |
 | `AGENTS.md` (root) | *How does the second-pass reviewer agent behave here?* |
+| `CLOUD.md` (root) | *How does a sprint's build leg run in a Claude Code cloud session, and how does it hand back to VS Code?* |
 | `docs/PROJECT-STATUS.md` | *Where is the build right now? Read this first in every fresh session.* |
 | `docs/ROADMAP.md` | *What are we building, in what order, with what exit gates?* |
 | `docs/WORKFLOW.md` | *How does a change get from a branch to production safely?* |

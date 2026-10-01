@@ -2,7 +2,7 @@
 
 The authoritative mechanics for `Aalishaan Studio`. Filled 2026-09-16 (status below); the sprint that changes a layer updates this file in the same PR. If another document disagrees about the stack or deployment model, this file wins; if the shipped repository disagrees, report the mismatch and correct documentation only within an authorized task.
 
-Status of this file: filled 2026-09-16 from the approved prototype + AF1 (`docs/APPROVED-INPUTS.md`), `docs/ROADMAP.md` (37 sprints) and `docs/PROJECT-STATUS.md` §7–§9; realigned 2026-09-17 to prototype revision **E9** (extended 2026-09-23 to **E10** for the additions D-37–D-39) = public E8 + **Admin A2 — 86400 UI edition** ("the final Admin", installed at `prototype/admin/`; D-PRE-23, D-36) and to the open decisions that follow from it (D-28–D-36). The stack in §2 is the D-01 lean, **confirmed 2026-09-23 at S0.0 and locked when the S0.0 PR merges**. S0.1 (2026-09-24) adds the scaffold — the pinned toolchain in §2, the holding page, the §9 headers, Sentry and the temporary §3c test route; everything else is not built yet, and every "Pending — sprint Sx.y" marker names the sprint that makes it real.
+Status of this file: filled 2026-09-16 from the approved prototype + AF1 (`docs/APPROVED-INPUTS.md`), `docs/ROADMAP.md` (38 sprints) and `docs/PROJECT-STATUS.md` §7–§9; realigned 2026-09-17 to prototype revision **E9** (extended 2026-09-23 to **E10** for the additions D-37–D-39) = public E8 + **Admin A2 — 86400 UI edition** ("the final Admin", installed at `prototype/admin/`; D-PRE-23, D-36) and to the open decisions that follow from it (D-28–D-36). The stack in §2 is the D-01 lean, **confirmed 2026-09-23 at S0.0 and locked when the S0.0 PR merges**. S0.1 (2026-09-24) adds the scaffold — the pinned toolchain in §2, the holding page, the §9 headers, Sentry and the temporary §3c test route; everything else is not built yet, and every "Pending — sprint Sx.y" marker names the sprint that makes it real.
 
 ## 1. Project summary
 
@@ -461,7 +461,7 @@ Project invariants that gate every merge are the nine rules in `SECURITY-CHECKLI
 
 ## 10. Companion documents
 
-- Order: `ROADMAP.md` (37 sprints; sprint briefs carry the migration inventory used in §4)
+- Order: `ROADMAP.md` (38 sprints; sprint briefs carry the migration inventory used in §4)
 - Current state: `PROJECT-STATUS.md` (locked decisions D-PRE-00…D-PRE-23 — D-PRE-23 is the final Admin; open decisions D-01…D-39 — D-28…D-36 follow from the final Admin, D-37…D-39 are the E10 additions of 2026-09-23; owner inputs OI-01…OI-14; env names §9; known issues §10, of which 5, 7 and 8 concern the Admin; placeholder register §12)
 - Delivery: `WORKFLOW.md`
 - Visual rules: `DESIGN.md`
