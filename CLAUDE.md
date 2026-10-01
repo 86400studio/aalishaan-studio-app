@@ -35,6 +35,7 @@ docs/ROADMAP.md.
 4. Read every task input and relevant approved copy/design file before editing.
 5. Confirm the task names the files allowed to change. If another file is needed, stop and explain why.
 6. Work only inside the active sprint and branch named by the task.
+7. Cloud sessions: if `CLAUDE_CODE_REMOTE` is `true`, read and follow `CLOUD.md` — it says what the cloud does, what it leaves for VS Code, and how it hands off. In VS Code, use `CLOUD.md` §3 only when the owner asks to pick up a hand-off. A sprint branch created in a cloud session may keep the name the session gave it; that name satisfies the task-branch convention in docs/WORKFLOW.md §1 and /close §2.
 
 When a sprint completes, update docs/PROJECT-STATUS.md and docs/ROADMAP.md in the same branch, provided
 those files are listed as allowed changes. Otherwise report the required bookkeeping to the owner.
