@@ -69,7 +69,7 @@ jobs:
         run: pnpm audit --prod --audit-level=critical
 ```
 
-The secret scan is a step of the same required job, so a finding blocks the merge exactly as a failed check does; findings are printed redacted. Dependabot (`.github/dependabot.yml`) proposes weekly updates for the root pnpm dependencies and the pinned Actions, never for `prototype/`.
+The secret scan is a step of the same required job, so a finding blocks the merge exactly as a failed check does; findings are printed redacted. Dependabot (`.github/dependabot.yml`) proposes weekly updates for the root pnpm dependencies and the pinned Actions, never for `prototype/`; major versions of `typescript`, `@types/node` and `@sentry/nextjs` are ignored there and adopted only as planned, reviewed changes (`PROJECT-STATUS.md` D-42).
 
 The contract behind it: the root `package.json` defines the scripts `typecheck` (`tsc --noEmit`), `lint`, `format:check` (`prettier --check .`), `test:unit`, `test` and `build` — Claude Code sets these up once, in S0.1. In plain words:
 
