@@ -1,6 +1,6 @@
 # supabase/ — migrations, rollback artifacts and CLI usage
 
-Supabase CLI **2.117.0** (`pnpm exec supabase`, a devDependency; the platform binary is an optional package,
+Supabase CLI **2.118.0** since 2026-10-01 (2.117.0 at S0.2; `pnpm exec supabase`, a devDependency; the platform binary is an optional package,
 nothing is downloaded at install). Two owner-held projects: **TEST** `aalishaan-studio-test` (Local and
 Preview) and **PROD** `aalishaan-studio-prod` (Production); refs by name in `docs/PROJECT-STATUS.md` §9.
 Rules: `docs/WORKFLOW.md` → Database change protocol, `docs/SUPABASE-VERCEL-SETUP.md` Part B,
@@ -33,7 +33,7 @@ store) or `SUPABASE_ACCESS_TOKEN` in the trusted process. The database password 
 `link`/`push` and saved in the OS credential store, or supplied through `SUPABASE_DB_PASSWORD`.
 
 ```bash
-pnpm exec supabase --version                                  # 2.117.0
+pnpm exec supabase --version                                  # 2.118.0
 pnpm exec supabase link --project-ref <TEST_REF>              # once per machine; writes supabase/.temp/
 pnpm exec supabase migration list --linked                    # local files vs the remote ledger
 pnpm exec supabase db push --linked --dry-run                 # prints what would be applied; applies nothing

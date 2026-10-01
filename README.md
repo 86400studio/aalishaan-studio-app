@@ -46,7 +46,7 @@ pnpm test:e2e       # Playwright smoke (desktop + mobile-390) against the verifi
 pnpm db:test:preflight   # read-only TEST target, provenance and health check (names and statuses only)
 pnpm test:preview-proof  # the bounded Preview write/read/cleanup proof; a dry run without --apply
 pnpm db:test:seed / pnpm db:test:reset   # D-22 fixture skeletons (synthetic rows, own namespace only); dry runs without --apply
-pnpm exec supabase --version   # the pinned Supabase CLI (2.117.0) — see supabase/README.md
+pnpm exec supabase --version   # the pinned Supabase CLI (2.118.0) — see supabase/README.md
 pnpm build          # next build
 pnpm audit --prod --audit-level=critical
 ```
