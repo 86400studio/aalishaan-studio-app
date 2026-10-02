@@ -274,8 +274,8 @@ describe("package.json — the S0.2 script contract", () => {
   });
 
   it("pins the three S0.2 additions exactly", () => {
-    expect(pkg.dependencies["@supabase/supabase-js"]).toBe("2.117.1");
+    expect(pkg.dependencies["@supabase/supabase-js"]).toBe("2.117.2");
     expect(pkg.devDependencies["@playwright/test"]).toBe("1.63.0");
-    expect(pkg.devDependencies["supabase"]).toBe("2.117.0");
+    expect(pkg.devDependencies["supabase"]).toBe("2.118.0");
   });
 });

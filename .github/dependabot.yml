@@ -14,6 +14,21 @@ updates:
         update-types:
           - minor
           - patch
+    # Major versions of these three are deliberate, reviewed changes, never bot proposals
+    # (docs/PROJECT-STATUS.md D-42). @types/node follows the runtime's Node major (24: engines, .nvmrc).
+    # TypeScript stays on the generator's ^5 line until a planned upgrade (docs/TECH-ARCHITECTURE.md §2).
+    # @sentry/nextjs 11 changes default data collection and needs a planned migration first.
+    # Delete an entry to let Dependabot propose that major again.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@sentry/nextjs"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: github-actions
     directory: /
