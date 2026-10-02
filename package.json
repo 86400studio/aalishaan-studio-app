@@ -24,9 +24,9 @@
     "db:test:reset": "node scripts/testing/reset.mjs"
   },
   "dependencies": {
-    "@sentry/nextjs": "10.75.2",
+    "@sentry/nextjs": "10.75.3",
     "@supabase/supabase-js": "2.117.2",
-    "next": "16.3.6",
+    "next": "16.3.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1"
@@ -34,11 +34,11 @@
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "24.13.6",
+    "@types/node": "24.19.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.3.7",
     "prettier": "3.9.9",
     "supabase": "2.118.0",
     "tailwindcss": "4.3.3",
