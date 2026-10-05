@@ -1,6 +1,6 @@
 # supabase/ — migrations, rollback artifacts and CLI usage
 
-Supabase CLI **2.118.0** since 2026-10-01 (2.117.0 at S0.2; `pnpm exec supabase`, a devDependency; the platform binary is an optional package,
+Supabase CLI **2.118.0** since 2026-10-02 (PR #16, which carried the Dependabot commit of the closed PR #11 of 2026-10-01; 2.117.0 at S0.2; `pnpm exec supabase`, a devDependency; the platform binary is an optional package,
 nothing is downloaded at install). Two owner-held projects: **TEST** `aalishaan-studio-test` (Local and
 Preview) and **PROD** `aalishaan-studio-prod` (Production); refs by name in `docs/PROJECT-STATUS.md` §9.
 Rules: `docs/WORKFLOW.md` → Database change protocol, `docs/SUPABASE-VERCEL-SETUP.md` Part B,
