@@ -20,7 +20,8 @@
     "test:e2e": "playwright test",
     "db:test:preflight": "node scripts/testing/preflight.mjs",
     "db:test:seed": "node scripts/testing/seed.mjs",
-    "db:test:reset": "node scripts/testing/reset.mjs"
+    "db:test:reset": "node scripts/testing/reset.mjs",
+    "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "10.75.3",
@@ -28,7 +29,8 @@
     "next": "16.3.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
