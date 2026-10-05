@@ -1,0 +1,2646 @@
+{
+  "commit": "b24dce1bf498a5c8131694fef5fb1602139e1653",
+  "bucket": "catalogue-public",
+  "entries": [
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-white-4fabbf7a-1200.webp",
+      "sha256": "1386168f3f68804488b8ebec3693364b4563c901dbcef5f486ed6073b40e9467"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-white-4fabbf7a-480.webp",
+      "sha256": "b28d41d5af8d7c43c068c0d6b8dd270612c42a7b4f4198e57331e42e94a81aeb"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-white-2a6b88c7-1200.webp",
+      "sha256": "3586dbae711f1688219d4b86435e2c8db401cc6d1ab945fbc1acc49ada9fcca9"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-white-2a6b88c7-480.webp",
+      "sha256": "1b993d735935a4d0b3da69bd1381e68c7c05cf66a1ac738bb82ff5ef26fc0895"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-black-827f51e9-1200.webp",
+      "sha256": "748a89c6f773af8485b7bb0452b378e296916ad8c77f6fdb72bb7d34dfd2e5c9"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-black-827f51e9-480.webp",
+      "sha256": "63c31401be8d733bf4df1ef4cd214232e2dd9c4b8376b552a1e1ae87fcf3a3f0"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-black-eb004a38-1200.webp",
+      "sha256": "ea257867019a0a2bb884a5ff162ec79dd34a7f0a6b63fbed35b3f8a147e09e32"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-black-eb004a38-480.webp",
+      "sha256": "fd709b28ca068d4d170f2b37eba3b8b20adbd8dc47565578671c724ada77ea0c"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-antique-gold-be96609e-1200.webp",
+      "sha256": "59606583be9cd2ecc653b77d9a43ac75a49f1073f0a71c2ae0b1e14a1941977a"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-frame-antique-gold-be96609e-480.webp",
+      "sha256": "fdce470e53e7cae1cb13a701cb7f43078b3a8f1006e4be91c4f0338a69609d46"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-antique-gold-3f3c22f2-1200.webp",
+      "sha256": "45c55751c68569cdd798273e686cc6354b888fa0e9696615cb190c4f0aa68c0e"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-close-antique-gold-3f3c22f2-480.webp",
+      "sha256": "52375c3edbb2fcffe71de561030b1b706f0e01a14e48991402ef68bb72dada70"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-of-blue-stone/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-paper-8c844a25-1200.webp",
+      "sha256": "273bf2d9982cc3f69e8f8e9775e511bf109af0b0612a66c68e2e7adc5b5d78af"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-bridge-of-blue-stone/paper-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-of-blue-stone-paper-8c844a25-480.webp",
+      "sha256": "91792b38f07cfd5d7c896e9a3666bd05b682d98727f5b6e64004753095b2f2d0"
+    },
+    {
+      "slug": "the-bridge-of-blue-stone",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-bridge-of-blue-stone/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-bridge-of-blue-stone.webp",
+      "sha256": "00e6e444d366975b189d47ad3d52354d3d2cde0426562d637d6e8a5c963fa7d7"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-white-94619c90-1200.webp",
+      "sha256": "2df8db6c630d7d225edec1b0ae6633dac402c08052f61fdda6d0c02f2107f142"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-white-94619c90-480.webp",
+      "sha256": "f3f0dd10d8e2d8a91bf3158b62e11186d774cb39635194bc2a9b9a7f23c8f11f"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-white-c6de88cd-1200.webp",
+      "sha256": "d9755ef869cb855ab66ae12cb11b46ad421fefc35a65bcb92f29d9b9034d3262"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-white-c6de88cd-480.webp",
+      "sha256": "dac0a4c3d85ed248cb3b0759493039581ccb97497f458cd8825a0b974ca12490"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-black-6542e571-1200.webp",
+      "sha256": "0ffc04581854bd156f4571f247ea863e1fdcc4bb65e78c9126f722d00a1eaff4"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-black-6542e571-480.webp",
+      "sha256": "625086f1af43ff842907810c5cf94c6295ed964dfc6e78ce0be3d5b68c6aa947"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-black-f3c78e2d-1200.webp",
+      "sha256": "0ed4c754665ea8f62c82d9ac135d043e23d4a937817aeaaab43c46381468dacd"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-black-f3c78e2d-480.webp",
+      "sha256": "1d2c5dccb64d3bcff6cdde2473ce9e418428e7227f22cdb16721153b2ed0f318"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-antique-gold-fe061c91-1200.webp",
+      "sha256": "fd4f7d52c3b3d6599a467bd81e98a4f15db30c289ccb8c14e288a4db0cb5dc98"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-frame-antique-gold-fe061c91-480.webp",
+      "sha256": "baf1794c4b347b89f56f7bea9a24679893810a0f310cbcb0951c79d9569ed821"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-e1cad9d0-1200.webp",
+      "sha256": "54da17b9aca6106d7228b25b6db1a0d3cbb183f212fa141537a3c99b0fb92b70"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-close-antique-gold-e1cad9d0-480.webp",
+      "sha256": "698cba54928be8b612210abe2dfb50f2b0d184dbc014b22dcd58a34af200fcca"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-moon-between-two-peaks/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-paper-6bb3f16e-1200.webp",
+      "sha256": "5c51e95c52facaedb35dfe8d391e11661dad1b57354278637f689746356764d4"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-moon-between-two-peaks/paper-480.webp",
+      "source_path": "assets/web-artworks/the-moon-between-two-peaks-paper-6bb3f16e-480.webp",
+      "sha256": "a1e165f358df9127b0895639c2c22f8a1c8da14d750086287550edaf5264fe43"
+    },
+    {
+      "slug": "the-moon-between-two-peaks",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-moon-between-two-peaks/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-moon-between-two-peaks.webp",
+      "sha256": "428b8f7ac5bcf4e1577119b78c83f70775a5eb7795f755547bfebb83bfe2de46"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-white-97c700d6-1200.webp",
+      "sha256": "4a2c873869d50396500b1a434d65d159ad63e010a4f9ffc55252c52d6364c7d8"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-white-97c700d6-480.webp",
+      "sha256": "739bdaff279b4bc20102354c3a54164b8a204630b639be3ded25f498ff0a87f4"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-white-74dbe53b-1200.webp",
+      "sha256": "2d137c949edb2f9f6b0f24a0ebf78f72274e3c940daa866dcc0eda3ef41abb17"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-white-74dbe53b-480.webp",
+      "sha256": "790256f8c7c194580378b83902e75ec5d88a6b1e537c62c3d6fbac696ed7d126"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-black-86cccf57-1200.webp",
+      "sha256": "2d26ed18e79139400041906cd8bd9e58a8cb97e0bfb74c8efa7c458504493808"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-black-86cccf57-480.webp",
+      "sha256": "133a72412ae87e1de8878c07047375a1c288427c3b6a502b431171926ac0c89c"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-black-c97bb10b-1200.webp",
+      "sha256": "c587dba023e52c8d23fb97444be015e56e69cb4d0264383862ca89cc5fddafbb"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-black-c97bb10b-480.webp",
+      "sha256": "c2ccfd122261f0f64994dd66b7a0d9649f8d28ea6ecd44d3324f7088d3baaff8"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-antique-gold-17262fba-1200.webp",
+      "sha256": "20808c61eda5ea20df0a780edea343a7d082327901ac99f35979c6eda81d2da2"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-frame-antique-gold-17262fba-480.webp",
+      "sha256": "6d059ec0c2450c20b203c7f0c44fc11e5d3834b7785e5b05932614a04a58982b"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-6a69e58b-1200.webp",
+      "sha256": "8a6a40cb5d2a272ad7078c8a6f035cf458640f718850d2164f77b396503e5fe8"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-close-antique-gold-6a69e58b-480.webp",
+      "sha256": "7d5986bc4bd18b477bde8cb81db1e0403853c1f1538fa8ae4823e383ce4406ba"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-pine-that-holds-the-moon/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-paper-215b560b-1200.webp",
+      "sha256": "8a1ee57fe64d3b4e5264001e42b032393745584ed83e9119604c7457950f3d9b"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-pine-that-holds-the-moon/paper-480.webp",
+      "source_path": "assets/web-artworks/the-pine-that-holds-the-moon-paper-215b560b-480.webp",
+      "sha256": "ff800b19309bf774f4f02f79118079c0ccad56f85b06451c3c1714498c85247e"
+    },
+    {
+      "slug": "the-pine-that-holds-the-moon",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-pine-that-holds-the-moon/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-pine-that-holds-the-moon.webp",
+      "sha256": "6bab5ed7e5584ccc75c64e5a01d9e365b0ab4097c091fe67309fcda2d57e57d0"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-white-6ff5d1b9-1200.webp",
+      "sha256": "a6ee15df7e577f034e14dc373d24dd8bd4579aae7e0fbc8426233aaa34980325"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/frame-white-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-white-6ff5d1b9-480.webp",
+      "sha256": "7d50de2681bbdf8cd45c24801f457ae4e98ed869441fb379340e8607b33f5017"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/close-white-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-white-0464d985-1200.webp",
+      "sha256": "9fb39b264f820ee835e2084f6a48307deaff251dc8a61ee0882fc0ac88b72efa"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/close-white-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-white-0464d985-480.webp",
+      "sha256": "2e8e8a0da41666452345fdbaf97f9a533613aa7efee76c57381c0f391cc99e9c"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-black-e92ea227-1200.webp",
+      "sha256": "bb8a47bcbdd5955fcaf65f3a31422d7aac0d588ab6b50955d71c5b6c464eba78"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/frame-black-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-black-e92ea227-480.webp",
+      "sha256": "b6677d9daca05436813fbba4f9089a7a50fae9784bc48565436be217af4e4312"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/close-black-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-black-2071f69f-1200.webp",
+      "sha256": "acae3f8740a767ef8374bb4ff3dfa767ea51b84d15e9bc1b68fe6168d96d07ed"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/close-black-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-black-2071f69f-480.webp",
+      "sha256": "30a79c2ca2fd915df98bd53968b6b2220ce136749eacf35f5d36f89f0523f940"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-antique-gold-fb5d7883-1200.webp",
+      "sha256": "9c52752cc602684c148c79cfa852546cee1a409c06b227ebc78030eb0694aa67"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-frame-antique-gold-fb5d7883-480.webp",
+      "sha256": "88e0e41577f7134349d92b919684b0397389f1b35f4f80f128887cd40b81cf2d"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-antique-gold-884bce41-1200.webp",
+      "sha256": "a2e1f0928c9abaeb1d85da70479f41d32c7c4ee2d63d491afb23524722e29161"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-close-antique-gold-884bce41-480.webp",
+      "sha256": "ee02438f57d7ed0c2833dbe3c8144d7475ae510963572c69f3412116f847a7e9"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/willow-after-rain/paper-1200.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-paper-5e779ef5-1200.webp",
+      "sha256": "ca24c21ad19a24ba79a968b8f8970a2a1842d81af476d949647b7805e0aa3f4d"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/willow-after-rain/paper-480.webp",
+      "source_path": "assets/web-artworks/willow-after-rain-paper-5e779ef5-480.webp",
+      "sha256": "b84ced8962726ece12ecf2893997b31393795fb8184b471df75704f882abcd86"
+    },
+    {
+      "slug": "willow-after-rain",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/willow-after-rain/artwork-full.webp",
+      "source_path": "assets/artwork-originals/willow-after-rain.webp",
+      "sha256": "7dccad9f0339a4600f0804de6061b477eea7538b47d3c6f298f45fcff472a04a"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-white-3ca9b7b8-1200.webp",
+      "sha256": "6aa67a74198fe3dc635091544c46559675ae645a5054ca8fbb47f405aebb009a"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/frame-white-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-white-3ca9b7b8-480.webp",
+      "sha256": "791c25ba112f53228a252405551f19d446c1771c7755fa82beb87dd665c53192"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/close-white-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-white-b3ffc51a-1200.webp",
+      "sha256": "b27490223218c2f713d6cd9ef46bd896430b5e34162dfe2485c2903424a7fb17"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/close-white-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-white-b3ffc51a-480.webp",
+      "sha256": "e02c31c2924eb238055e1cb1ffde0de98fcfc01d9e256ee790f49edecfe312ec"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-black-364bbc03-1200.webp",
+      "sha256": "a7eecdd7b55f2ef02e9f4c1128c8824ad4f8634eb4a33a4e3c0eae17f1800578"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/frame-black-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-black-364bbc03-480.webp",
+      "sha256": "c57bddfc63b3dc2cfc6bed7caa3aff4f1dd79c43f8128a68014d79f598ad4e91"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/close-black-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-black-3dad7307-1200.webp",
+      "sha256": "a1a6d01ba2a43efe194ec9db168718ca3fe4eba172c6a47128919e218c6aebbb"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/close-black-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-black-3dad7307-480.webp",
+      "sha256": "c928760838d3d080fb69897e12c2981793e8be58f99a0eae3531a9a22d4c7761"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-antique-gold-05d6ef16-1200.webp",
+      "sha256": "c9164b1a022a389ebcd3b0529e6663fb3ea1140b880f64ba7e23fe1861b4c92c"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-frame-antique-gold-05d6ef16-480.webp",
+      "sha256": "7db920074cfd77120a6851079d03a140765c87b58ae0b982586a1a6368198d95"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-antique-gold-a0d31f19-1200.webp",
+      "sha256": "e0621b2d5e74d4c2e1609c38dbbfb5125831fd4cd36ef66aa15b29b70085bd41"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-close-antique-gold-a0d31f19-480.webp",
+      "sha256": "41c5561f0f3b4f404f777bf96ffaa88f1a464e88fdae1da14e0d78256e1bd6fb"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/bamboo-after-the-storm/paper-1200.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-paper-4b20c822-1200.webp",
+      "sha256": "7c8992cc6209402629de6df1c3fe1350d61ddc661b096e01dbebe38a23fb5104"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/bamboo-after-the-storm/paper-480.webp",
+      "source_path": "assets/web-artworks/bamboo-after-the-storm-paper-4b20c822-480.webp",
+      "sha256": "7c5b92199d8fc0ddc49ed00aa0c4123da0138cbda074bf86e5b88da546d27d01"
+    },
+    {
+      "slug": "bamboo-after-the-storm",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/bamboo-after-the-storm/artwork-full.webp",
+      "source_path": "assets/artwork-originals/bamboo-after-the-storm.webp",
+      "sha256": "b13a355e598a737bf3dbb5cddaf58ed2204b959af3420409130a853920361dd9"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-white-81eaf5a8-1200.webp",
+      "sha256": "5d4fe1af8105d774244f19e587925fa73f865942576588f531a8a8b8e22d6e3e"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-white-81eaf5a8-480.webp",
+      "sha256": "cd1f2f756f064382bb97b719b0cf1dbe011a1e35dc89dcd84a3768765a8b9ddb"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-white-169d0723-1200.webp",
+      "sha256": "9225307858779a2f207b64922cd29b6ff387874a988af8d7a97bccfb29dd2304"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-white-169d0723-480.webp",
+      "sha256": "1341a9c691cca7494212a4ae80982260d4ed7a895c4cd187242fa95c2dd7e0b7"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-black-d5bc209f-1200.webp",
+      "sha256": "f788285bc87d326eed0503fa11694b3e8dd85a886d6533c39c1dd34ba3b613b3"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-black-d5bc209f-480.webp",
+      "sha256": "d4ffcd3f17d5b929685f0d4d4dfe37a411a68b73496079b28380e92c1db6827a"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-black-5ddb1cff-1200.webp",
+      "sha256": "b75437705c1934fbf25e5afbb1f25308acd6f201e08f4f60b693771cecdf82ed"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-black-5ddb1cff-480.webp",
+      "sha256": "ca8c651e3d0b7382f015d808e1f16fe74be879afc6b23ffdea9ca40e20164ead"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-antique-gold-0f42dec6-1200.webp",
+      "sha256": "f4e7c0c331545e3eeac4891c45c9847b2c30fa93b5dda4f0247828abe29e9193"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-frame-antique-gold-0f42dec6-480.webp",
+      "sha256": "cc278595e7df9755d8bb1f93787e41d4270c67e2dc131d347b2d2596b8c2825a"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-antique-gold-ff121489-1200.webp",
+      "sha256": "5b85748fb99cb7e33008019ada5dd27234f3255aba412f7d751f3962e4741847"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-close-antique-gold-ff121489-480.webp",
+      "sha256": "c72fe0a073ed6c4040c5f7dbb2aa4bca1f91b221942a9ed44e9471e6aeb1211f"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-cup-beneath-the-plum/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-paper-1664d872-1200.webp",
+      "sha256": "c3d3d6b734240daa6f7e0bb872955f70c7d67a67eb21b39a95e9837e4bdc1364"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-cup-beneath-the-plum/paper-480.webp",
+      "source_path": "assets/web-artworks/the-cup-beneath-the-plum-paper-1664d872-480.webp",
+      "sha256": "42556253fde05889ad04b5a2f8a5b5086ab7c957af2af4d71b87f635dab901b5"
+    },
+    {
+      "slug": "the-cup-beneath-the-plum",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-cup-beneath-the-plum/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-cup-beneath-the-plum.webp",
+      "sha256": "302b259176af9deef85608bfbcb62644ddab2020e967ee2a15dacd9f1d528572"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-white-53958ec6-1200.webp",
+      "sha256": "e3a2fb009c2b6423e7d7bba5766e37d79cfc5f79ff66594768b675df14b1c0fb"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-white-53958ec6-480.webp",
+      "sha256": "559f78c5d467ab3e259adf0da50ece30a4bf9e1f81c03563be25474aace3fa03"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-dabe3a70-1200.webp",
+      "sha256": "348db211964c440c18d57a2095bb0df09c0839c7b038ff750436f67f766e400c"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-white-dabe3a70-480.webp",
+      "sha256": "a8288d3d4f82e8a46ab13c3e6a9570f9dd5b4db93083489bb575554a26969e34"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-black-e1578944-1200.webp",
+      "sha256": "8665ea9667dca807b8ff354760c1ae42401158f9162314b7c7f72a8371e960a1"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-black-e1578944-480.webp",
+      "sha256": "950adde890e3ad89b996e05544cfa5b1d1ab1580c4c03863a62ef202dde3bcc9"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-black-9191b1b8-1200.webp",
+      "sha256": "02a948151150c5eef95271fd6298ed01681203d5d8a4777f5ed23b6ef4a0778b"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-black-9191b1b8-480.webp",
+      "sha256": "626283681cfb62cfdcd05dbdd3a681d9c538ca206c9943b3063b91865cdc6962"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-antique-gold-fc46e7e0-1200.webp",
+      "sha256": "bfe69ca267e3d7152c818ef9665f2f4827bdbad9ae5b765140a926e74909a4d3"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-frame-antique-gold-fc46e7e0-480.webp",
+      "sha256": "c06ad5d8c8af96883ce71c92e5072d0a9d5110490dff0448cfdf2f2bd468ac70"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-antique-gold-f40720f6-1200.webp",
+      "sha256": "272adaedef7cbb81e866aa97abbe0d418645eef6c3390e82f3293558f6502a68"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-close-antique-gold-f40720f6-480.webp",
+      "sha256": "a3f52eb130d7c5df0aa9fc4d21b64cfdf1cd501e9748a80e5290d1c2e20ad44e"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-blossom-over-the-closed-window/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-paper-36fdf879-1200.webp",
+      "sha256": "7ca5e08dde9cc9f9b65f58aa6161855e47ecc461e69ba003b822ef4a512da4ac"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-blossom-over-the-closed-window/paper-480.webp",
+      "source_path": "assets/web-artworks/the-blossom-over-the-closed-window-paper-36fdf879-480.webp",
+      "sha256": "c53f9ec3a79b5be5447ec94acf4cdece58210f9b9d8115ad1db6e042485c4aca"
+    },
+    {
+      "slug": "the-blossom-over-the-closed-window",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-blossom-over-the-closed-window/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-blossom-over-the-closed-window.webp",
+      "sha256": "c4d206085b8a05857a0d625a19b919e61a722fe22a5e4afc7bd75ecaaedd5c8f"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-white-0c810512-1200.webp",
+      "sha256": "3af259b4b39d6cf8ea0120261a7bee569d4bf748c8b87584389a97d9535d207a"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-white-0c810512-480.webp",
+      "sha256": "1c51cbb3947fc88019b1265e5ef59a9c214fe1a9c019fb6eed1716d9bb85a633"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-white-db062230-1200.webp",
+      "sha256": "f40fe03756a408179e6818e68024d73b12faa1773d46c0242a2079485910820c"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-white-db062230-480.webp",
+      "sha256": "c8d25709db734adb20b1d6146fb185c211dcefc23cf5cc3a1d97426e77e43639"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-black-1820523f-1200.webp",
+      "sha256": "4d49518bf2e5c26ce990dcaa2e6eb45edbbbcec8ef20096f16e6b8b2441751dc"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-black-1820523f-480.webp",
+      "sha256": "3136da025401c929bf17e3b4fd4e3d5e6382a19e211892ed54eb1744e775f79f"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-black-11c77d66-1200.webp",
+      "sha256": "bbac032a9a797aeefc2001cbbd579b7af7cfbcca4344431da0046143be257514"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-black-11c77d66-480.webp",
+      "sha256": "958b5a66fb0094cbc989e38e2f153706c2f951b0b51f5974124ca7dc10ec9333"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-antique-gold-231335d7-1200.webp",
+      "sha256": "4a0a4fd4cda592611dfb5a414088b644870e3b017884afb9f3a625bade65628c"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-frame-antique-gold-231335d7-480.webp",
+      "sha256": "123ec44da5db83da895f5ee8f969415095c6c30c1246b4737b883fe34b74c832"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-antique-gold-38fdd113-1200.webp",
+      "sha256": "c08ecb0f0becd123dad536a56727970a8a53fb99e75469846ff9f1f253b9c6e3"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-wall-close-antique-gold-38fdd113-480.webp",
+      "sha256": "0f7c9fcd4d5ff11d28fad8ffae6d899051347a16b241c4e274adb1952d906581"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-first-warm-wall/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-first-warm-paper-5335f2a5-1200.webp",
+      "sha256": "8cb1f1f89a2a3932c0e9b6dc3e83360e49da74bea4e57a081e5f4e9859dd5a78"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-first-warm-wall/paper-480.webp",
+      "source_path": "assets/web-artworks/the-first-warm-paper-5335f2a5-480.webp",
+      "sha256": "c4cb4df6090bc1802a2b28314b01e866ea7f11e237fba5a639bef48b3e2dffaa"
+    },
+    {
+      "slug": "the-first-warm-wall",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-first-warm-wall/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-first-warm-wall.webp",
+      "sha256": "ae78212493d1f62242fd37bd55d4c593390b38cc7a81f2edecdaf406d52f8cf9"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-white-d7402d8c-1200.webp",
+      "sha256": "9c9eeb7596552314d057256046f35d8f4caf95fffeb8b25956f1334e051c6e3b"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-white-d7402d8c-480.webp",
+      "sha256": "b77fc54854dabba241db70d0cf1675bb6c2bffc3f0e8510f6b42ae4a98a82fd0"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-white-0e0b61a7-1200.webp",
+      "sha256": "c887c36bd8e99d06ee49a9eca7e511bf6239000565c97354a32cce3851024142"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-white-0e0b61a7-480.webp",
+      "sha256": "233fb98d6b2ebea89a35d8bdbb403319a8b1361c9c907f46d87e81d0299a7b4f"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-black-059dafc0-1200.webp",
+      "sha256": "21138b8294970c965a5c8487ca77dbdd4ac57e1cff2c8d6ddbc498a51c4c39fe"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-black-059dafc0-480.webp",
+      "sha256": "856557dde48cac2b27205384e6d9c4af6836f1c531a39cb0f8e26f39f07e69fb"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-black-03b79cc1-1200.webp",
+      "sha256": "cef9a65b1cdabb1b4d4d745457b17ea97c6d4023bd7cf516ceb1e9c09be26074"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-black-03b79cc1-480.webp",
+      "sha256": "cbce0cfa4579382c020532ab1aaba98b9bcd95d500952f6a05c001b699006a80"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-antique-gold-4c5e1371-1200.webp",
+      "sha256": "f273a029889b161ff448dc37e262394da6784cd4351ae88b9701b6637d6b534d"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-frame-antique-gold-4c5e1371-480.webp",
+      "sha256": "54433b268bb7036656c8c2cc03839fa197ec0c94002a900b500a62c4122b3281"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-antique-gold-d4d5141f-1200.webp",
+      "sha256": "ca21a2ef39a917fd5986ad6a92fc0876a89b3df40b141d4c1b193a4c20e853ed"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-close-antique-gold-d4d5141f-480.webp",
+      "sha256": "477110a05a8a397ba406db4040a5934e74ce71be9c9920e3a744f660fc2ace88"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-branch-above-dark-water/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-paper-84406d1d-1200.webp",
+      "sha256": "82620b31cb25f9bd65fcfa60b1a007ef673720bdf013ee86b72b93171b15b55a"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-branch-above-dark-water/paper-480.webp",
+      "source_path": "assets/web-artworks/the-branch-above-dark-water-paper-84406d1d-480.webp",
+      "sha256": "8badd4c7db98d0b6011b30f2e5a6101703bd9c17825ba2efe8f810abdd8cc038"
+    },
+    {
+      "slug": "the-branch-above-dark-water",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-branch-above-dark-water/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-branch-above-dark-water.webp",
+      "sha256": "cbc5b69a00aa4f1fcdf4562961f035f396cedc77cff7a7c93689d6a7dc696c8c"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-white-7460a868-1200.webp",
+      "sha256": "b6081efb2bc0cc87a7c923e70c92c8f2402ecacfad38f0346924af3f01099749"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-white-7460a868-480.webp",
+      "sha256": "e6e84103d1dc6b8ab7eab3af40bdac7bf583c81a6eba26c94570bfb1b7b9fbe5"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-white-5da9b424-1200.webp",
+      "sha256": "b870ad0ea6f0e3969e9116002a8e36839173c8d30bef27158f82c555637f5f61"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-white-5da9b424-480.webp",
+      "sha256": "883cc1a3f3e7983da39a38ab6910457c6227148d1956ebcf81f93b2a55923ca9"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-black-3cff0074-1200.webp",
+      "sha256": "e7ef3667125b3eadbfa8d615f60675dcdf7a453d98a67ec7772376bbd459f883"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-black-3cff0074-480.webp",
+      "sha256": "1929fa9f958ec218f55768e014250c8f43d08191df239fc9ad12e2292ef3b123"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-black-73a41cc7-1200.webp",
+      "sha256": "2399a6d131736d8ed07cee1eb85a6d678d8baaa9d7ffb0b050597a15ef6e0094"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-black-73a41cc7-480.webp",
+      "sha256": "cdf548d42fddc9fe202610ff0f5f7e79e467373fd2658a92dbab471dbfa03b27"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-antique-gold-47584c3d-1200.webp",
+      "sha256": "3fa200b75e2bb1b5623d25c633a43f84bc226be9ba82266533fd49359fd526ec"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-frame-antique-gold-47584c3d-480.webp",
+      "sha256": "25fa6ab6c0610255cdf9f64670e24d07fb4a58724dcee20d9a1d81d97e0edbf2"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-antique-gold-1aab254f-1200.webp",
+      "sha256": "e58db3cf5b4ccc696a7c3336c11a839805646284fe2dd3698f14a2a7e7d45148"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-close-antique-gold-1aab254f-480.webp",
+      "sha256": "543a1c7dac20d7d1e8b7ab991c15ded2788cd129f4db26c080ffd5da236c9c99"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-window-after-midnight/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-paper-a248a6a2-1200.webp",
+      "sha256": "5c350a7d4d7a3cd93b6d9680c8a05905f8e77622663ac850175b2cfe3e8434c1"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-window-after-midnight/paper-480.webp",
+      "source_path": "assets/web-artworks/the-window-after-midnight-paper-a248a6a2-480.webp",
+      "sha256": "f48683cef11f34dfd7ebf101cd508c62619aeaff226e36fd909df9fd74d451a6"
+    },
+    {
+      "slug": "the-window-after-midnight",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-window-after-midnight/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-window-after-midnight.webp",
+      "sha256": "bdedb490de1043bc2a0a6c6cf78669266eb26ac76a8337bd93f0ca5fa34db9a9"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-white-e27b1f92-1200.webp",
+      "sha256": "ea9507f4111cd06537a6848a5e435613ccd41cf5adea05e71eab8dbdadc6d819"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-white-e27b1f92-480.webp",
+      "sha256": "6e6cb55830d601b53d5dd10f19d7b501c849812b0674a816c3ba992ad5dbc12a"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-442cf163-1200.webp",
+      "sha256": "3483e4b113ede73df0b25538a223c851918fb61b4d840eaec7e76612ac9efe50"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-white-442cf163-480.webp",
+      "sha256": "7ca54e3aaab7fd9d9d1aa68fcc544f55af4f033007fd348d21c4a4bf8a39ffa2"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-black-a246ef86-1200.webp",
+      "sha256": "b641bdd53963de6650bb8095fdfd61ff145ea50cc163a6c544efddebcc2a049e"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-black-a246ef86-480.webp",
+      "sha256": "94d021215233aef86449b259ef6afac64934e338de4ba96a8d2faff7bd6a943f"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-black-1c5e68fe-1200.webp",
+      "sha256": "8790c2e34c83d533f197b7f6e7663c306e3c99104077639b1a75e55f1b60807a"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-black-1c5e68fe-480.webp",
+      "sha256": "e112b8bda5b481ef5aafbad513243de95e6c552f2b783d287e024184ff8b6354"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-antique-gold-0476cce1-1200.webp",
+      "sha256": "ae86daa3f6af31176535e98c26502f24fab6cc176d8b251c3cf623384209e2e5"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-frame-antique-gold-0476cce1-480.webp",
+      "sha256": "f4722bf01ef6568bb797a811b4ba01fe4d6e133405f72ce23b52362e2f557225"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-antique-gold-269ebfea-1200.webp",
+      "sha256": "0c5550525154eac90546efc7b123d080717ec6199a31c590774989096a3f54c1"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-close-antique-gold-269ebfea-480.webp",
+      "sha256": "c5f002262445499ba0491bcc0b4164179761a2642200e176d477efbab767103b"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-paper-4eb4c74b-1200.webp",
+      "sha256": "054aca3f1a61326a332707fd871f0f913780a233f19ffaaaaf6b2f5d67ab334f"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/paper-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-paper-4eb4c74b-480.webp",
+      "sha256": "9a1ce78d06e709395d9099835fd28d708d61b9d925bf1d8761df41f96a09b1dd"
+    },
+    {
+      "slug": "the-teahouse-shutters-at-spring-dawn",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-teahouse-shutters-at-spring-dawn/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-teahouse-shutters-at-spring-dawn.webp",
+      "sha256": "afbdd9e93986f27e67feb23b7f9ebe045347eb6a85f72ab774b30f5300ad99d4"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-white-7ed3aa75-1200.webp",
+      "sha256": "9095bf4b2e3e76f555d330685e928a570beaf19f4a2cbfe10c1e08a07d58cbe5"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-white-7ed3aa75-480.webp",
+      "sha256": "032d1d187cc2a881f291552806b9c130194f44f355abe699d3b5c131cfe027d7"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-white-a1950fa5-1200.webp",
+      "sha256": "8dc31441966dccb0c3dde30d76f6a50d2243f5fc2c9553d49fef12f15a474f07"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-white-a1950fa5-480.webp",
+      "sha256": "ac055ad208c9b10a55d071ea21d68b96eb58d3c52718734573d45d00a6c7cfc0"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-black-a2251843-1200.webp",
+      "sha256": "9e707734b780c93e94562323b0441889a1a3f8ee150bdf5959ee49e9129a947c"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-black-a2251843-480.webp",
+      "sha256": "85dae488059093b4da3563a3657c9f9627d28477e01e867e6589ab35150719bb"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-black-c2198460-1200.webp",
+      "sha256": "f388daeada08fba3c07c90497781a600465173f75b80437888813bdf9543932b"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-black-c2198460-480.webp",
+      "sha256": "6d51cfda1499ac03fc762100d416466788d7dc54cc79fe7bfcf8088bccfca850"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-antique-gold-4862a364-1200.webp",
+      "sha256": "f99af4ed9f90d831efb3a4ba40df5d1512238092826601c1c4afa3178ce99d29"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-frame-antique-gold-4862a364-480.webp",
+      "sha256": "86d3575fdfef067b33381111bb084772392d9cfe3b38999c6e1850793af55f1f"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-antique-gold-184010ad-1200.webp",
+      "sha256": "8016a42dff2d310dbd5fbd5467de7cf38813d161b8b48e96f3f8e9259740e826"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-bridge-under-falling-blossom-close-antique-gold-184010ad-480.webp",
+      "sha256": "4066340c2f4f9074417a714408b9d7bd521485239c7dbffb2b9965c73d32e929"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-bridge-under-falling-blossom/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-paper-0fdc1edb-1200.webp",
+      "sha256": "0a026ddc0dba5b1c576b7c9b6148b9a84cce230d33721213866cea7caa457f7f"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-bridge-under-falling-blossom/paper-480.webp",
+      "source_path": "assets/web-artworks/the-teahouse-shutters-at-spring-dawn-paper-0fdc1edb-480.webp",
+      "sha256": "957d50c60e29218beefe2d45c4f590e8bb8a9f9a6af193b60e4799c28fe86410"
+    },
+    {
+      "slug": "the-bridge-under-falling-blossom",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-bridge-under-falling-blossom/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-bridge-under-falling-blossom.webp",
+      "sha256": "5f99a4631465a5a2c4d6422c2552ffaaeeb9ef24c3dd3afa9e66f10958ae87c1"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-white-b7af48c1-1200.webp",
+      "sha256": "a296f51460ee186ee851c0ef144525de74133dcde8ba4ea9c5a99dd6ab6e1522"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-white-b7af48c1-480.webp",
+      "sha256": "3a98ab94be3f011aede21e81a3e200a1738fe2d2cbb0305ed278ce905b569e98"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-white-17563d49-1200.webp",
+      "sha256": "534f7787b3c755b13892558d78fb0a6e87d6cbf2d5597c890b05e77adf1a2ceb"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-white-17563d49-480.webp",
+      "sha256": "968ff9c8c5459f498ede770a37c3d5f97093da127e7fb3d1bb15e44c72d62922"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-black-6937c9a8-1200.webp",
+      "sha256": "ec621915b750ae53f2a225880b10c210333b7d043cd0ae80e47375a2932c4712"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-black-6937c9a8-480.webp",
+      "sha256": "070d275b521da725575a06c4a053798265bc9ed5f68d15147691f5d3d01e1631"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-black-0cf3aa15-1200.webp",
+      "sha256": "9bed39f66b87083b161c8a3582886f7d61fe04e5eb0b0fc40518d0f2da9a130c"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-black-0cf3aa15-480.webp",
+      "sha256": "18e15b3c82bfb708047bfaf2a35f0a5cec31001923bc2c188ee57b52726bd842"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-antique-gold-abfe01d2-1200.webp",
+      "sha256": "67e225565164a74e11f52354138d3e0e3b1ee3e39d13c1380af3e750c17e5975"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-frame-antique-gold-abfe01d2-480.webp",
+      "sha256": "8c607435d1c1ccd74d849da80746ed0e40c463f8607a0880b4a5b1274bf1d8b4"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-c5d4fa7e-1200.webp",
+      "sha256": "d4d3f68350fd0b4a2d5717de808a71c53dad0a71312811eec9177b82962d07be"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-close-antique-gold-c5d4fa7e-480.webp",
+      "sha256": "9cf29969d2bb75e6c2540806176af09339b81d2a70053bc1ba9f75928d2e3f13"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-harbour-chain-opens/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-paper-c87601d5-1200.webp",
+      "sha256": "f11acfc1e13e7a4891584b49e9c2cef15aaa03324049ad579ee63beffb94e246"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-harbour-chain-opens/paper-480.webp",
+      "source_path": "assets/web-artworks/the-harbour-chain-opens-paper-c87601d5-480.webp",
+      "sha256": "819ea53dbf5106249718bb24e0abb4dd31f228c980d98a4ccd4bb557dbcdc11d"
+    },
+    {
+      "slug": "the-harbour-chain-opens",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-harbour-chain-opens/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-harbour-chain-opens.webp",
+      "sha256": "d3272259e05ed80e69a00f0baab86c4a0dc240633de6d3aa8236df38746586fe"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-white-dc3c0b83-1200.webp",
+      "sha256": "9ad5999c97e0edd13ccc7a84e8a68a4f218dd15d6d30a999838fd69b5ecef475"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-white-dc3c0b83-480.webp",
+      "sha256": "c4f9ed4e2def5e310f92976e1e1d4dd82eaa8777eb80f7019cca84b3bb41a5c9"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-white-77eb2c07-1200.webp",
+      "sha256": "3ffcefb7998dad4b2603c9392e2e003be557b0c6e615a724759eaad107043c35"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-white-77eb2c07-480.webp",
+      "sha256": "9e66b960b32246d8e08f182f8d3bbebcd0e27db4f0046f0b454308b6aa1d2c83"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-black-982d0b18-1200.webp",
+      "sha256": "274dbd093774f8c9b72ab4d6a096314b444f57c42dfc833a4900e5b83afbdd62"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-black-982d0b18-480.webp",
+      "sha256": "69349c78bba83fc01605455a227d2779d1af8c8c8590a8a8a1695bce89c54ac1"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-black-7b2c9178-1200.webp",
+      "sha256": "b909c050d6f922f5fe97530fbeac83f7fa1fa8f5ad5b2e99cce3b3229cc32bb7"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-black-7b2c9178-480.webp",
+      "sha256": "29ee24670fe61a203bfb0c5e9353b8cb5c943052bb078a4faa8d77198df2eb12"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-antique-gold-c52d6988-1200.webp",
+      "sha256": "0b0b352108191df2a29587302316ccb2f7bc5604dc30ca6d1de254641f499506"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-frame-antique-gold-c52d6988-480.webp",
+      "sha256": "664249d69f43b58c1a762797862f307caec9b111999d14893b4f3aff5b91ade7"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-antique-gold-472bbc35-1200.webp",
+      "sha256": "b47a964ce375f1c78357ebd395aa355713e2ad1518d88d39e1c24feef2b3f0ea"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-close-antique-gold-472bbc35-480.webp",
+      "sha256": "834b40783948d4c252bfb2096643421c2a04f023aca84c43a6577d0c063523c1"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-paper-ee83203a-1200.webp",
+      "sha256": "fd1c253d4d9adab0c5cc85190b3cf6c3b478a45c6bcc2bd48d0163924cdc1efc"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/paper-480.webp",
+      "source_path": "assets/web-artworks/the-galley-beyond-the-breakwater-paper-ee83203a-480.webp",
+      "sha256": "b2daacd516474f2c3878aa9518ecdfbaef060c37e6652a5f72941c0847360119"
+    },
+    {
+      "slug": "the-galley-beyond-the-breakwater",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-galley-beyond-the-breakwater/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-galley-beyond-the-breakwater.webp",
+      "sha256": "8765eb6438956b0c5c235f97c8affe6322a1abc493637594f1b70048f31de088"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-white-e1a2a14f-1200.webp",
+      "sha256": "b76250ebc84ee8fe9f89c78fc1141752a6d8e0ba802c61adf56c47cb2ee6d175"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-white-e1a2a14f-480.webp",
+      "sha256": "e4a6374a14ae685f1f7cd64661f2ccf5eb5bacd68200a14ee34c9a6f679578ce"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-white-cd899800-1200.webp",
+      "sha256": "05be020c31635a767869ae1bbb99484e505d632648a90c8cbfb89cf4197e970c"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-white-cd899800-480.webp",
+      "sha256": "2f9191dba7134153f652e214fcc779bcc9607d1575929537d5f75f574242a0dd"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-black-87c8a581-1200.webp",
+      "sha256": "dcdc86692e252ab2d14b86bf28bcdb385d27ba99e7389a25291b03e2a226d208"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-black-87c8a581-480.webp",
+      "sha256": "39b899ec00ebe03e39946138e1cf00317823471ca0203f9f92350f81d4536c24"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-dbda7fbd-1200.webp",
+      "sha256": "fe15a6d6312f02b0b39e9d1b63ca2c8e913eb2e6b3457e2248565569e7294fd4"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-black-dbda7fbd-480.webp",
+      "sha256": "bf83f7c08c9daf596c6ba38328861d84e8b60fc7842a75017c91c666c8c8b3aa"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-antique-gold-e9ba6d74-1200.webp",
+      "sha256": "65ed7738a90bbfb5af3ea7846a4aa1686e8e42a1da4f0db9fa5da37cdd658601"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-frame-antique-gold-e9ba6d74-480.webp",
+      "sha256": "e6d25f8c81c4f054b1d85b093f58570002c69d116a2ead5efac5ee9e6d0497bf"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-antique-gold-f4383cad-1200.webp",
+      "sha256": "8b321b57584677572e0661276d939520f42bee9c302da0653b7c1f41dd92ffe9"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-close-antique-gold-f4383cad-480.webp",
+      "sha256": "411e30243d61069b4f8f85e7c0e6c36e98e665f2fd2a9fe9fbd1b1456c96dd3d"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-paper-4f68b057-1200.webp",
+      "sha256": "fb74603969a5734d6f7315226c701d603626853636ee1db12d0f15430067c895"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/paper-480.webp",
+      "source_path": "assets/web-artworks/the-lantern-that-outlasted-the-gale-paper-4f68b057-480.webp",
+      "sha256": "b3fd28b120cdfd27f0b68a18ad8017f59e88a2cfbd0b8a0fe0c4fadd2e669e8c"
+    },
+    {
+      "slug": "the-lantern-that-outlasted-the-gale",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-lantern-that-outlasted-the-gale/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-lantern-that-outlasted-the-gale.webp",
+      "sha256": "66a421dafb3b64e7a45c5bc099d492a8ac5bb54a1016a4a6658652276b154674"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-white-e848b182-1200.webp",
+      "sha256": "0179270d0c4441489c95b032e33ef0b0aec37f7fe602eb92b5f35ffa04eed22d"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-white-e848b182-480.webp",
+      "sha256": "b3302c334ce6ca7fab445e0aa05b2dbdbbabea5f74935acd2a6421352d81478b"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-white-d6bc1287-1200.webp",
+      "sha256": "b31bc7158428090f1511c7cba6d6496b9816e26898b1186d0970dfe800a821c3"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-white-d6bc1287-480.webp",
+      "sha256": "b4430838193e80015bbf034871e0af598db84236f4202df2aa4f5264a1e524f2"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-black-fba303ba-1200.webp",
+      "sha256": "c8710e64ed106a8bf186a21deb421575703187d83258b2a25bbb2960582ba8da"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-black-fba303ba-480.webp",
+      "sha256": "609d7bcaea9655db5fd227f4da71c4a006cda37ee0292f648ab498333054bef8"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-black-424add86-1200.webp",
+      "sha256": "b692ccbecc94fbc945498bff9a658c65988c63f57a5f1c6bc9e3acaa82a59372"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-black-424add86-480.webp",
+      "sha256": "5f40746b9e2a84ee98cfabf9000483b1ccb01eb6c3cf0d68eafb4dd89d55a9c0"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-antique-gold-def7f6e9-1200.webp",
+      "sha256": "49f924bd1e7b192df2e1693a563bdb2e045dde1409a097b3e8b4e56b54cf2eec"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-frame-antique-gold-def7f6e9-480.webp",
+      "sha256": "2899696ea6d64a57ee3308dee636399aeb43050d7dda6acc3e53088e742dcbc4"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-antique-gold-8369366a-1200.webp",
+      "sha256": "9841b135d529e724e90c453b82b75e7c38c68da873b0f58188be52ff8f33ae8d"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-close-antique-gold-8369366a-480.webp",
+      "sha256": "9a7f482bf0bc85fec97d9d9980929f03688ed3ec430932b7a7a9f3d2cdb2c783"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-ship-between-two-storms/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-paper-220bf30b-1200.webp",
+      "sha256": "1e525296b67b61b5f23728833110ffb6cd519d24d6b4b7fc09101558d30e7ffa"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-ship-between-two-storms/paper-480.webp",
+      "source_path": "assets/web-artworks/the-ship-between-two-storms-paper-220bf30b-480.webp",
+      "sha256": "68ee68d2d9d54ad770b58d90be7ab3cb0c595f090e5613823ba8ac1ed343633a"
+    },
+    {
+      "slug": "the-ship-between-two-storms",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-ship-between-two-storms/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-ship-between-two-storms.webp",
+      "sha256": "fe1cbce922544a8f79203b5001aa4e3f0c4e0317c67bae8b378dec09dd735a4a"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-white-43a95a05-1200.webp",
+      "sha256": "4be3a2e03d69a9f21c1654203e687ae6fc5e16c7b73e989deaec7baa4694b4eb"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-white-43a95a05-480.webp",
+      "sha256": "58a7d931f5ab9977d15a1cf5190cca0b6d196af790dbfccc327e049c3ba336af"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-white-c7e58c72-1200.webp",
+      "sha256": "7fac9761560801c630460c0438611c8c0f333d7750ae52f1c808678b93552c1c"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-white-c7e58c72-480.webp",
+      "sha256": "e40921e8cd66291a5dbac418d2d517dbc69299623fa0e66cfa755797372e7461"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-black-8585986f-1200.webp",
+      "sha256": "7968f4f9531873b5e8022360fe81e5794923766b4c51eda4d62f8de3ce34f3e5"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-black-8585986f-480.webp",
+      "sha256": "773b60f2b67a31cff00371bfcf04883679b7887e4eb3d4a3f1ea5ee2e7ffcb17"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-6835f423-1200.webp",
+      "sha256": "679299eaeda2ad5bc8c334986b632d76f9ff307248727846824f284658bc48ef"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-black-6835f423-480.webp",
+      "sha256": "496ea90100e43ba6ba79cd0e1ae001896910f0676abb66a9b4bd21d2e23a3b6a"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-antique-gold-9382e84c-1200.webp",
+      "sha256": "0eecc2f15502a502ad8d3072d809394316310f8d338d25482c298276f721f30d"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-frame-antique-gold-9382e84c-480.webp",
+      "sha256": "97b6ccd8862868c360e2e9f8b35e381e2f7f7da9d80afe11e1fe584c14c19992"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-antique-gold-4e357671-1200.webp",
+      "sha256": "9e1bdbf475347cd5eda66e91e84f8c000d7f7c0d7fa250c34c2008a750c7b607"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-close-antique-gold-4e357671-480.webp",
+      "sha256": "41dcca0d9e7ffcdd803d655261c0df6d2c374b43f82cb2c9342dfe796a289796"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-last-mooring-in-the-mist/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-paper-9384389c-1200.webp",
+      "sha256": "52fed20027bb92a63ff84e8ba1ecf34d604a7a176390b80f9dfbf9c6b0c101b4"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-last-mooring-in-the-mist/paper-480.webp",
+      "source_path": "assets/web-artworks/the-last-mooring-in-the-mist-paper-9384389c-480.webp",
+      "sha256": "ed873b05501d2b0f266bebcbd3345f7472f707eba0e622e0ec5b808c05530a52"
+    },
+    {
+      "slug": "the-last-mooring-in-the-mist",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-last-mooring-in-the-mist/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-last-mooring-in-the-mist.webp",
+      "sha256": "641ac5d467a131358a8bab60567a76f8af998364ff6121ec73c1524bd0a9c876"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-white-86da03f8-1200.webp",
+      "sha256": "33fc81d9cd300837365f93313bb4c60aa377570f6aa91bcecdd8938139040508"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-white-86da03f8-480.webp",
+      "sha256": "1da68e0c43e0b850b217af3e3b2bae30468af147a13ef9a3dbb654e61c2a90d0"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-white-d2ef40e3-1200.webp",
+      "sha256": "663d246e033696a0eb4fa06d7eeccecab2614f6358cca9bd5bf96d5f07dc1e86"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-white-d2ef40e3-480.webp",
+      "sha256": "0735227e820fa80c478702b6335feb52f92c38fbeab4051a4531193ace339138"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-black-4a6edfa2-1200.webp",
+      "sha256": "d8d378027eeb538047b8b9121be73879b622fa777adadc357ca5905ec11beee6"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-black-4a6edfa2-480.webp",
+      "sha256": "bf8f6aba10840912e2cf4068bae0e1a53bb7ef8b4b348d906631660fc5c9d744"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-black-dfa560db-1200.webp",
+      "sha256": "b07379035005ba26723632e403dc8df08601e39903144b74b3743fa2cb114f55"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-black-dfa560db-480.webp",
+      "sha256": "81569d8b6cd0a0a969c7a1ce8ba59f63ce2e336589e77c377cd98c53be35756a"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-antique-gold-f056443b-1200.webp",
+      "sha256": "ee9a5115a8a8c8563a1c2f6f61babbdc97d1130f1490e575a72c45a95fe2ea3e"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-frame-antique-gold-f056443b-480.webp",
+      "sha256": "1db8561a294f6914f91a3f7a1186200b2dcd3152d1bea9f492e986829595ebcf"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-antique-gold-d4c7067f-1200.webp",
+      "sha256": "732df9632c13ec354fb2c59c767505ca8a5e8c0ddc91091df60ac1304fa9bd0d"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-close-antique-gold-d4c7067f-480.webp",
+      "sha256": "b1777ceb3531b649492b9634e814a0f36a6d1539e978ddf77b90bb2fddaa2511"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-paper-0b15f849-1200.webp",
+      "sha256": "3b0d1ad6a45d845eaaa4d04506575ea74492450397ba3a4be1abfd8c1afb38e8"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/paper-480.webp",
+      "source_path": "assets/web-artworks/the-ship-behind-the-fog-bell-paper-0b15f849-480.webp",
+      "sha256": "80dcf9e3ef66c6e9037ffdcdef871539a31d37db54f2b6c21c4a9ae5cf87f0b6"
+    },
+    {
+      "slug": "the-ship-behind-the-fog-bell",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-ship-behind-the-fog-bell/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-ship-behind-the-fog-bell.webp",
+      "sha256": "4fc40946d354cd99a5080d5d9a2246ea3ea13a0af96a9007f2bbe359d6443fba"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-white-d8e88a99-1200.webp",
+      "sha256": "cbf21a0cc16201a1f4e3686c7ad4684c1bfe575babf30e02255bab09b44cd989"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-white-d8e88a99-480.webp",
+      "sha256": "20032dbdc54daed336855232829c6f0d7457cee742da00df1adf6485ce3ab067"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-white-bbe04600-1200.webp",
+      "sha256": "5ea95885ad02eba18850581b787c2826923841f1e60ea22e3c6ef0a7f838ba42"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-white-bbe04600-480.webp",
+      "sha256": "8c58b06e53ec32bfbfd100e05e1030b9a19b2c77ddacc59b2a4c8a122ea9a54b"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-black-9269e6ff-1200.webp",
+      "sha256": "12f86c65df066655a6060979f41d434409f0444472257af19e04b53f10b3f779"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-black-9269e6ff-480.webp",
+      "sha256": "36b67f3bc139fb8b0d23fd59b2349b87aa087204f80fcbf580b312cd1fbc1f46"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-black-eb3bba60-1200.webp",
+      "sha256": "5d95c9f9ab6eab67eaca443588c5f70ac247bb28d6b98fd05e7d0aa68cbe933d"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-black-eb3bba60-480.webp",
+      "sha256": "3e3c2752a5cf8e8fa3b330f50d64b9c08602841566fd0b4a880ac0be5968c824"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-antique-gold-38089211-1200.webp",
+      "sha256": "19a61744fdb55ba734f57cb3d1444a6dc189b5d16d1110934048dead30c7952f"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-frame-antique-gold-38089211-480.webp",
+      "sha256": "25a9f6dc5ffa30a3e8c27753652b0d8d273573b52322f873e2939bcaf3e82552"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-antique-gold-4c0e777e-1200.webp",
+      "sha256": "d1813d7c97aa3f45dfcf9d077160fa9016cd594d7857cbc272d2d14fc1bcc1fa"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-close-antique-gold-4c0e777e-480.webp",
+      "sha256": "5f2f75040ce7da537f950c3d369842225fc7b017faac5a3a1efe1b84145d9da5"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-shipyard-at-low-tide/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-paper-5e16dd0d-1200.webp",
+      "sha256": "3e49576c8f569b2a79f7deb33f43f2022ff353d3cf2b6d057412ebb396b7b6de"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-shipyard-at-low-tide/paper-480.webp",
+      "source_path": "assets/web-artworks/the-shipyard-at-low-tide-paper-5e16dd0d-480.webp",
+      "sha256": "1c7520d223168e261a4508f20e220cbbd51abc4701c3ce712f040c878467cac0"
+    },
+    {
+      "slug": "the-shipyard-at-low-tide",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-shipyard-at-low-tide/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-shipyard-at-low-tide.webp",
+      "sha256": "73f619638b0fd4002aeb3e75dbdaa91a4fc4dd30985d928d4b5ac4530d5893be"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-white-c7597093-1200.webp",
+      "sha256": "a23738db1e9bfaceb9a7d050814400edfece6a9e8ac660548a45c5cc2ffea6e2"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-white-c7597093-480.webp",
+      "sha256": "929c6f4dda3aa82185ae2cadb78b02e0cfb83e93b5d9374330d715775ae919eb"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-white-6394d986-1200.webp",
+      "sha256": "243c17fe5888b854bb920d16efcec35d681a58ac628e65468d5bb58bb173ebe4"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-white-6394d986-480.webp",
+      "sha256": "b7f627eabf4c8df06eda0c7b4bba81152565c109a781ae214f690e93484da195"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-black-c82fb1d6-1200.webp",
+      "sha256": "2366e9396036549eb2e10ded3b68e378b018fa421e117b77032c5b83fdfc8830"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-black-c82fb1d6-480.webp",
+      "sha256": "7e57a20cfb45a67d2ee5de442f33b5552f31dafcdaa75601c605e75efba5f25f"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-black-ce784207-1200.webp",
+      "sha256": "4ce7b8a6d477508dadbf4b22cd692b6351ba94ee803f2fb0f78b19c7d74de402"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-black-ce784207-480.webp",
+      "sha256": "dc14845a2ed9f13a413077d516db9a6f93846ce63d9d1a91416ddc2998007e4f"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-antique-gold-10731466-1200.webp",
+      "sha256": "f79ff87880ae878eb9774ebfeb4db8eb3bf046ad90381e9aae4b00308e026f51"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-frame-antique-gold-10731466-480.webp",
+      "sha256": "afee2a1357c9f26a9dfd061b225b7d840ae202dbec8bca0c1b046f54fb834993"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-antique-gold-0342e440-1200.webp",
+      "sha256": "f5d1fa9f7650b1f839cac3e144b265438426ea50621b3cbd38e48ec7c49727ed"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-close-antique-gold-0342e440-480.webp",
+      "sha256": "7ed55e5a0a6fa7ab322205a6877d358c8724677084239736acf7d2c9526e37e7"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-paper-87c54942-1200.webp",
+      "sha256": "feaf29ebdaa29996c8630442307d2ef5911304bd50046ceee03db4ee56093f6b"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/paper-480.webp",
+      "source_path": "assets/web-artworks/the-clipper-in-a-grain-wind-paper-87c54942-480.webp",
+      "sha256": "680a7633fe21fdb4c04e695e72139111e6a6d3ec982b3b5dc2e38a42afd45ea2"
+    },
+    {
+      "slug": "the-clipper-in-a-grain-wind",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-clipper-in-a-grain-wind/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-clipper-in-a-grain-wind.webp",
+      "sha256": "994e6a3b647b4ef6d542f754cb98f7dcda8102a1cbe6e578b5ee0b0be9c6a487"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-white-4949101c-1200.webp",
+      "sha256": "e75d9eff3eef1c109869750fa639baf444a36d06b42053017ee1fe912e28dc7e"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-white-4949101c-480.webp",
+      "sha256": "09bf443a7dd915f45d22b5fa86b177c9608ee810108bf97dae2742a72afc2c95"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-white-acf4967b-1200.webp",
+      "sha256": "c9d99d219ba22dfd5ddc524edb2ac586745b8b5d582705f6065a99b0c3098b5e"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-white-acf4967b-480.webp",
+      "sha256": "1fa679d8915f970d9e7fce4dae7d99f5e9a0ca66b11ddc25fb6244e1ef760caf"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-black-ee535189-1200.webp",
+      "sha256": "c9a279778c2b30e015a39fd133e904f3350b1dc949a9930ec2bcf44fd530ab21"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-black-ee535189-480.webp",
+      "sha256": "5dac79b5408b3efa344f5b1bd894144b1f565b02431e8911ed3f7f05a05fee63"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-black-785a6c06-1200.webp",
+      "sha256": "434131550c1960c51bca939ff22fae694d2f575482ece389febd50c5fa056d2f"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-black-785a6c06-480.webp",
+      "sha256": "ef434f5b585f031f8bb6302c7be8b4da1bdc70e2fcc5945bdc7dcf89b7c72b74"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-antique-gold-5fb3ab17-1200.webp",
+      "sha256": "1f69a43c49624dac23d71bb959a2d916ddce8a9aa8b085915b199201d7ec4b06"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-frame-antique-gold-5fb3ab17-480.webp",
+      "sha256": "16c489852d892f7b3652f0b0618ab39173a5774f5fd6d6ab568fa0a90aa92c87"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-92d86f31-1200.webp",
+      "sha256": "cee77279aba32d0464a7151c825d5f6b4e17a9601ab238fb607004e52c779ce7"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-close-antique-gold-92d86f31-480.webp",
+      "sha256": "095aedd292fcf052075e75af7de9cad874f0604a4aa4f27fd3da02246153d752"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-paper-166ebf9c-1200.webp",
+      "sha256": "85a746943adda530e2f6f7993513362fc7defe28d6816048dac754bffdde6b7b"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/paper-480.webp",
+      "source_path": "assets/web-artworks/the-copper-citadel-at-the-sea-gate-paper-166ebf9c-480.webp",
+      "sha256": "0d5012dee71b7224d39452af3fdaf8cb834874cfef23e2c506d7847eabae5f2b"
+    },
+    {
+      "slug": "the-copper-citadel-at-the-sea-gate",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-copper-citadel-at-the-sea-gate/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-copper-citadel-at-the-sea-gate.webp",
+      "sha256": "14ccb258effb0063f18bad95b48d718ba37318b8d9a928d9ccf1ed5609cc2e9f"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-white",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-white-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-white-05808d49-1200.webp",
+      "sha256": "84793060b20008451506a85b64ed8ce585920acc68c17a287d92214cc0512e79"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-white",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-white-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-white-05808d49-480.webp",
+      "sha256": "bb1379939057fb00760b24fc6c486416c4280b9725c71659e17415923ac26d7a"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-white",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-white-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-white-b0874470-1200.webp",
+      "sha256": "12a2dd1c5946faab48b76f484b2cce51a981fbc5f4fa780ad254514ad85fdd7f"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-white",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-white-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-white-b0874470-480.webp",
+      "sha256": "ecba34d1b53d62b9bdc12286ca98aebc4deab7c50ef733bcf85d37b9cc62e4f9"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-black",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-black-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-black-25cf83f9-1200.webp",
+      "sha256": "3af2a779f9474f1185d7d14ea351d63175f24ff2adbcede43e2d82ec03072a7c"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-black",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-black-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-black-25cf83f9-480.webp",
+      "sha256": "f28a6d96756d917dd14c08a4c80a86a3b896944750de78b2b6d31d84dd157e54"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-black",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-black-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-black-e1fee2ae-1200.webp",
+      "sha256": "eab96419301a6bf41d228552e236608d38b760366d8863caeccc93b72c4a6346"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-black",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-black-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-black-e1fee2ae-480.webp",
+      "sha256": "ced292f6c339725ae53f4191a33cf698d3c50930cc63c5024188a18552497e9c"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-antique-gold-4a44a026-1200.webp",
+      "sha256": "6af918e0ac35cfa80a325fc051559d377231e1b3cf3d74bbab59e47388ee119a"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "frame-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/frame-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-frame-antique-gold-4a44a026-480.webp",
+      "sha256": "91c92aadf76e071ca38c1de29c626800a3ea555d0923eec8f29834ab645a66e7"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-antique-gold",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-antique-gold-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-antique-gold-91ae1cd9-1200.webp",
+      "sha256": "5d2a2b32a2672ce00175253ff74214fc7f08ebcd2b7a25ebff8c46db59d5eadf"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "close-antique-gold",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/close-antique-gold-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-close-antique-gold-91ae1cd9-480.webp",
+      "sha256": "c5605c4b2255d6e2e430c0c6d42cee6bfbd84523c585d48261021c2235ffa735"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "paper",
+      "size": "1200",
+      "object_path": "artworks/the-palace-above-the-dry-dock/paper-1200.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-paper-ee33a1c7-1200.webp",
+      "sha256": "32879096b18c31b63bca7e55c5ae1bc30334145bf4386fb5080e22272d5aa576"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "paper",
+      "size": "480",
+      "object_path": "artworks/the-palace-above-the-dry-dock/paper-480.webp",
+      "source_path": "assets/web-artworks/the-palace-above-the-dry-dock-paper-ee33a1c7-480.webp",
+      "sha256": "ec5ea8ba8881eec53be2584a67346ebc3f6f5174f8e0e823a77a10e0e739c8ce"
+    },
+    {
+      "slug": "the-palace-above-the-dry-dock",
+      "slot": "artwork",
+      "size": "full",
+      "object_path": "artworks/the-palace-above-the-dry-dock/artwork-full.webp",
+      "source_path": "assets/artwork-originals/the-palace-above-the-dry-dock.webp",
+      "sha256": "026b09a13af18b8393e7b3f1fe27a4e997027d1745cfdccb567b6122f09638f5"
+    }
+  ]
+}

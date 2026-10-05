@@ -131,7 +131,10 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
         headers: { "content-type": "application/json" },
         body:
           method === "POST"
-            ? JSON.stringify({ action: "read", marker: "s0-2-proof:smokecheck" })
+            ? JSON.stringify({
+                action: "read",
+                marker: "s0-2-proof:smokecheck",
+              })
             : undefined,
       });
       expect(response.status, `${method} /api/setup-proof`).toBe(404);
