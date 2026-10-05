@@ -74,6 +74,8 @@ Under a recorded Profile B exception, the agent may perform only necessary read-
 
 `read_only=true` is a technical guardrail, not permission to read everything.
 
+**S1.1 Gate 0 review of the Profile B exception (2026-10-05, requested by the S1.1 cloud build leg — `PROJECT-STATUS.md` §5 #5, D-40):** `0002_orders` introduces the first PII-capable tables (`customers_contact`, `addresses`, the orders that reference them). The `supabase-prod-readonly` entry stays only if the owner re-approves it in writing with a data classification and scope; otherwise the owner removes it from `.mcp.json`. Until decided: the connection is used for nothing beyond the S0.2-approved verification SQL, the S1.1 PROD verification (the change records' read-only blocks and the P8 comparison) is the owner's in the PROD SQL editor, and no agent reads a PII table on PROD under any outcome — schema-level and aggregate statements only, as §4 requires. The cloud session itself used no database connection (`CLOUD.md` §4.4).
+
 ## 5. Standard database-change loop
 
 1. **Confirm environment.** State the MCP server name and verify its project ref.
