@@ -1144,7 +1144,7 @@ describe("fixture skeleton guards (D-22)", () => {
 
   it("allows only the three S0.2 namespaces", () => {
     expect(
-      ["fixture:", "integration:", "s0-2-proof:"].every(isAllowedNamespace),
+      ["fixture:", "integration:"].every(isAllowedNamespace),
     ).toBe(true);
     expect(
       ["public:", "", "fixture", "orders:", "%"].some(isAllowedNamespace),

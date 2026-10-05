@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // @ts-check
 /**
- * `pnpm db:test:reset` — the D-22 TEST reset skeleton. It deletes only SYNTHETIC `system_checks` rows whose
- * key starts with one allowed fixture namespace (default `fixture:`; `--namespace=integration:` or
- * `--namespace=s0-2-proof:` clears residuals of an interrupted run; `--scope=<run>` narrows further).
+ * `pnpm db:test:reset` — the D-22 TEST reset. It deletes only SYNTHETIC `system_checks` rows whose
+ * key starts with one allowed fixture namespace (default `fixture:`; `--namespace=integration:` clears
+ * residuals of an interrupted run; `--scope=<run>` narrows further; the S0.2 `s0-2-proof:` namespace was
+ * retired by S1.1 with its route), or — `--namespace=catalogue:` — the S1.1 catalogue fixture rows that
+ * the seed plan positively identifies and that no order references (./lib/catalogue.mjs).
  * Never a whole-database reset, schema drop, truncate, broad delete, auth-user deletion or customer seed.
  * Dry run by default; `--apply` performs the delete after a fresh TEST preflight.
  */

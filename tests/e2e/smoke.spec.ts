@@ -4,10 +4,10 @@ import { expect, test } from "./harness/fixtures";
 /**
  * The S0.2 smoke (docs/ROADMAP.md S0.2 acceptance): the deployed candidate serves the NS-17 holding page
  * through the application (not Vercel's login), with no runtime or console error and no horizontal
- * overflow, the seven headers and read-only health on every response, the S0.1 diagnostic route gone and
- * the proof route denied — on the desktop and mobile-390 projects. It performs no write: the bounded
- * Preview write is the separate `pnpm test:preview-proof` command. Direct HTTP checks go through Node
- * `fetch` (tests/e2e/harness/bypass.ts), never through Playwright's request context with the secret.
+ * overflow, the seven headers and read-only health on every response, the S0.1 diagnostic route and the
+ * S0.2 proof route gone (both retired, the latter by S1.1) — on the desktop and mobile-390 projects. It
+ * performs no write. Direct HTTP checks go through Node `fetch` (tests/e2e/harness/bypass.ts), never
+ * through Playwright's request context with the secret.
  */
 
 const HOLDING_LINE =
@@ -122,17 +122,22 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
     }
   });
 
-  test("POST /api/setup-proof denies an unauthenticated call before any I/O", async ({
+  test("the S0.2 proof route is gone (retired by S1.1): GET and POST both 404", async ({
     target,
   }) => {
-    const response = await exactRequest(target, "/api/setup-proof", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "read", marker: "s0-2-proof:smokecheck" }),
-    });
-    expect(response.status).toBe(404);
-    expect(JSON.parse(response.body)).toEqual({ status: "not_found" });
-    expect(response.headers["cache-control"]).toBe("no-store");
+    for (const method of ["POST", "GET"]) {
+      const response = await exactRequest(target, "/api/setup-proof", {
+        method,
+        headers: { "content-type": "application/json" },
+        body:
+          method === "POST"
+            ? JSON.stringify({ action: "read", marker: "s0-2-proof:smokecheck" })
+            : undefined,
+      });
+      expect(response.status, `${method} /api/setup-proof`).toBe(404);
+      // A removed route answers with the framework's 404, never the route's old JSON shape.
+      expect(response.body).not.toContain('"status":"not_found"');
+    }
   });
 
   test("without the bypass the deployment stays protected (local mode: the bare origin answers directly)", async ({

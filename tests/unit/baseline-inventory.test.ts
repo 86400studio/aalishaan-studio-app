@@ -261,7 +261,6 @@ describe("package.json — the S0.2 script contract", () => {
       "test:integration": "vitest run --config vitest.integration.config.ts",
       test: "pnpm run test:unit && pnpm run test:integration",
       "test:e2e": "playwright test",
-      "test:preview-proof": "node scripts/testing/preview-proof.mjs",
       "db:test:preflight": "node scripts/testing/preflight.mjs",
       "db:test:seed": "node scripts/testing/seed.mjs",
       "db:test:reset": "node scripts/testing/reset.mjs",

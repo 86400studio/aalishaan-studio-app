@@ -2,17 +2,20 @@
 /**
  * The D-22 TEST fixture skeleton (docs/PROJECT-STATUS.md §8a D-22, §8c): one namespaced synthetic
  * `system_checks` row to seed, and a reset that removes only synthetic rows inside an allowed namespace
- * (optionally narrowed to one run). No product table exists yet — S1.1 extends this. Nothing here can
- * drop, truncate, reset a database, delete auth users or touch a row outside its namespace.
+ * (optionally narrowed to one run). The catalogue fixtures of S1.1 live in ./catalogue.mjs. Nothing here
+ * can drop, truncate, reset a database, delete auth users or touch a row outside its namespace.
+ *
+ * S1.1 retired the S0.2 proof namespace `s0-2-proof:` together with the Preview-only proof route and
+ * `pnpm test:preview-proof`: every proof marker was cleaned up by its own run (the S0.2 record and
+ * ENVIRONMENT-PARITY.md §12 — zero residual rows at the reviewed head and on PROD), so the reset no longer
+ * accepts that namespace; a stray row with that prefix would be an anomaly to investigate, not to delete.
  */
 
 export const FIXTURE_NAMESPACE = "fixture:";
 export const INTEGRATION_NAMESPACE = "integration:";
-export const PROOF_NAMESPACE = "s0-2-proof:";
 export const ALLOWED_NAMESPACES = Object.freeze([
   FIXTURE_NAMESPACE,
   INTEGRATION_NAMESPACE,
-  PROOF_NAMESPACE,
 ]);
 
 /** A run scope narrows a reset to `<namespace><scope>…`; only these characters are allowed. */
