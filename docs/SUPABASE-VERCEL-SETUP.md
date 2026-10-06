@@ -92,7 +92,7 @@ Why this matters: RLS is the last line of defense when application code gets a c
 | `NEXT_PUBLIC_SITE_URL` | *(never write here)* | `https://[DOMAIN]` | Preview origin (or unset) | Public |
 | `SUPABASE_SECRET_KEY` *(only if truly needed)* | *(never write here)* | PROD secret | TEST secret | Server-only, Sensitive |
 | `SUPABASE_TEST_PROJECT_REF` / `SUPABASE_PROD_PROJECT_REF` (S0.2) | *(the two refs — non-secret identifiers, recorded by name in `PROJECT-STATUS.md` §9)* | both refs | both refs | Server-only configuration |
-| ~~`S0_2_PROOF_TOKEN`~~ (S0.2 only; **removed by S1.1 on 2026-10-05** — the owner deletes the Preview entry, `PROJECT-STATUS.md` §5 #7) | *(never write here)* | **absent** | ~~Preview only (not Development)~~ — none | ~~Server-only, Sensitive~~ — retired |
+| ~~`S0_2_PROOF_TOKEN`~~ (S0.2 only; **removed by S1.1 on 2026-10-05** — the owner deleted the Preview entry on 2026-10-02, confirmed 2026-10-06, `PROJECT-STATUS.md` §5 #7) | *(never write here)* | **absent** | ~~Preview only (not Development)~~ — none | ~~Server-only, Sensitive~~ — retired |
 
 ⚠️ **The Value column stays blank forever.** Real values live only in an ignored local env file and the Vercel dashboard. Agents do not open or copy them. Never fill values into this or any committed file.
 
