@@ -29,22 +29,28 @@ dashboard SQL editor runs a pasted script as one implicit transaction too, but i
 ## Commands (names only — the CLI prompts for or reads secrets itself; never paste one)
 
 Authentication: `pnpm exec supabase login` once (browser flow; the access token goes to the OS credential
-store) or `SUPABASE_ACCESS_TOKEN` in the trusted process. The database password is prompted for by
-`link`/`push` and saved in the OS credential store, or supplied through `SUPABASE_DB_PASSWORD`.
+store) or `SUPABASE_ACCESS_TOKEN` in the trusted process. At 2.118.0 `link` neither asks for nor stores a
+database password; `migration list`, `db push` and `migration repair` take one only from `--password` or
+`SUPABASE_DB_PASSWORD`, and without one they sign in with the access token and create a temporary login role
+on the project named on the command ("Initialising login role…"). **The token is account-wide, so the project
+ref on each command is the only thing that separates TEST from PROD** (S1.1, 2026-10-06 — the 0001 record).
 
 ```bash
 pnpm exec supabase --version                                  # 2.118.0
-pnpm exec supabase link --project-ref <TEST_REF>              # once per machine; writes supabase/.temp/
-pnpm exec supabase migration list --linked                    # local files vs the remote ledger
-pnpm exec supabase db push --linked --dry-run                 # prints what would be applied; applies nothing
-pnpm exec supabase db push --linked                           # TEST apply — only under the owner's explicit authorisation
+pnpm exec supabase link --project-ref <TEST_REF>              # once per checkout, by the owner in their own terminal; writes supabase/.temp/project-ref
+cat supabase/.temp/project-ref                                # read the link back: it must print the TEST ref
+pnpm exec supabase migration list --project-ref <TEST_REF>    # local files vs the remote ledger
+pnpm exec supabase db push --project-ref <TEST_REF> --dry-run # prints what would be applied; applies nothing
+pnpm exec supabase db push --project-ref <TEST_REF> --yes     # TEST apply — only under the owner's explicit authorisation (--yes: the builder's process has no terminal)
 pnpm exec supabase db dump --linked --schema public -f <scratch>/test-schema.sql   # read-only schema capture for P8
 ```
 
-`--project-ref <REF>` on `db push` / `migration list` targets a project without re-linking; the human PROD
-procedure uses it explicitly (`docs/database-changes/S0.2-0000-init.md`). Never run `db reset` against a
-linked remote project, never `--include-seed` (seeding is disabled in `config.toml` as well), never a down
-file through `db push`.
+Name the project on every command that reaches a database (S1.1, 2026-10-06): `--project-ref <REF>` is
+accepted by `db push`, `migration list` and `migration repair` at 2.118.0 and outranks the link file, and
+neither the dry run nor the push prints which project it reaches. A fresh clone is not linked — `--linked`
+then fails, or follows a stray `SUPABASE_PROJECT_ID`. The human PROD procedure uses the PROD ref the same
+way (`docs/database-changes/S0.2-0000-init.md`). Never run `db reset` against a remote project, never
+`--include-seed` (seeding is disabled in `config.toml` as well), never a down file through `db push`.
 
 ## S1.1 data tools (TEST only — every one a dry run without `--apply`)
 
@@ -59,8 +65,13 @@ pnpm db:test:reset                                             # the S0.2 form: 
 
 ## Recovery
 
-Prefer forward fixes: every planned migration is additive. When a schema rollback is unavoidable, a human
-runs the paired `rollbacks/*.down.sql` by hand after the checks in the change record, on TEST first (for S1.1,
-`0002_orders.down.sql` before `0001_catalogue.down.sql` — `order_items` references the catalogue), then
-records the reversal in the ledger with `supabase migration repair --status reverted <version>`. Host
-rollback (Vercel Instant Rollback) never touches the database.
+Prefer forward fixes: every planned migration is additive. When a schema rollback is unavoidable, the paired
+`rollbacks/*.down.sql` is run by hand after the checks in the change record, on TEST first (for S1.1,
+`0002_orders.down.sql` before `0001_catalogue.down.sql` — `order_items` references the catalogue), and the
+reversal is then recorded in the ledger with `supabase migration repair --status reverted <version>
+--project-ref <REF>`. Who may run a down file and through which channel is stated once, in
+`docs/database-changes/S1.1-0001-catalogue.md` → "Rollback rehearsal": on TEST the owner, or the builder
+under the owner's written authorisation naming the files and the project; on PROD the human owner only.
+The 0001 down file leaves the `catalogue-public` bucket and its objects in place — Storage refuses a SQL
+delete on its tables and one would orphan the files; remove them through the Storage API (the dashboard) if
+they must go. Host rollback (Vercel Instant Rollback) never touches the database.
