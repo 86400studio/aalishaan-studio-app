@@ -13,7 +13,11 @@ import {
   splitVariantCode,
   variantCodeSchema,
 } from "@/lib/schemas/catalogue";
-import { nullablePaiseSchema, paiseSchema } from "@/lib/schemas/money";
+import {
+  nullablePaiseSchema,
+  paiseSchema,
+  positivePaiseSchema,
+} from "@/lib/schemas/money";
 import {
   ORDER_ITEM_STAGES,
   addressInputSchema,
@@ -21,6 +25,7 @@ import {
   confirmationTokenHashSchema,
   customerContactInputSchema,
   emailSchema,
+  orderItemInputSchema,
   orderNumberSchema,
   orderTotalsSchema,
   pendingWorkInputSchema,
@@ -42,7 +47,6 @@ function sampleRow(): Record<string, unknown> {
   return {
     slug,
     title: "The Bridge of Blue Stone",
-    full_title: "The Bridge of Blue Stone · Blue-Gold Landscape Artwork",
     hook: "A blue bridge crosses a river of real gold.",
     description: "A blue bridge crosses a river of evening gold.",
     collection_slug: "painted-in-gold",
@@ -123,6 +127,16 @@ describe("money schemas", () => {
       expect(paiseSchema.safeParse(bad).success, String(bad)).toBe(false);
     expect(nullablePaiseSchema.parse(null)).toBeNull();
     expect(nullablePaiseSchema.parse("7")).toBe(B(7));
+  });
+
+  it("positivePaiseSchema is the same boundary and refuses zero, as the price columns do", () => {
+    expect(paiseSchema.parse(0)).toBe(B(0));
+    expect(positivePaiseSchema.parse("1900000")).toBe(B(1900000));
+    expect(positivePaiseSchema.parse(1)).toBe(B(1));
+    for (const bad of [0, "0", B(0), -1, 1.5, "100000000001"])
+      expect(positivePaiseSchema.safeParse(bad).success, String(bad)).toBe(
+        false,
+      );
   });
 });
 
@@ -226,6 +240,12 @@ describe("catalogue schemas", () => {
     expect(
       publicCatalogueRowSchema.safeParse({ ...row, variants }).success,
     ).toBe(false);
+    const free = (row.variants as Array<Record<string, unknown>>).map((v, i) =>
+      i === 0 ? { ...v, price_paise: 0 } : v,
+    );
+    expect(
+      publicCatalogueRowSchema.safeParse({ ...row, variants: free }).success,
+    ).toBe(false);
   });
 });
 
@@ -251,6 +271,37 @@ describe("order schemas", () => {
     expect(ORDER_ITEM_STAGES).toHaveLength(11);
     expect(ORDER_ITEM_STAGES[0]).toBe("Pending payment");
     expect(ORDER_ITEM_STAGES[10]).toBe("Delivered");
+  });
+
+  it("refuses an over-long email at the length cap, before the pattern runs", () => {
+    // Without the aborting cap the pattern still ran on this value and took seconds (quadratic backtracking);
+    // a single "too_big" issue, with no "invalid_format" beside it, is the proof that it no longer runs.
+    const hostile = `a@${".".repeat(100_000)} `;
+    const result = emailSchema.safeParse(hostile);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.map((issue) => issue.code)).toEqual([
+        "too_big",
+      ]);
+    const malformed = emailSchema.safeParse("not-an-email");
+    expect(malformed.success).toBe(false);
+    if (!malformed.success)
+      expect(malformed.error.issues.map((issue) => issue.code)).toEqual([
+        "invalid_format",
+      ]);
+  });
+
+  it("refuses a zero unit price on an order line, as order_items does", () => {
+    const line = {
+      variant_code: "the-bridge-of-blue-stone:white",
+      finish_code: "white",
+      quantity: 2,
+      unit_price_paise: 1900000,
+    };
+    expect(orderItemInputSchema.parse(line).unit_price_paise).toBe(B(1900000));
+    expect(
+      orderItemInputSchema.safeParse({ ...line, unit_price_paise: 0 }).success,
+    ).toBe(false);
   });
 
   it("applies the checkout's contact rules", () => {

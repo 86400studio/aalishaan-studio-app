@@ -106,6 +106,24 @@ describe("the publishable key cannot write or list", () => {
 
   it("delete and update of a known object are denied and the object still resolves", async () => {
     const target = SAMPLE[0].object_path;
+    const dir = target.slice(0, target.lastIndexOf("/"));
+    const name = target.slice(target.lastIndexOf("/") + 1);
+    // The stored object as the server sees it — the public URL below can be answered from a cache.
+    const stored = async () => {
+      const listing = await privileged.storage
+        .from(BUCKET)
+        .list(dir, { search: name, limit: 5 });
+      expect(listing.error).toBeNull();
+      const object = (listing.data ?? []).find((o) => o.name === name);
+      expect(object, `${target} is stored`).toBeDefined();
+      return {
+        id: object?.id,
+        updated_at: object?.updated_at,
+        eTag: object?.metadata?.eTag,
+        size: object?.metadata?.size,
+      };
+    };
+    const before = await stored();
     const remove = await anon.storage.from(BUCKET).remove([target]);
     // The Storage API answers a denied delete with an error or with an empty result; the object must remain either way.
     if (!remove.error) expect(remove.data ?? []).toEqual([]);
@@ -113,6 +131,7 @@ describe("the publishable key cannot write or list", () => {
       .from(BUCKET)
       .update(target, webp, { contentType: "image/webp" });
     expect(update.error).not.toBeNull();
+    expect(await stored()).toEqual(before);
     const { data } = anon.storage.from(BUCKET).getPublicUrl(target);
     const response = await fetch(data.publicUrl, { redirect: "manual" });
     expect(response.status).toBe(200);

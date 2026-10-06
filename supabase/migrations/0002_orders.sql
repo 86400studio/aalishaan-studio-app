@@ -12,8 +12,12 @@
 --   * money: integer bigint paise, INR only; total_paise = subtotal + coalesce(shipping) + coalesce(tax) —
 --     shipping and tax stay NULL until the owner supplies them (OI-02, OI-03), never zero or a guess;
 --   * numbering (D-09): orders.order_number = 'AS-' || n from a locked transactional counter row, assigned by
---     a BEFORE INSERT trigger — never by the caller, never by a sequence (a rolled-back insert consumes no
---     number); the counter starts at 1001; no anonymous allocation path exists;
+--     a BEFORE INSERT trigger — never by the caller of an order insert, never by a sequence (a rolled-back
+--     insert consumes no number); the counter starts at 1001; no anonymous allocation path exists. Two limits,
+--     both rules for the server code rather than database guards: orders are written with a plain INSERT only
+--     (a row absorbed by ON CONFLICT has already taken a number), and the server role holds UPDATE on the
+--     counter and EXECUTE on next_order_number() only because the trigger runs as the inserting role — nothing
+--     but the order insert may use them;
 --   * the confirmation token (D-09): orders.confirmation_token_hash is the lower-case hex SHA-256 of an opaque
 --     token of at least 256 random bits that S1.6 issues and S1.7's /order/[token] verifies; the raw token is
 --     never stored or logged; the column is NULL until issued and unique when present;
@@ -102,7 +106,7 @@ create table public.business_rules (
   -- A closed store always carries its reason; an open one never does (D-37: prelaunch until S3.4, capacity for the S2.21 pause).
   constraint business_rules_sales_open_reason_consistent check (sales_open = (sales_open_reason is null)),
   constraint business_rules_expiry_bounded check (pending_order_expiry_minutes between 1 and 1440),
-  constraint business_rules_shipping_paise_nonnegative check (shipping_paise is null or shipping_paise >= 0),
+  constraint business_rules_shipping_paise_bounded check (shipping_paise is null or (shipping_paise >= 0 and shipping_paise <= 100000000000)),
   constraint business_rules_tax_treatment_allowed check (tax_treatment is null or tax_treatment in ('inclusive', 'exclusive')),
   constraint business_rules_note_length check (note is null or char_length(note) <= 500)
 );
@@ -210,7 +214,9 @@ create trigger addresses_append_only
 -- (5) the numbering counter and orders ----------------------------------------------------------------------------
 
 -- One locked row; UPDATE … RETURNING inside the inserting transaction serialises concurrent orders and rolls
--- back with an aborted insert, so numbers are unique and gapless. Not a sequence (nextval never rolls back).
+-- back with an aborted insert, so numbers are unique and gapless for plain inserts (an INSERT … ON CONFLICT
+-- that absorbs a row has already taken its number: orders are never upserted). Not a sequence (nextval never
+-- rolls back).
 create table public.order_number_counter (
   id         boolean not null default true,
   next_value bigint  not null,
@@ -222,7 +228,7 @@ create table public.order_number_counter (
 insert into public.order_number_counter (id, next_value) values (true, 1001);
 
 comment on table public.order_number_counter is
-  'S1.1: the singleton counter behind next_order_number() — the next AS-#### number to issue (D-09: gapless from AS-1001). Private; service_role may only read and update it through the order insert.';
+  'S1.1: the singleton counter behind next_order_number() — the next AS-#### number to issue (D-09: gapless from AS-1001). Private to anon and authenticated. The server role holds SELECT and UPDATE because the order insert trigger runs as the inserting role; by rule nothing but the order insert uses them (a rule for the server code, not a database guard).';
 
 create or replace function public.next_order_number()
 returns text
@@ -394,6 +400,8 @@ create table public.order_items (
   -- The storefront's quantity cap (locked-facts §6: 1–99 per artwork and finish line).
   constraint order_items_quantity_bounded check (quantity between 1 and 99),
   constraint order_items_unit_price_paise_positive check (unit_price_paise > 0 and unit_price_paise <= 100000000000),
+  -- The generated line total carries the same bound as every other money column (it could otherwise reach 99 times it).
+  constraint order_items_line_total_paise_bounded check (unit_price_paise * quantity <= 100000000000),
   -- The eleven Admin order stages, 0 Pending payment … 10 Delivered (locked-facts §9).
   constraint order_items_stage_bounded check (stage between 0 and 10)
 );

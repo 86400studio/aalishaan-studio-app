@@ -1,15 +1,18 @@
 -- 0002_orders.down.sql — the schema-recovery artifact paired with supabase/migrations/0002_orders.sql (S1.1).
 --
 -- This file lives outside supabase/migrations/ on purpose: `supabase db push` discovers only that folder, so
--- forward discovery can never run it. It is a plan, not permission: it is executed only by a human, after the
--- checks in docs/database-changes/S1.1-0002-orders.md → "Rollback plan", and only when forward-fixing the
--- additive order schema is not possible. It DELETES every order, item, snapshot, payment attempt, provider
--- event, unit of pending work, history row, audit row, policy version, rule version, address, contact and
--- staff profile and cannot restore them — down-SQL reverses schema, never data; once real orders exist this
--- file is never run (the rollback plan prefers the forward fix).
+-- forward discovery can never run it. It is a plan, not permission: it is run only on a written authorisation
+-- that names this file and the project, after the checks in docs/database-changes/S1.1-0002-orders.md →
+-- "Rollback plan", and only when forward-fixing the additive order schema is not possible — on TEST by the
+-- owner in the SQL editor or by the builder under the owner's scoped delegation
+-- (docs/database-changes/S1.1-0001-catalogue.md → "Rollback rehearsal"), on PROD by the human owner only.
+-- It DELETES every order, item, snapshot, payment attempt, provider event, unit of pending work, history row,
+-- audit row, policy version, rule version, address, contact and staff profile and cannot restore them —
+-- down-SQL reverses schema, never data; once real orders exist this file is never run (the rollback plan
+-- prefers the forward fix).
 --
--- Reverse order of the forward file. The migration-ledger row is not touched here; the human records the
--- reversal afterwards with `supabase migration repair --status reverted 0002` against the same project.
+-- Reverse order of the forward file. The migration-ledger row is not touched here; the reversal is recorded
+-- afterwards with `supabase migration repair --status reverted 0002 --project-ref <REF>` for the same project.
 
 drop trigger if exists audit_log_insert_only on public.audit_log;
 drop trigger if exists work_history_append_only on public.work_history;

@@ -60,7 +60,7 @@ describe("parsePaise — the lossless database/JSON boundary", () => {
   });
 });
 
-describe("rupeesToPaise — the seed boundary only", () => {
+describe("rupeesToPaise — exact rupees in, paise out", () => {
   it("converts whole rupees and up to two decimals exactly", () => {
     expect(rupeesToPaise(19000)).toEqual({ ok: true, paise: B(1900000) });
     expect(rupeesToPaise("21000")).toEqual({ ok: true, paise: B(2100000) });

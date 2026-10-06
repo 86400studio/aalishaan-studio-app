@@ -22,6 +22,12 @@ export const paiseSchema = z
     return result.paise;
   });
 
+/** A price: the same boundary, and more than zero — `variants.price_paise` and `order_items.unit_price_paise` refuse 0. */
+export const positivePaiseSchema = paiseSchema.refine(
+  (paise) => paise > BigInt(0),
+  { message: "a price must be more than zero paise" },
+);
+
 /** A money column that may be unknown until the owner supplies it (shipping, tax — OI-02, OI-03). */
 export const nullablePaiseSchema = z.union([z.null(), paiseSchema]);
 

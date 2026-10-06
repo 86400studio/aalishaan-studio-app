@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   nullablePaiseSchema,
   currencySchema,
-  paiseSchema,
+  positivePaiseSchema,
 } from "@/lib/schemas/money";
 
 /**
@@ -114,7 +114,7 @@ export const publicVariantSchema = z
     finish: finishCodeSchema,
     finish_name: z.string().min(1).max(40),
     variant_code: variantCodeSchema,
-    price_paise: paiseSchema,
+    price_paise: positivePaiseSchema,
     currency: currencySchema,
     availability: availabilitySchema,
     lead_time: z.string().min(1).max(80).nullable(),
@@ -137,7 +137,6 @@ export const publicCatalogueRowSchema = z
   .object({
     slug: slugSchema,
     title: z.string().min(1).max(160),
-    full_title: z.string().min(1).max(220),
     hook: z.string().min(1).max(300),
     description: z.string().min(1).max(4000),
     collection_slug: slugSchema,

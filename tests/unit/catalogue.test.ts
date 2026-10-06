@@ -394,6 +394,34 @@ describe("0002_orders — tables, append-only guards, numbering and narrow grant
     );
   });
 
+  it("bounds every paise column at 100,000,000,000 — the rule's shipping charge and the generated line total included", () => {
+    expect(lower2).toContain(
+      "constraint business_rules_shipping_paise_bounded check (shipping_paise is null or (shipping_paise >= 0 and shipping_paise <= 100000000000))",
+    );
+    expect(lower2).toContain(
+      "constraint order_items_line_total_paise_bounded check (unit_price_paise * quantity <= 100000000000)",
+    );
+    // The rule's shipping charge, the four order amounts, the unit price, the line total and the attempt amount.
+    expect(code2.match(/<= 100000000000/g)).toHaveLength(8);
+    // Every `…_paise bigint` column of both files is one of the bounded ones.
+    const columns = [
+      ...`${code1}\n${code2}`.matchAll(/^\s*(\w+_paise)\s+bigint/gm),
+    ]
+      .map((m) => m[1])
+      .sort();
+    expect(columns).toEqual([
+      "amount_paise",
+      "line_total_paise",
+      "price_paise",
+      "shipping_paise",
+      "shipping_paise",
+      "subtotal_paise",
+      "tax_paise",
+      "total_paise",
+      "unit_price_paise",
+    ]);
+  });
+
   it("settles D-09: the token hash column, never a raw token", () => {
     expect(lower2).toContain(
       "confirmation_token_hash is null or confirmation_token_hash ~ '^[0-9a-f]{64}$'",
@@ -427,7 +455,7 @@ describe("0002_orders — tables, append-only guards, numbering and narrow grant
 });
 
 describe("the down files — schema recovery only, in reverse order", () => {
-  it("0001 drops the view first, then triggers, the function, the tables in dependency order, the type, then the bucket", () => {
+  it("0001 drops the view first, then triggers, the function, the tables in dependency order and the type — and leaves Storage alone", () => {
     const s = statements(down1).map((x) => x.toLowerCase());
     expect(s[0]).toBe("drop view if exists public.public_catalogue");
     const tables = s
@@ -444,11 +472,11 @@ describe("the down files — schema recovery only, in reverse order", () => {
     expect(s).toContain(
       "drop function if exists public.enforce_variant_code()",
     );
-    expect(s).toContain("drop type if exists public.artwork_status");
-    expect(s.slice(-2)).toEqual([
-      "delete from storage.objects where bucket_id = 'catalogue-public'",
-      "delete from storage.buckets where id = 'catalogue-public'",
-    ]);
+    expect(s[s.length - 1]).toBe("drop type if exists public.artwork_status");
+    // Supabase Storage refuses a SQL DELETE on its tables, and one would orphan the files: the bucket and its
+    // objects are removed through the Storage API only, never by this file.
+    expect(s.filter((x) => x.includes("storage."))).toEqual([]);
+    expect(s.filter((x) => !x.startsWith("drop "))).toEqual([]);
     expect(down1).toMatch(/DELETES every row/);
     expect(down1).toMatch(/cannot restore/);
   });

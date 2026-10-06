@@ -8,9 +8,10 @@
  * Bounded and enumerated: only the files listed in scripts/testing/catalogue-images.json (the manifest the
  * seed plan generates — 330 entries: frame and close-up per finish at 480 and 1200, the paper detail at both
  * sizes, the artwork itself) are considered. Each file is resolved inside the source root — a path that
- * escapes the root through `..`, an absolute path, a symbolic link or a hard-linked file outside it is
- * refused —, must be a regular file of at most 5 MiB whose bytes start with the WebP signature and whose
- * SHA-256 equals the manifest's (taken from the prototype's E10 development baseline). The checkout is
+ * escapes the root through `..`, an absolute path, a symbolic link or a path that resolves outside the
+ * root through a linked directory is refused —, must be a regular file of at most 5 MiB whose bytes start
+ * with the WebP signature and whose SHA-256 equals the manifest's (taken from the prototype's E10
+ * development baseline; the hash, not the path, is what fixes the content). The checkout is
  * verified too: with a `.git` directory its HEAD must be the pinned commit; without one the hashes alone
  * stand, and the report says so. Masters, unlisted files and anything outside the enumerated contract are
  * never uploaded.
@@ -31,6 +32,7 @@ import {
   statSync,
 } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -220,13 +222,23 @@ async function main() {
     .from("artwork_images")
     .select("object_path", { count: "exact", head: true })
     .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-  if (rows.error)
+  // A count that did not come back is a failure, never zero: a HEAD answer carries no error body, so a
+  // missing table reads as "no error".
+  if (rows.error || rows.count === null) {
+    const reason = rows.error?.code
+      ? rows.error.code
+      : !rows.error
+        ? "no count returned (is the table there?)"
+        : rows.status > 0
+          ? `HTTP ${rows.status}`
+          : "no response (network error or timeout)";
     throw new Error(
-      `artwork_images read: ${rows.error.code ?? "unknown"} — apply 0001_catalogue and run the seed first`,
+      `artwork_images read: ${reason} — apply 0001_catalogue and run the seed first`,
     );
-  if ((rows.count ?? 0) !== manifest.entries.length)
+  }
+  if (rows.count !== manifest.entries.length)
     console.log(
-      `Note: artwork_images holds ${rows.count ?? 0} rows, the manifest ${manifest.entries.length} — run pnpm db:test:seed --apply so the projection matches the objects.`,
+      `Note: artwork_images holds ${rows.count} rows, the manifest ${manifest.entries.length} — run pnpm db:test:seed --apply so the projection matches the objects.`,
     );
 
   let uploaded = 0;
@@ -255,7 +267,10 @@ async function main() {
       .from(BUCKET)
       .upload(entry.object_path, readFileSync(file), {
         contentType: "image/webp",
-        cacheControl: "31536000",
+        // One hour, not a year: the object paths carry no version, so a replaced image keeps its URL. The
+        // long-lived caching rule (a version in the path, or this short lifetime) is settled with the pages
+        // that render these URLs — S1.5 / S2.5 (docs/database-changes/S1.1-0001-catalogue.md → "Known limits").
+        cacheControl: "3600",
         upsert: Boolean(existing),
       });
     if (up.error)
@@ -271,9 +286,12 @@ async function main() {
   );
 }
 
+// Run only as the entry point (the unit suite imports this file). fileURLToPath, not URL.pathname: on Windows
+// the pathname keeps a leading slash and percent-encodes the spaces, so the two never matched and the tool
+// printed nothing, uploaded nothing and exited 0.
 if (
   process.argv[1] &&
-  path.resolve(process.argv[1]) === new URL(import.meta.url).pathname
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   main().catch((error) => {
     console.error(

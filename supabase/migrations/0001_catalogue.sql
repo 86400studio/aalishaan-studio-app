@@ -100,7 +100,6 @@ create table public.artworks (
   id              uuid                  not null default gen_random_uuid(),
   slug            text                  not null,
   title           text                  not null,
-  full_title      text                  not null,
   hook            text                  not null,
   description     text                  not null,
   collection_id   uuid                  not null,
@@ -135,7 +134,6 @@ create table public.artworks (
     references public.frame_finishes (code) on delete restrict,
   constraint artworks_slug_shape check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) <= 120),
   constraint artworks_title_length check (char_length(title) between 1 and 160),
-  constraint artworks_full_title_length check (char_length(full_title) between 1 and 220),
   constraint artworks_hook_length check (char_length(hook) between 1 and 300),
   constraint artworks_description_length check (char_length(description) between 1 and 4000),
   constraint artworks_orientation_allowed check (orientation in ('Portrait', 'Landscape')),
@@ -264,7 +262,10 @@ create trigger artwork_images_set_updated_at
 create trigger variants_set_updated_at
   before update on public.variants for each row execute function public.set_updated_at();
 
--- variant_code must equal "<artwork slug>:<finish code>" at every insert and update (the approved bag key).
+-- variant_code must equal "<artwork slug>:<finish code>" at every insert and update of a variant (the approved
+-- bag key). The guard sits on variants only: a later change of an artwork's slug is not covered here — the
+-- product editor (S2.5) must rewrite the three codes in the same transaction or refuse the change
+-- (docs/database-changes/S1.1-0001-catalogue.md → "Known limits").
 create or replace function public.enforce_variant_code()
 returns trigger
 language plpgsql
@@ -335,7 +336,6 @@ create view public.public_catalogue with (security_barrier = true) as
 select
   a.slug,
   a.title,
-  a.full_title,
   a.hook,
   a.description,
   c.slug       as collection_slug,

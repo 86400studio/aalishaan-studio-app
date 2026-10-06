@@ -5,6 +5,7 @@ import {
   currencySchema,
   nullablePaiseSchema,
   paiseSchema,
+  positivePaiseSchema,
 } from "@/lib/schemas/money";
 
 /**
@@ -75,12 +76,20 @@ export const orderItemStageSchema = z.number().int().min(0).max(10);
 
 export const salesOpenReasonSchema = z.enum(["prelaunch", "capacity"]);
 
-/** The checkout's own contact rules (locked-facts §6). */
+/**
+ * The checkout's own contact rules (locked-facts §6). The length cap aborts: without it the pattern still runs
+ * on an over-long value, and on a crafted one it takes quadratic time.
+ */
 export const emailSchema = z
   .string()
-  .max(254)
+  .max(254, { abort: true })
   .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
   .transform((value) => value.toLowerCase());
+/**
+ * The stored form — ten digits, as the database checks them. The approved checkout first strips spaces,
+ * brackets, `+`, `-` and a leading `91` (locked-facts §6); S1.6 normalises the form value that way before
+ * this schema sees it.
+ */
 export const indianMobileSchema = z.string().regex(/^[6-9]\d{9}$/);
 export const pincodeSchema = z.string().regex(/^[1-9][0-9]{5}$/);
 
@@ -115,7 +124,7 @@ export const orderItemInputSchema = z
     variant_code: variantCodeSchema,
     finish_code: finishCodeSchema,
     quantity: quantitySchema,
-    unit_price_paise: paiseSchema,
+    unit_price_paise: positivePaiseSchema,
   })
   .strict();
 

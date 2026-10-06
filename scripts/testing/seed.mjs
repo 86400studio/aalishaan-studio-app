@@ -11,9 +11,11 @@
  * the initial business-rules version (closed, prelaunch, synthetic, 60-minute expiry).
  *
  * Idempotent and conservative: rows are matched on their natural keys (slug, code, variant_code,
- * object_path, (policy_key, version), version), so a second run preserves ids; a missing row is inserted; an
+ * object_path, policy_key, rule version), so a second run preserves ids; a missing row is inserted; an
  * identical row is left alone; a row that differs from the plan is REPORTED and skipped — a staff edit on
- * TEST is never overwritten blindly. `--overwrite` applies the plan over differing catalogue rows, except a
+ * TEST is never overwritten blindly. A policy is matched on its key and its version is compared, so this
+ * tool manages one version per policy: a second version (the owner's real terms at S3.1) would be reported
+ * as a difference, never inserted, and needs its own change here. `--overwrite` applies the plan over differing catalogue rows, except a
  * variant that an order item references (reported, kept). Policy versions and business rules are
  * append-only: a differing version is reported and never rewritten (a change is a new version).
  *
@@ -22,7 +24,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
-import { buildSeedPlan } from "./lib/catalogue.mjs";
+import { buildSeedPlan, canonicalJson, sameInstant } from "./lib/catalogue.mjs";
 import { loadLocalEnv } from "./lib/env.mjs";
 import { BASELINE_FIXTURE, seedBaselineFixture } from "./lib/fixtures.mjs";
 import {
@@ -34,12 +36,22 @@ import {
 const apply = process.argv.includes("--apply");
 const overwrite = process.argv.includes("--overwrite");
 const TIMEOUT_MS = 15_000;
+/** Keys per read: the 330 object paths in one `in` filter make a 21,756-character URL, over the platform's 16 KB limit. */
+const READ_CHUNK = 100;
 
-/** @param {unknown} value */
-function stable(value) {
-  return JSON.stringify(value, (_, v) =>
-    typeof v === "bigint" ? v.toString(10) : v,
-  );
+/**
+ * A refused request by its Postgres / PostgREST code; without one, by its HTTP status. A HEAD count that comes
+ * back with no error and no count is named for what it is — the client reports a missing table's empty 404 as
+ * a success — and a request that never got an answer is not given a status it does not have.
+ * @param {{ code?: string } | null} error
+ * @param {number} status
+ */
+function describe(error, status) {
+  if (error?.code) return error.code;
+  if (!error) return "no count returned (is the table there?)";
+  return status > 0
+    ? `HTTP ${status}`
+    : "no response (network error or timeout)";
 }
 
 /**
@@ -47,32 +59,54 @@ function stable(value) {
  * @param {string} table
  */
 async function tablePresent(client, table) {
-  const { error } = await client
+  // A plain GET for at most one row, never a HEAD: a HEAD answer has no body, and the client reports the
+  // empty 404 of a missing table as success.
+  const { error, status } = await client
     .from(table)
-    .select("*", { count: "exact", head: true })
+    .select("*")
+    .limit(1)
     .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
   if (!error) return true;
   // PostgREST answers PGRST205 / 42P01 when the relation does not exist.
   if (error.code === "PGRST205" || error.code === "42P01") return false;
-  throw new Error(`${table}: ${error.code ?? "unknown error"}`);
+  throw new Error(`${table}: ${describe(error, status)}`);
 }
 
 /**
- * Upsert-by-natural-key with the compare-before-write rule.
+ * The rows whose key is one of `values`, read READ_CHUNK keys at a time.
  * @param {import("@supabase/supabase-js").SupabaseClient} client
- * @param {{ table: string, key: string, rows: Array<Record<string, unknown>>, compare: string[], immutable?: boolean, referenced?: (row: Record<string, unknown>) => Promise<boolean> }} spec
+ * @param {string} table
+ * @param {string} key
+ * @param {unknown[]} values
+ * @returns {Promise<Array<Record<string, unknown>>>}
+ */
+async function readIn(client, table, key, values) {
+  /** @type {Array<Record<string, unknown>>} */
+  const rows = [];
+  for (let i = 0; i < values.length; i += READ_CHUNK) {
+    const { data, error, status } = await client
+      .from(table)
+      .select("*")
+      .in(key, values.slice(i, i + READ_CHUNK))
+      .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
+    if (error) throw new Error(`${table} read: ${describe(error, status)}`);
+    rows.push(.../** @type {Array<Record<string, unknown>>} */ (data ?? []));
+  }
+  return rows;
+}
+
+/**
+ * Upsert-by-natural-key with the compare-before-write rule. Values are compared as canonical JSON (the
+ * database returns jsonb with its own key order) and the `instants` columns as points in time (it returns a
+ * timestamptz with a +00:00 offset for the plan's "…Z"), so a row that has not changed reads "unchanged".
+ * @param {import("@supabase/supabase-js").SupabaseClient} client
+ * @param {{ table: string, key: string, rows: Array<Record<string, unknown>>, compare: string[], instants?: string[], immutable?: boolean, referenced?: (row: Record<string, unknown>) => Promise<boolean> }} spec
  * @returns {Promise<{ inserted: number, unchanged: number, differs: string[], updated: number, kept: string[] }>}
  */
 async function reconcile(client, spec) {
   const keys = spec.rows.map((r) => r[spec.key]);
-  const { data, error } = await client
-    .from(spec.table)
-    .select("*")
-    .in(spec.key, keys)
-    .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-  if (error) throw new Error(`${spec.table} read: ${error.code ?? "unknown"}`);
   const existing = new Map(
-    /** @type {Array<Record<string, unknown>>} */ (data ?? []).map((r) => [
+    (await readIn(client, spec.table, spec.key, keys)).map((r) => [
       String(r[spec.key]),
       r,
     ]),
@@ -95,8 +129,10 @@ async function reconcile(client, spec) {
       toInsert.push(row);
       continue;
     }
-    const same = spec.compare.every(
-      (column) => stable(current[column]) === stable(row[column]),
+    const same = spec.compare.every((column) =>
+      spec.instants?.includes(column)
+        ? sameInstant(current[column], row[column])
+        : canonicalJson(current[column]) === canonicalJson(row[column]),
     );
     if (same) {
       result.unchanged += 1;
@@ -123,7 +159,9 @@ async function reconcile(client, spec) {
       .select(spec.key)
       .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
     if (ins.error)
-      throw new Error(`${spec.table} insert: ${ins.error.code ?? "unknown"}`);
+      throw new Error(
+        `${spec.table} insert: ${describe(ins.error, ins.status)}`,
+      );
     result.inserted += (ins.data ?? []).length;
   }
   for (const row of toUpdate) {
@@ -137,7 +175,9 @@ async function reconcile(client, spec) {
       .select(spec.key)
       .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
     if (upd.error)
-      throw new Error(`${spec.table} update: ${upd.error.code ?? "unknown"}`);
+      throw new Error(
+        `${spec.table} update: ${describe(upd.error, upd.status)}`,
+      );
     result.updated += (upd.data ?? []).length;
   }
   return result;
@@ -151,22 +191,16 @@ async function reconcile(client, spec) {
  * @returns {Promise<Map<string, string>>} natural key → id
  */
 async function idsByKey(client, table, key, values) {
-  const { data, error } = await client
-    .from(table)
-    .select("*")
-    .in(key, values)
-    .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-  if (error) throw new Error(`${table} ids: ${error.code ?? "unknown"}`);
   return new Map(
-    /** @type {Array<Record<string, string>>} */ (data ?? []).map((r) => [
-      r[key],
-      r.id,
+    (await readIn(client, table, key, values)).map((r) => [
+      String(r[key]),
+      String(r.id),
     ]),
   );
 }
 
-/** @param {string} label @param {{ inserted: number, unchanged: number, differs: string[], updated: number, kept: string[] }} r */
-function report(label, r) {
+/** @param {string} label @param {{ inserted: number, unchanged: number, differs: string[], updated: number, kept: string[] }} r @param {boolean} [immutable] */
+function report(label, r, immutable = false) {
   const parts = [
     `${apply ? "inserted" : "would insert"} ${r.inserted}`,
     `unchanged ${r.unchanged}`,
@@ -177,7 +211,7 @@ function report(label, r) {
   console.log(`  ${label}: ${parts.join(" · ")}`);
   if (r.differs.length)
     console.log(
-      `    differing keys: ${r.differs.slice(0, 10).join(", ")}${r.differs.length > 10 ? ", …" : ""}${overwrite ? "" : " (kept — re-run with --overwrite to apply the plan over them)"}`,
+      `    differing keys: ${r.differs.slice(0, 10).join(", ")}${r.differs.length > 10 ? ", …" : ""}${immutable ? " (append-only — never rewritten; a change is a new version)" : overwrite ? "" : " (kept — re-run with --overwrite to apply the plan over them)"}`,
     );
 }
 
@@ -286,7 +320,6 @@ async function main() {
   const now = new Date().toISOString();
   const artworkCompare = [
     "title",
-    "full_title",
     "hook",
     "description",
     "orientation",
@@ -367,14 +400,15 @@ async function main() {
         "lead_time",
       ],
       referenced: async (row) => {
-        const { count, error } = await client
+        const { count, error, status } = await client
           .from("order_items")
           .select("id", { count: "exact", head: true })
           .eq("variant_code", row.variant_code)
           .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-        if (error)
-          throw new Error(`order_items read: ${error.code ?? "unknown"}`);
-        return (count ?? 0) > 0;
+        // A count that did not come back is a failure, never "no reference" (a HEAD carries no error body).
+        if (error || count === null)
+          throw new Error(`order_items read: ${describe(error, status)}`);
+        return count > 0;
       },
     }),
   );
@@ -395,8 +429,10 @@ async function main() {
         "source",
         "effective_from",
       ],
+      instants: ["effective_from"],
       immutable: true,
     }),
+    true,
   );
   report(
     "business_rules",
@@ -416,8 +452,10 @@ async function main() {
         "tax_treatment",
         "note",
       ],
+      instants: ["effective_from"],
       immutable: true,
     }),
+    true,
   );
 
   // 5. the S0.2 skeleton row (unchanged behaviour)

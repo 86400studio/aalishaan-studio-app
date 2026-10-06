@@ -1,7 +1,8 @@
 /**
  * The money boundary — S1.1 (docs/TECH-ARCHITECTURE.md → Money; locked-facts §2). Every stored or computed
  * monetary value is an exact integer number of paise held as a `bigint`; rupees exist only at the display
- * edge (`formatRupees`) and at the one seed boundary that reads the prototype's rupee prices. No float
+ * edge (`formatRupees`) and where a rupee amount is first read (`rupeesToPaise`; the TEST seed has its own
+ * whole-rupee converter for the prototype's prices in scripts/testing/lib/catalogue.mjs). No float
  * arithmetic, no rounding, no silent coercion: a value that is negative, fractional, non-finite, outside the
  * JavaScript safe-integer range or above the schema's bound is refused with a reason.
  *
@@ -55,7 +56,7 @@ export function toPaise(value: unknown): bigint {
   return result.paise;
 }
 
-/** Exact rupees (whole or with at most two decimals, as a string) → paise. The seed boundary only. */
+/** Exact rupees (whole or with at most two decimals, as a string) → paise, wherever a rupee amount enters. */
 export function rupeesToPaise(rupees: string | number): PaiseResult {
   const text = typeof rupees === "number" ? String(rupees) : rupees.trim();
   const match = /^(\d{1,12})(?:\.(\d{1,2}))?$/.exec(text);

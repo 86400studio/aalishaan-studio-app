@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   mkdirSync,
@@ -29,9 +30,11 @@ import {
   POLICY_KEYS,
   VARIANT_COUNT,
   buildSeedPlan,
+  canonicalJson,
   extractPolicyPage,
   manifestDocument,
   rupeesToPaise,
+  sameInstant,
 } from "../../scripts/testing/lib/catalogue.mjs";
 import {
   checkoutCommit,
@@ -152,7 +155,6 @@ describe("the seed plan — counts, identities and exact money", () => {
       const a = plan.artworks.find((x) => x.slug === p.slug);
       expect(a, String(p.slug)).toBeDefined();
       expect(a?.title).toBe(p.title);
-      expect(a?.full_title).toBe(p.fullTitle);
       expect(a?.hook).toBe(p.hook);
       expect(a?.description).toBe(p.description);
       expect(a?.default_alt).toBe(p.alt);
@@ -198,22 +200,33 @@ describe("the seed plan — counts, identities and exact money", () => {
         `prototype/pages/policies/${pv.policy_key}/index.html`,
       );
       const pageText = norm(html.replace(/<[^>]+>/g, " "));
+      const carves = POLICY_CARVE_OUTS.filter(
+        (c) => c.policy_key === pv.policy_key,
+      );
+      // A reworded sentence is stored in its approved, pre-E10 form, which the E10 page no longer carries.
+      const restored = new Set(
+        carves
+          .filter((c) => c.replacement !== "")
+          .map((c) => norm(c.replacement)),
+      );
       for (const section of pv.body) {
         expect(section.text.length).toBeGreaterThan(0);
-        // Sentence by sentence: a carve-out removes a sentence from the middle of a paragraph, so the paragraph as a
-        // whole is no longer contiguous on the page while every sentence it keeps still is.
-        for (const sentence of section.text.split(/(?<=[.!?])\s+/))
+        // Sentence by sentence: a carve-out removes or rewords a sentence in the middle of a paragraph, so the
+        // paragraph as a whole is no longer contiguous on the page while every other sentence it keeps still is.
+        for (const sentence of section.text.split(/(?<=[.!?])\s+/)) {
+          if (restored.has(norm(sentence))) continue;
           expect(pageText, `${pv.policy_key} › ${section.heading}`).toContain(
             norm(sentence),
           );
+        }
       }
-      for (const carve of POLICY_CARVE_OUTS.filter(
-        (c) => c.policy_key === pv.policy_key,
-      )) {
+      for (const carve of carves) {
         const section = pv.body.find((s) => s.heading === carve.heading);
         expect(section, carve.heading).toBeDefined();
         expect(norm(section?.text ?? "")).not.toContain(norm(carve.sentence));
         expect(pageText).toContain(norm(carve.sentence));
+        if (carve.replacement !== "")
+          expect(section?.text ?? "").toContain(carve.replacement);
       }
     }
     expect(
@@ -221,6 +234,31 @@ describe("the seed plan — counts, identities and exact money", () => {
         .find((p) => p.policy_key === "terms")
         ?.body.some((s) => /₹19,000, ₹21,000 and ₹23,000/.test(s.text)),
     ).toBe(true);
+  });
+
+  it("stores the three sections E10 touched in the wording of the pinned public commit", () => {
+    // Read on 2026-10-06 from pages/policies/privacy and pages/policies/cookies at PINNED_PROTOTYPE_COMMIT. Those
+    // pages are not in this repository (D-07), so the approved wording is pinned here; every other section of
+    // the seven policies is the same text in both revisions.
+    const text = (key: string, heading: string) =>
+      plan.policy_versions
+        .find((p) => p.policy_key === key)
+        ?.body.find((s) => s.heading === heading)?.text;
+    expect(text("privacy", "Browser storage")).toBe(
+      "Your selected artworks, wishlist and the PIN code you check for delivery can be remembered in this browser. The order preview is stored for the browser session and contains artwork selections, a payment-method label and that PIN code, not personal details.",
+    );
+    expect(text("cookies", "What is remembered")).toBe(
+      "The prototype uses browser storage for the bag, wishlist, the PIN code you check for delivery and a session order preview. These let you revisit your selection while exploring the site.",
+    );
+    expect(text("cookies", "Clear your preview")).toBe(
+      "Clear the saved bag, wishlist and order preview using the control below. Your browser also provides storage controls.",
+    );
+    expect(POLICY_CARVE_OUTS).toHaveLength(3);
+    // The waiting list is an E10 draft (NS-12–NS-15): no seeded policy mentions it.
+    for (const pv of plan.policy_versions)
+      expect(JSON.stringify(pv.body), pv.policy_key).not.toMatch(
+        /waiting[- ]list/i,
+      );
   });
 
   it("seeds the initial rule version closed for prelaunch, synthetic, with the D-20 expiry and no guessed charge", () => {
@@ -240,8 +278,37 @@ describe("the seed plan — counts, identities and exact money", () => {
     );
   });
 
-  it("is deterministic: two builds produce the same fingerprint", () => {
+  it("is deterministic: two builds produce the same fingerprint, and it is the recorded one", () => {
     expect(buildSeedPlan().fingerprint).toBe(plan.fingerprint);
+    // The plan the S1.1 records quote. It is pinned so that the value in a record can be checked, on every
+    // platform the tests run on; a deliberate change to the plan or its sources changes it — update the value
+    // here and in docs/sprint-prompts/S1.1-core-schema.md together.
+    expect(plan.fingerprint).toBe(
+      "e8492943d8cd9aca7588a6fd7c49c1c95ddb2ab531b517bac1702f245a997bcc",
+    );
+  });
+});
+
+describe("the seed's compare-before-write rule", () => {
+  it("reads a jsonb body in the database's key order and a timestamptz with an offset as unchanged", () => {
+    const planned = plan.policy_versions[0].body;
+    // Postgres stores jsonb keys shortest first, so a section comes back as { text, heading }.
+    const returned = planned.map(({ heading, text }) => ({ text, heading }));
+    expect(JSON.stringify(returned)).not.toBe(JSON.stringify(planned));
+    expect(canonicalJson(returned)).toBe(canonicalJson(planned));
+    expect(canonicalJson({ b: [{ d: 1, c: BigInt(2) }], a: null })).toBe(
+      '{"a":null,"b":[{"c":"2","d":1}]}',
+    );
+    expect(canonicalJson([2, 1])).not.toBe(canonicalJson([1, 2]));
+    expect(canonicalJson({ a: 1 })).not.toBe(canonicalJson({ a: 2 }));
+
+    const planInstant = INITIAL_BUSINESS_RULES.effective_from;
+    expect(sameInstant("2026-10-05T00:00:00+00:00", planInstant)).toBe(true);
+    expect(sameInstant("2026-10-05T05:30:00+05:30", planInstant)).toBe(true);
+    expect(sameInstant("2026-10-05T00:00:01+00:00", planInstant)).toBe(false);
+    expect(sameInstant(null, null)).toBe(true);
+    expect(sameInstant(null, planInstant)).toBe(false);
+    expect(sameInstant("not a date", "not a date")).toBe(false);
   });
 });
 
@@ -296,10 +363,17 @@ describe("the upload tool — bounded source verification", () => {
   );
   const outside = mkdtempSync(path.join(tmpdir(), "aalishaan-outside-"));
   writeFileSync(path.join(outside, "escaped.webp"), webp);
-  symlinkSync(
-    path.join(outside, "escaped.webp"),
-    path.join(root, "assets", "web-artworks", "link.webp"),
-  );
+  const link = path.join(root, "assets", "web-artworks", "link.webp");
+  try {
+    symlinkSync(path.join(outside, "escaped.webp"), link);
+  } catch (error) {
+    // Windows grants a file symbolic link only in Developer Mode or to an administrator. A directory junction
+    // needs no privilege and is a symbolic link to lstat all the same, so the refusal is exercised either way.
+    if ((error as NodeJS.ErrnoException).code !== "EPERM") throw error;
+    symlinkSync(outside, link, "junction");
+  }
+  // A linked directory: the file inside it is a regular file whose real path lies outside the root.
+  symlinkSync(outside, path.join(root, "assets", "linked"), "junction");
   const entry = (source_path: string, sha256 = sha) => ({
     slug: "x",
     slot: "frame-white",
@@ -324,12 +398,26 @@ describe("the upload tool — bounded source verification", () => {
     ["/etc/passwd", /not a plain relative path/],
     ["assets\\web-artworks\\good.webp", /not a plain relative path/],
     ["assets/web-artworks/link.webp", /symbolic link/],
+    ["assets/linked/escaped.webp", /resolves outside the source root/],
     ["assets/web-artworks/wrong-hash.webp", /SHA-256 differs/],
     ["assets/web-artworks/not-webp.webp", /not a WebP/],
   ])("refuses %s", (source_path, reason) => {
     const result = verifySourceFile(root, entry(source_path));
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(reason);
+  });
+
+  it("runs as a command: without --source-root it refuses aloud and exits 2, never a silent exit 0", () => {
+    // The entry-point guard once compared a Windows path with a URL pathname, so on Windows the tool printed
+    // nothing, uploaded nothing and exited 0. This run stops at the missing argument, before any environment
+    // file is read or any request is made.
+    const run = spawnSync(
+      process.execPath,
+      [path.join(ROOT, "scripts", "testing", "upload-catalogue.mjs")],
+      { encoding: "utf8" },
+    );
+    expect(run.status).toBe(2);
+    expect(run.stderr).toContain("Refused: --source-root");
   });
 
   it("refuses an unlisted file by construction (only manifest entries are ever considered) and reads no commit from a plain directory", () => {

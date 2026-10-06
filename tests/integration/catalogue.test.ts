@@ -50,18 +50,53 @@ async function privilegedArtwork(slug: string) {
   );
 }
 
+/**
+ * Denial is at the grant level: the publishable key's role holds no privilege on any base table, so every
+ * statement is refused with 42501 before a row is looked at. An empty 200 is not accepted — it is also what
+ * a readable but empty table answers.
+ */
 function denied(
   result: { error: { code?: string } | null; status: number; data: unknown },
   label: string,
 ) {
-  if (result.error) {
-    expect([401, 403], `${label}: HTTP status`).toContain(result.status);
-    expect(result.error.code, `${label}: Postgres code`).toBe("42501");
-  } else {
-    // Zero affected rows is the only other acceptable shape; the privileged post-check is the assertion.
-    expect(result.data ?? [], `${label}: no row returned`).toEqual([]);
-  }
+  expect(result.error?.code, `${label}: Postgres code`).toBe("42501");
+  expect([401, 403], `${label}: HTTP status`).toContain(result.status);
 }
+
+async function exactCount(table: string): Promise<number> {
+  const { count, error } = await privileged
+    .from(table)
+    .select("*", { count: "exact", head: true });
+  expect(error, `${table}: privileged count`).toBeNull();
+  expect(count, `${table}: privileged count`).not.toBeNull();
+  return count ?? -1;
+}
+
+/**
+ * One syntactically valid write per table, and a filter value that matches no row: the privilege check refuses
+ * the statement whatever it would match, and a probe that got through would still change nothing seeded.
+ */
+const WRITE_PROBES: Array<{
+  table: string;
+  row: Record<string, unknown>;
+  key: string;
+}> = [
+  { table: "collections", row: { slug: "zz-anon-probe" }, key: "slug" },
+  { table: "art_styles", row: { slug: "zz-anon-probe" }, key: "slug" },
+  { table: "frame_finishes", row: { code: "zz-anon-probe" }, key: "code" },
+  { table: "artworks", row: { slug: "zz-anon-probe" }, key: "slug" },
+  {
+    table: "artwork_images",
+    row: { object_path: "artworks/zz-anon-probe/paper-480.webp" },
+    key: "object_path",
+  },
+  {
+    table: "variants",
+    row: { variant_code: "zz-anon-probe:white" },
+    key: "variant_code",
+  },
+];
+const NO_SUCH_ROW = "zz-no-such-row";
 
 beforeAll(async () => {
   const target = resolveTestTarget(process.env);
@@ -76,16 +111,15 @@ beforeAll(async () => {
     target.target.publishableKey,
     NO_SESSION,
   );
-  const present = await privileged
-    .from("artworks")
-    .select("id", { count: "exact", head: true });
+  // A plain GET, never a HEAD: a HEAD answer has no body, so a missing table would read as "no error".
+  const present = await privileged.from("artworks").select("slug");
   if (present.error)
     throw new Error(
-      `0001_catalogue is not applied on TEST (artworks: ${present.error.code}) — apply it and run pnpm db:test:seed --apply first`,
+      `0001_catalogue is not applied on TEST (artworks: ${present.error.code ?? `HTTP ${present.status}`}) — apply it and run pnpm db:test:seed --apply first`,
     );
-  if ((present.count ?? 0) !== 22)
+  if ((present.data ?? []).length !== 22)
     throw new Error(
-      `artworks holds ${present.count ?? 0} rows, expected the 22 seeded — run pnpm db:test:seed --apply`,
+      `artworks holds ${(present.data ?? []).length} rows, expected the 22 seeded — run pnpm db:test:seed --apply`,
     );
 });
 
@@ -174,6 +208,23 @@ describe("the base tables are private", () => {
     const result = await anon.from(table).select("*").limit(1);
     denied(result, `select ${table}`);
   });
+
+  it.each(WRITE_PROBES)(
+    "anonymous insert, update and delete on $table are denied and its row count is unchanged",
+    async ({ table, row, key }) => {
+      const before = await exactCount(table);
+      denied(await anon.from(table).insert(row).select("*"), `insert ${table}`);
+      denied(
+        await anon.from(table).update(row).eq(key, NO_SUCH_ROW).select("*"),
+        `update ${table}`,
+      );
+      denied(
+        await anon.from(table).delete().eq(key, NO_SUCH_ROW).select("*"),
+        `delete ${table}`,
+      );
+      expect(await exactCount(table)).toBe(before);
+    },
+  );
 
   it("anonymous insert, update and delete on artworks change nothing (privileged post-checks)", async () => {
     const before = await privilegedArtwork(PROBE_SLUG);

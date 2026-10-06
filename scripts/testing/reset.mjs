@@ -11,7 +11,7 @@
  *       the 330 image rows by object_path, the 66 variants by variant_code, the 22 artworks by slug, the 11
  *       art styles and 3 collections by slug, the 3 finishes by code — and refuses before any request when
  *       an order item references one of the seeded variants (a referenced catalogue is never deleted) or
- *       when a row the plan names carries a status other than the seed's (a staff edit is reported, not
+ *       when a row the plan names carries a status other than the seed's (a changed status is reported, not
  *       erased). Policy versions, rule versions, orders, snapshots, ledgers and the audit log are never
  *       touched by any reset: they are append-only by design (0002_orders); synthetic rows the integration
  *       suite writes there are retained history until a human rehearses the down files on TEST.
@@ -37,16 +37,42 @@ import {
 
 export const CATALOGUE_NAMESPACE = "catalogue:";
 const TIMEOUT_MS = 15_000;
+/** Keys per request: the 330 object paths in one `in` filter make a 21,756-character URL, over the platform's 16 KB limit. */
+const KEY_CHUNK = 100;
+
+/**
+ * `--name=value` or `--name value`; a bare `--name` yields "" so it is refused, never read as the default.
+ * @param {string} name
+ * @returns {string | undefined}
+ */
+function option(name) {
+  const joined = process.argv.find((arg) => arg.startsWith(`--${name}=`));
+  if (joined !== undefined) return joined.slice(name.length + 3);
+  const at = process.argv.indexOf(`--${name}`);
+  if (at < 0) return undefined;
+  const next = process.argv[at + 1];
+  return next === undefined || next.startsWith("--") ? "" : next;
+}
 
 const apply = process.argv.includes("--apply");
-const namespace =
-  process.argv
-    .find((arg) => arg.startsWith("--namespace="))
-    ?.slice("--namespace=".length) ?? FIXTURE_NAMESPACE;
-const scope =
-  process.argv
-    .find((arg) => arg.startsWith("--scope="))
-    ?.slice("--scope=".length) ?? "";
+const namespace = option("namespace") ?? FIXTURE_NAMESPACE;
+const scopeOption = option("scope");
+const scope = scopeOption ?? "";
+
+/**
+ * A refused request by its Postgres / PostgREST code; without one, by its HTTP status. A HEAD count that comes
+ * back with no error and no count is named for what it is — the client reports a missing table's empty 404 as
+ * a success — and a request that never got an answer is not given a status it does not have.
+ * @param {{ code?: string } | null} error
+ * @param {number} status
+ */
+function describe(error, status) {
+  if (error?.code) return error.code;
+  if (!error) return "no count returned (is the table there?)";
+  return status > 0
+    ? `HTTP ${status}`
+    : "no response (network error or timeout)";
+}
 
 /**
  * @param {import("@supabase/supabase-js").SupabaseClient} client
@@ -55,13 +81,19 @@ const scope =
  * @param {unknown[]} values
  */
 async function countIn(client, table, key, values) {
-  const { count, error } = await client
-    .from(table)
-    .select("*", { count: "exact", head: true })
-    .in(key, values)
-    .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-  if (error) throw new Error(`${table} count: ${error.code ?? "unknown"}`);
-  return count ?? 0;
+  let total = 0;
+  for (let i = 0; i < values.length; i += KEY_CHUNK) {
+    const { count, error, status } = await client
+      .from(table)
+      .select("*", { count: "exact", head: true })
+      .in(key, values.slice(i, i + KEY_CHUNK))
+      .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
+    // A count that did not come back is a failure, never zero (a HEAD carries no error body).
+    if (error || count === null)
+      throw new Error(`${table} count: ${describe(error, status)}`);
+    total += count;
+  }
+  return total;
 }
 
 /**
@@ -72,14 +104,14 @@ async function countIn(client, table, key, values) {
  */
 async function deleteIn(client, table, key, values) {
   let deleted = 0;
-  for (let i = 0; i < values.length; i += 100) {
-    const { data, error } = await client
+  for (let i = 0; i < values.length; i += KEY_CHUNK) {
+    const { data, error, status } = await client
       .from(table)
       .delete()
-      .in(key, values.slice(i, i + 100))
+      .in(key, values.slice(i, i + KEY_CHUNK))
       .select(key)
       .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
-    if (error) throw new Error(`${table} delete: ${error.code ?? "unknown"}`);
+    if (error) throw new Error(`${table} delete: ${describe(error, status)}`);
     deleted += (data ?? []).length;
   }
   return deleted;
@@ -114,7 +146,7 @@ async function resetCatalogue(client) {
     .neq("status", "Active")
     .abortSignal(AbortSignal.timeout(TIMEOUT_MS));
   if (edited.error)
-    throw new Error(`artworks read: ${edited.error.code ?? "unknown"}`);
+    throw new Error(`artworks read: ${describe(edited.error, edited.status)}`);
   if ((edited.data ?? []).length > 0) {
     console.error(
       `Refused: ${(edited.data ?? []).length} seeded artwork(s) carry a status the seed did not set (a staff edit) — ${(edited.data ?? []).map((r) => `${r.slug}=${r.status}`).join(", ")}.`,
@@ -178,6 +210,13 @@ async function main() {
     process.exitCode = 2;
     return;
   }
+  if (scopeOption === "") {
+    console.error(
+      "Refused: --scope needs a value (--scope=<run> or --scope <run>); without one the whole namespace would match.",
+    );
+    process.exitCode = 2;
+    return;
+  }
   loadLocalEnv();
   const target = resolveTestTarget(process.env);
   if (!target.ok) {
@@ -209,6 +248,9 @@ async function main() {
     return;
   }
   const before = await countNamespace(client, namespace, { scope });
+  // A count that could not be read is a failure, never "0 rows" (nothing has been deleted yet).
+  if (!before.ok)
+    throw new Error(`system_checks count: ${before.code || "request failed"}`);
   console.log(
     `TEST project ${target.target.ref} verified. Reset plan: delete synthetic rows with check_key like "${namespace}${scope}%" (${before.count} row(s) match now).`,
   );
@@ -227,6 +269,13 @@ async function main() {
     return;
   }
   const after = await countNamespace(client, namespace, { scope });
+  if (!after.ok) {
+    console.error(
+      `Reset applied: ${result.deleted} synthetic row(s) deleted, but the count after the reset could not be read (${after.code || "request failed"}) — check for residual rows.`,
+    );
+    process.exitCode = 1;
+    return;
+  }
   console.log(
     `Reset applied: ${result.deleted} synthetic row(s) deleted; ${after.count} row(s) still match (non-synthetic rows are never touched).`,
   );
