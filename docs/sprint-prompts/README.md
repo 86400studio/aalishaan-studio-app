@@ -19,12 +19,12 @@ No routine closeout PR (WORKFLOW §8); fixes after review still require re-revie
 
 Active sprint: [S1.1 — Core schema, money model & catalogue seed](S1.1-core-schema.md), prepared 2026-09-28 (on `main` since
 the planning-only PR #10, the owner's one-time exception) and **In Progress since 2026-10-05** in the first Claude Code cloud
-session (`CLOUD.md`, D-41) on the session branch `claude/relaxed-einstein-vvbise` from `main` = `04b2906` (draft PR #18): the two additive
+session (`CLOUD.md`, D-41) on the session branch `claude/relaxed-einstein-vvbise` from `main` = `04b2906` (PR #18, opened as a draft): the two additive
 migrations with their down files and change records, the public projection and bucket contract, the S0.2 proof-route
 retirement, the Zod mirrors and money boundary, the bounded seed / upload / reset tools and the tests; the TEST apply,
 seed, upload, rehearsal, integration run, proofs, Preview test and review are the VS Code leg (the record's "Hand-off to VS
 Code"), picked up on 2026-10-06: the owner's Gate 0 items are settled and the pre-apply corrections are on the branch (the
-record's "VS Code leg"); the owner authorised the TEST plan in writing the same day and it has run up to the rollback rehearsal. Its paired [review record](../code-reviews/S1.1-core-schema-review.md) holds the planning PR's record and the
+record's "VS Code leg"); the owner authorised the TEST plan in writing the same day and it has run in full, the rollback rehearsal included; PR #18 is marked ready for review. Its paired [review record](../code-reviews/S1.1-core-schema-review.md) holds the planning PR's record and the
 implementation's review context; the database records are `docs/database-changes/S1.1-0001-catalogue.md` and
 `S1.1-0002-orders.md`.
 
