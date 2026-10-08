@@ -21,16 +21,22 @@ const CLI_LEGACY_INIT = /([0-9]{14})_init\.sql/;
 describe("supabase/migrations — forward discovery", () => {
   const files = readdirSync(path.join(ROOT, "supabase", "migrations")).sort();
 
-  it("holds exactly the S0.2 baseline under the roadmap's name", () => {
-    expect(files).toEqual(["0000_init.sql"]);
+  const EXPECTED = [
+    ["0000_init.sql", "0000", "init"],
+    ["0001_catalogue.sql", "0001", "catalogue"],
+    ["0002_orders.sql", "0002", "orders"],
+  ] as const;
+
+  it("holds exactly the S0.2 baseline and the two S1.1 migrations under the roadmap's names", () => {
+    expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 
-  it("is discovered by the CLI: matches its pattern and is not the legacy dashboard init it skips", () => {
-    for (const file of files) {
+  it("is discovered by the CLI in version order: each matches its pattern and none is the legacy dashboard init it skips", () => {
+    for (const [file, version, name] of EXPECTED) {
       const match = CLI_MIGRATION_PATTERN.exec(file);
       expect(match, file).not.toBeNull();
-      expect(match?.[1]).toBe("0000");
-      expect(match?.[2]).toBe("init");
+      expect(match?.[1]).toBe(version);
+      expect(match?.[2]).toBe(name);
       const legacy = CLI_LEGACY_INIT.exec(file);
       expect(
         legacy === null || Number(legacy[1]) >= 20211209000000,
@@ -39,13 +45,20 @@ describe("supabase/migrations — forward discovery", () => {
     }
   });
 
-  it("contains no down file — rollback artifacts live outside forward discovery", () => {
+  it("contains no down file — every rollback artifact lives outside forward discovery, paired by name", () => {
     expect(files.filter((file) => /down/i.test(file))).toEqual([]);
-    expect(
-      existsSync(
-        path.join(ROOT, "supabase", "rollbacks", "0000_init.down.sql"),
-      ),
-    ).toBe(true);
+    for (const [file] of EXPECTED)
+      expect(
+        existsSync(
+          path.join(
+            ROOT,
+            "supabase",
+            "rollbacks",
+            file.replace(/\.sql$/, ".down.sql"),
+          ),
+        ),
+        file,
+      ).toBe(true);
   });
 });
 
@@ -261,10 +274,10 @@ describe("package.json — the S0.2 script contract", () => {
       "test:integration": "vitest run --config vitest.integration.config.ts",
       test: "pnpm run test:unit && pnpm run test:integration",
       "test:e2e": "playwright test",
-      "test:preview-proof": "node scripts/testing/preview-proof.mjs",
       "db:test:preflight": "node scripts/testing/preflight.mjs",
       "db:test:seed": "node scripts/testing/seed.mjs",
       "db:test:reset": "node scripts/testing/reset.mjs",
+      "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs",
     });
     for (const script of Object.values(pkg.scripts)) {
       expect(script).not.toMatch(
