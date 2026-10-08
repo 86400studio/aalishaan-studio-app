@@ -17,10 +17,14 @@
  * never uploaded.
  *
  * Dry run by default (every file verified, nothing uploaded); `--apply` uploads with the server's secret
- * key to the public bucket `catalogue-public` at the manifest's object path. Idempotent: an object that
- * already exists with the same size is skipped unless `--overwrite` is given. The matching artwork_images
- * rows are expected from `pnpm db:test:seed` (reported, never created here). PROD, an unknown target,
- * missing credentials or mismatched refs are refused before any request, with names only.
+ * key to the public bucket `catalogue-public` at the manifest's object path. Idempotent, and never
+ * destructive without `--overwrite`: a missing object is uploaded; an object that already exists is KEPT —
+ * counted as skipped when its size equals the source file's, listed by path when its size differs or the
+ * bucket's listing gives no usable size. With `--overwrite` (and `--apply`) every existing object is
+ * replaced, the same-size ones included: the listing gives a length, not the content. (The seed keeps a
+ * differing row in the same way and overwrites it only with its flag.) The matching artwork_images rows are
+ * expected from `pnpm db:test:seed` (reported, never created here). PROD, an unknown target, missing
+ * credentials or mismatched refs are refused before any request, with names only.
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -128,6 +132,121 @@ export function checkoutCommit(root) {
   } catch {
     return "unreadable";
   }
+}
+
+/**
+ * One entry of the bucket's listing, as far as this tool reads it.
+ * @typedef {{ name: string, metadata?: Record<string, unknown> | null }} ListedObject
+ * @typedef {"missing" | "same" | "differs" | "unknown"} ObjectState
+ * @typedef {{ state: ObjectState, action: "upload" | "replace" | "keep", upsert: boolean }} UploadDecision
+ */
+
+/**
+ * What the bucket's listing says about one manifest object, against the verified source file's size. Pure, no
+ * network. "same" means the same length, not the same bytes: the listing gives a size and an opaque eTag, no
+ * SHA-256 to compare with the manifest's, and the integration suite compares the SHA-256 of what the public
+ * URL serves for three sampled objects only. A listing entry without a usable size is "unknown", never "same".
+ * @param {ListedObject | null | undefined} existing the listing entry with exactly this object's name, if any
+ * @param {number} bytes the verified source file's size
+ * @returns {ObjectState}
+ */
+export function objectState(existing, bytes) {
+  if (!existing) return "missing";
+  const raw = existing.metadata?.size;
+  const size =
+    typeof raw === "number" && Number.isSafeInteger(raw) && raw >= 0
+      ? raw
+      : typeof raw === "string" && /^\d+$/.test(raw)
+        ? Number(raw)
+        : null;
+  if (size === null) return "unknown";
+  return size === bytes ? "same" : "differs";
+}
+
+/**
+ * Decides one object. An object that already exists is never replaced without `--overwrite`: whatever its
+ * size, it is kept. Only a missing object is uploaded, and without `upsert`, so that an object which appears
+ * between the listing and the upload is refused by Storage, not replaced. `upsert` is true in exactly one
+ * case: an existing object and the explicit flag.
+ * @param {ListedObject | null | undefined} existing
+ * @param {number} bytes
+ * @param {boolean} overwrite whether `--overwrite` was given
+ * @returns {UploadDecision}
+ */
+export function decideUpload(existing, bytes, overwrite) {
+  const state = objectState(existing, bytes);
+  if (state === "missing") return { state, action: "upload", upsert: false };
+  if (overwrite) return { state, action: "replace", upsert: true };
+  return { state, action: "keep", upsert: false };
+}
+
+/**
+ * The part of a Storage bucket this tool uses; the unit suite passes a recording fake.
+ * @typedef {{
+ *   list: (dir: string, options: { search: string, limit: number }) => PromiseLike<{ data: ListedObject[] | null, error: { message: string } | null }>,
+ *   upload: (objectPath: string, body: Buffer, options: { contentType: string, cacheControl: string, upsert: boolean }) => PromiseLike<{ error: { message: string } | null }>,
+ * }} BucketLike
+ * @typedef {{ uploaded: number, replaced: number, wouldUpload: number, wouldReplace: number, same: number, differs: string[], unknown: string[] }} ReconcileResult
+ */
+
+/**
+ * Brings the bucket to the manifest, one verified file at a time, under `decideUpload`'s rule. A dry run
+ * (`apply` false) lists and decides but never calls `upload`. Kept objects whose size differs from the
+ * source's, or whose size the listing does not give, are returned by path (`differs`, `unknown`) so the caller
+ * can report them. The first listing or upload error stops the run: no later object is listed or sent.
+ * @param {BucketLike} bucket
+ * @param {Array<{ entry: ManifestEntry, file: string, bytes: number }>} verified
+ * @param {{ apply: boolean, overwrite: boolean, read?: (file: string) => Buffer }} options
+ * @returns {Promise<ReconcileResult>}
+ */
+export async function reconcileObjects(bucket, verified, options) {
+  const read = options.read ?? ((file) => readFileSync(file));
+  /** @type {ReconcileResult} */
+  const result = {
+    uploaded: 0,
+    replaced: 0,
+    wouldUpload: 0,
+    wouldReplace: 0,
+    same: 0,
+    differs: [],
+    unknown: [],
+  };
+  for (const { entry, file, bytes } of verified) {
+    const dir = path.posix.dirname(entry.object_path);
+    const name = path.posix.basename(entry.object_path);
+    const listing = await bucket.list(dir, { search: name, limit: 5 });
+    if (listing.error)
+      throw new Error(`bucket list failed: ${listing.error.message}`);
+    const existing = (listing.data ?? []).find((o) => o.name === name);
+    const decision = decideUpload(existing, bytes, options.overwrite);
+    if (decision.action === "keep") {
+      if (decision.state === "same") result.same += 1;
+      else if (decision.state === "differs")
+        result.differs.push(entry.object_path);
+      else result.unknown.push(entry.object_path);
+      continue;
+    }
+    if (!options.apply) {
+      if (decision.action === "replace") result.wouldReplace += 1;
+      else result.wouldUpload += 1;
+      continue;
+    }
+    const up = await bucket.upload(entry.object_path, read(file), {
+      contentType: "image/webp",
+      // One hour, not a year: the object paths carry no version, so a replaced image keeps its URL. The
+      // long-lived caching rule (a version in the path, or this short lifetime) is settled with the pages
+      // that render these URLs — S1.5 / S2.5 (docs/database-changes/S1.1-0001-catalogue.md → "Known limits").
+      cacheControl: "3600",
+      upsert: decision.upsert,
+    });
+    if (up.error)
+      throw new Error(
+        `upload ${entry.object_path} failed: ${up.error.message}`,
+      );
+    if (decision.action === "replace") result.replaced += 1;
+    else result.uploaded += 1;
+  }
+  return result;
 }
 
 async function main() {
@@ -241,49 +360,40 @@ async function main() {
       `Note: artwork_images holds ${rows.count} rows, the manifest ${manifest.entries.length} — run pnpm db:test:seed --apply so the projection matches the objects.`,
     );
 
-  let uploaded = 0;
-  let skipped = 0;
-  let planned = 0;
-  for (const { entry, file, bytes } of verified) {
-    const dir = path.posix.dirname(entry.object_path);
-    const name = path.posix.basename(entry.object_path);
-    const listing = await client.storage
-      .from(BUCKET)
-      .list(dir, { search: name, limit: 5 });
-    if (listing.error)
-      throw new Error(`bucket list failed: ${listing.error.message}`);
-    const existing = (listing.data ?? []).find((o) => o.name === name);
-    const sameSize =
-      existing?.metadata && Number(existing.metadata.size) === bytes;
-    if (existing && sameSize && !overwrite) {
-      skipped += 1;
-      continue;
-    }
-    if (!apply) {
-      planned += 1;
-      continue;
-    }
-    const up = await client.storage
-      .from(BUCKET)
-      .upload(entry.object_path, readFileSync(file), {
-        contentType: "image/webp",
-        // One hour, not a year: the object paths carry no version, so a replaced image keeps its URL. The
-        // long-lived caching rule (a version in the path, or this short lifetime) is settled with the pages
-        // that render these URLs — S1.5 / S2.5 (docs/database-changes/S1.1-0001-catalogue.md → "Known limits").
-        cacheControl: "3600",
-        upsert: Boolean(existing),
-      });
-    if (up.error)
-      throw new Error(
-        `upload ${entry.object_path} failed: ${up.error.message}`,
-      );
-    uploaded += 1;
-  }
+  const result = await reconcileObjects(client.storage.from(BUCKET), verified, {
+    apply,
+    overwrite,
+  });
+  // The first line counts everything sent, replacements included, so that a run with --overwrite never reads
+  // "0 written"; without the flag nothing is replaced and the line is the one the records quote. With the
+  // flag no object is kept, so a dry run says so instead of a same-size count the loop did not take.
+  const sameClause = overwrite
+    ? "none skipped (--overwrite replaces the same-size objects too)"
+    : `${result.same} already present with the same size`;
   console.log(
     apply
-      ? `Upload applied: ${uploaded} object(s) written, ${skipped} already present with the same size and skipped.`
-      : `Dry run: ${planned} object(s) would be uploaded, ${skipped} already present with the same size. Re-run with --apply under the owner's TEST storage authorisation.`,
+      ? `Upload applied: ${result.uploaded + result.replaced} object(s) written, ${result.same} already present with the same size and skipped.`
+      : `Dry run: ${result.wouldUpload + result.wouldReplace} object(s) would be uploaded, ${sameClause}. Re-run with --apply under the owner's TEST storage authorisation.`,
   );
+  if (result.replaced > 0 || result.wouldReplace > 0)
+    console.log(
+      apply
+        ? `Of those, ${result.replaced} replaced an existing object (--overwrite).`
+        : `Of those, ${result.wouldReplace} would replace an existing object (--overwrite).`,
+    );
+  const kept = [
+    ...result.differs.map((p) => `${p} (a different size)`),
+    ...result.unknown.map((p) => `${p} (no size in the listing)`),
+  ];
+  if (kept.length > 0) {
+    console.log(
+      `NOT replaced: ${kept.length} object(s) already in the bucket were kept although they are not confirmed to equal the source — ${result.differs.length} with a different size, ${result.unknown.length} whose size the bucket does not report. An existing object is replaced only with --overwrite.`,
+    );
+    // Every path, not a sample: --overwrite is all or nothing — it replaces every existing object, the
+    // same-size ones included — so this list is how the operator learns which of them are not confirmed to
+    // equal the source (at most the manifest's 330 lines).
+    for (const line of kept) console.log(`  - ${line}`);
+  }
 }
 
 // Run only as the entry point (the unit suite imports this file). fileURLToPath, not URL.pathname: on Windows

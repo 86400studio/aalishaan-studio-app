@@ -36,8 +36,12 @@ import {
   rupeesToPaise,
   sameInstant,
 } from "../../scripts/testing/lib/catalogue.mjs";
+import { TARGET_NAMES } from "../../scripts/testing/lib/supabase-target.mjs";
 import {
   checkoutCommit,
+  decideUpload,
+  objectState,
+  reconcileObjects,
   verifySourceFile,
 } from "../../scripts/testing/upload-catalogue.mjs";
 
@@ -430,3 +434,351 @@ describe("the upload tool — bounded source verification", () => {
     ).toBe(false);
   });
 });
+
+describe("the upload tool — an existing object is never replaced without --overwrite", () => {
+  // Codex round 1 (PR #18): the tool once skipped only an object of the same size and sent every other
+  // existing object with `upsert: true`, so an edited image, or one whose size the listing did not report,
+  // was replaced without the flag. These tests drive the tool's own loop against a recording bucket.
+  const DIR = "artworks/x";
+  const BYTES = 100;
+  const item = (name: string) => ({
+    entry: {
+      slug: "x",
+      slot: "frame-white",
+      size: "480",
+      object_path: `${DIR}/${name}`,
+      source_path: `assets/web-artworks/${name}`,
+      sha256: "0".repeat(64),
+    },
+    file: `unused/${name}`,
+    bytes: BYTES,
+  });
+  const verified = [
+    item("missing.webp"),
+    item("same.webp"),
+    item("same-as-text.webp"),
+    item("differs.webp"),
+    item("no-metadata.webp"),
+    item("no-size.webp"),
+  ];
+  /** What the bucket holds: name → the listing's metadata. `missing.webp` is absent; a look-alike is present. */
+  const held: Record<string, Record<string, unknown> | null> = {
+    "missing.webp.bak": { size: BYTES },
+    "same.webp": { size: BYTES },
+    "same-as-text.webp": { size: String(BYTES) },
+    "differs.webp": { size: BYTES + 1 },
+    "no-metadata.webp": null,
+    "no-size.webp": { mimetype: "image/webp" },
+  };
+  const existingPaths = [
+    "same.webp",
+    "same-as-text.webp",
+    "differs.webp",
+    "no-metadata.webp",
+    "no-size.webp",
+  ].map((name) => `${DIR}/${name}`);
+
+  function recordingBucket(fail: { list?: string; upload?: string } = {}) {
+    const uploads: Array<{
+      objectPath: string;
+      upsert: boolean;
+      contentType: string;
+      bytes: number;
+    }> = [];
+    /** Every call the tool makes, counted before it can fail: how far the loop went. */
+    const calls = { list: 0, upload: 0 };
+    const bucket = {
+      list: async (dir: string, options: { search: string; limit: number }) => {
+        calls.list += 1;
+        return fail.list
+          ? { data: null, error: { message: fail.list } }
+          : {
+              data:
+                dir === DIR
+                  ? Object.keys(held)
+                      // Storage's search is a pattern on the name, not an exact match: a name that merely
+                      // starts with the searched one comes back too.
+                      .filter((name) => name.startsWith(options.search))
+                      .slice(0, options.limit)
+                      .map((name) => ({ name, metadata: held[name] }))
+                  : [],
+              error: null,
+            };
+      },
+      upload: async (
+        objectPath: string,
+        body: Buffer,
+        options: { contentType: string; cacheControl: string; upsert: boolean },
+      ) => {
+        calls.upload += 1;
+        if (fail.upload) return { error: { message: fail.upload } };
+        uploads.push({
+          objectPath,
+          upsert: options.upsert,
+          contentType: options.contentType,
+          bytes: body.length,
+        });
+        return { error: null };
+      },
+    };
+    return { bucket, uploads, calls };
+  }
+  /** A reader that records which verified file it was asked for; the body is BYTES long whatever the file. */
+  function recordingReader() {
+    const asked: string[] = [];
+    const read = (file: string) => {
+      asked.push(file);
+      return Buffer.alloc(BYTES);
+    };
+    return { asked, read };
+  }
+
+  it("reads the listing strictly: a size it cannot trust is unknown, never the same", () => {
+    expect(objectState(undefined, BYTES)).toBe("missing");
+    expect(objectState(null, BYTES)).toBe("missing");
+    expect(
+      objectState({ name: "a.webp", metadata: { size: BYTES } }, BYTES),
+    ).toBe("same");
+    expect(
+      objectState({ name: "a.webp", metadata: { size: String(BYTES) } }, BYTES),
+    ).toBe("same");
+    expect(
+      objectState({ name: "a.webp", metadata: { size: BYTES + 1 } }, BYTES),
+    ).toBe("differs");
+    expect(objectState({ name: "a.webp", metadata: { size: 0 } }, BYTES)).toBe(
+      "differs",
+    );
+    const untrusted: Array<Record<string, unknown> | null | undefined> = [
+      undefined,
+      null,
+      {},
+      { size: null },
+      { size: undefined },
+      { size: "" },
+      { size: "12abc" },
+      { size: " 100" },
+      { size: -1 },
+      { size: 1.5 },
+      { size: Number.NaN },
+      { size: true },
+      { size: [BYTES] },
+    ];
+    for (const metadata of untrusted)
+      expect(
+        objectState({ name: "a.webp", metadata }, BYTES),
+        JSON.stringify(metadata),
+      ).toBe("unknown");
+  });
+
+  it("decides: only a missing object is uploaded, and upsert is true only for an existing object with the flag", () => {
+    const listing = {
+      missing: undefined,
+      same: { name: "a.webp", metadata: { size: BYTES } },
+      differs: { name: "a.webp", metadata: { size: BYTES + 1 } },
+      unknown: { name: "a.webp", metadata: null },
+    } as const;
+    for (const overwrite of [false, true])
+      expect(decideUpload(listing.missing, BYTES, overwrite)).toEqual({
+        state: "missing",
+        action: "upload",
+        upsert: false,
+      });
+    for (const state of ["same", "differs", "unknown"] as const) {
+      expect(decideUpload(listing[state], BYTES, false)).toEqual({
+        state,
+        action: "keep",
+        upsert: false,
+      });
+      expect(decideUpload(listing[state], BYTES, true)).toEqual({
+        state,
+        action: "replace",
+        upsert: true,
+      });
+    }
+  });
+
+  it("--apply without --overwrite uploads only the missing object and keeps every existing one, reporting those whose size differs or is unknown", async () => {
+    const { bucket, uploads } = recordingBucket();
+    const { asked, read: readFile } = recordingReader();
+    const result = await reconcileObjects(bucket, verified, {
+      apply: true,
+      overwrite: false,
+      read: readFile,
+    });
+    expect(uploads).toEqual([
+      {
+        objectPath: `${DIR}/missing.webp`,
+        upsert: false,
+        contentType: "image/webp",
+        bytes: BYTES,
+      },
+    ]);
+    // Only the file that is sent is read, and it is the verified file, not a path built some other way.
+    expect(asked).toEqual(["unused/missing.webp"]);
+    expect(result).toEqual({
+      uploaded: 1,
+      replaced: 0,
+      wouldUpload: 0,
+      wouldReplace: 0,
+      same: 2,
+      differs: [`${DIR}/differs.webp`],
+      unknown: [`${DIR}/no-metadata.webp`, `${DIR}/no-size.webp`],
+    });
+  });
+
+  it("--apply with --overwrite replaces every existing object, and still uploads the missing one without upsert", async () => {
+    const { bucket, uploads } = recordingBucket();
+    const { asked, read: readFile } = recordingReader();
+    const result = await reconcileObjects(bucket, verified, {
+      apply: true,
+      overwrite: true,
+      read: readFile,
+    });
+    expect(uploads.map((u) => [u.objectPath, u.upsert])).toEqual([
+      [`${DIR}/missing.webp`, false],
+      ...existingPaths.map((p) => [p, true]),
+    ]);
+    expect(asked).toEqual(verified.map((v) => v.file));
+    expect(result).toEqual({
+      uploaded: 1,
+      replaced: 5,
+      wouldUpload: 0,
+      wouldReplace: 0,
+      same: 0,
+      differs: [],
+      unknown: [],
+    });
+  });
+
+  it.each([false, true])(
+    "a dry run never uploads and reads no file (overwrite %s)",
+    async (overwrite) => {
+      const { bucket, uploads, calls } = recordingBucket();
+      const { asked, read: readFile } = recordingReader();
+      const result = await reconcileObjects(bucket, verified, {
+        apply: false,
+        overwrite,
+        read: readFile,
+      });
+      expect(uploads).toEqual([]);
+      expect(calls).toEqual({ list: verified.length, upload: 0 });
+      expect(asked).toEqual([]);
+      expect(result.uploaded).toBe(0);
+      expect(result.replaced).toBe(0);
+      expect(result.wouldUpload).toBe(1);
+      expect(result.wouldReplace).toBe(overwrite ? 5 : 0);
+      expect(result.same).toBe(overwrite ? 0 : 2);
+      expect(result.differs).toEqual(overwrite ? [] : [`${DIR}/differs.webp`]);
+    },
+  );
+
+  it("stops at the first listing error and at the first upload error: no later object is listed or sent", async () => {
+    // Both runs carry --overwrite, so all six objects would be sent if the loop went on after an error.
+    const listing = recordingBucket({ list: "listing refused" });
+    await expect(
+      reconcileObjects(listing.bucket, verified, {
+        apply: true,
+        overwrite: true,
+        read: recordingReader().read,
+      }),
+    ).rejects.toThrow(/bucket list failed: listing refused/);
+    expect(listing.calls).toEqual({ list: 1, upload: 0 });
+    const upload = recordingBucket({ upload: "The resource already exists" });
+    await expect(
+      reconcileObjects(upload.bucket, verified, {
+        apply: true,
+        overwrite: true,
+        read: recordingReader().read,
+      }),
+    ).rejects.toThrow(
+      /upload artworks\/x\/missing\.webp failed: The resource already exists/,
+    );
+    expect(upload.calls).toEqual({ list: 1, upload: 1 });
+  });
+
+  it("the command passes its two flags to that loop, has one Storage call site and one upload call, and takes upsert from the decision", () => {
+    // main() needs the 330 pinned files and the TEST project, so it is not run here; these pins tie the
+    // command to the loop the tests above drive.
+    const source = read("scripts/testing/upload-catalogue.mjs");
+    expect(source).toContain('const apply = process.argv.includes("--apply");');
+    expect(source).toContain(
+      'const overwrite = process.argv.includes("--overwrite");',
+    );
+    expect(source).toMatch(
+      /await reconcileObjects\(client\.storage\.from\(BUCKET\), verified, \{\s*apply,\s*overwrite,\s*\}\);/,
+    );
+    expect(source.match(/\.storage\b/g)).toHaveLength(1);
+    expect(source.match(/\.upload\(/g)).toHaveLength(1);
+    expect(source).toContain("upsert: decision.upsert");
+    expect(source).not.toContain("Boolean(existing)");
+    expect(source).toContain("NOT replaced:");
+    // A dry run with the flag does not print a same-size count the loop never took.
+    expect(source).toContain(
+      "none skipped (--overwrite replaces the same-size objects too)",
+    );
+    // Every kept path is printed, not a sample.
+    expect(source).toContain("for (const line of kept) console.log(");
+  });
+});
+
+// Each case starts the tool as a process (and the last one three times); the limit is raised so a busy machine
+// does not turn a slow start into a failure.
+describe(
+  "the reset tool — refusals before the environment is read",
+  {
+    timeout: 30_000,
+  },
+  () => {
+    // Each run is a dry run (never --apply) in an empty directory with the five target names removed, so that
+    // even a refusal that regressed would stop at "Refused before any request" and reach no database.
+    const emptyDir = mkdtempSync(path.join(tmpdir(), "aalishaan-reset-"));
+    const withoutTarget = { ...process.env };
+    for (const name of TARGET_NAMES) delete withoutTarget[name];
+    const reset = (...args: string[]) =>
+      spawnSync(
+        process.execPath,
+        [path.join(ROOT, "scripts", "testing", "reset.mjs"), ...args],
+        { encoding: "utf8", cwd: emptyDir, env: withoutTarget },
+      );
+
+    it.each([
+      [["--namespace=catalogue:", "--scope=the-bridge-of-blue-stone"]],
+      [["--namespace", "catalogue:", "--scope", "run-1"]],
+      [["--namespace=catalogue:", "--scope"]],
+    ])(
+      "refuses --scope with the catalogue form, which always covers the whole seeded catalogue (%j)",
+      (args) => {
+        const run = reset(...args);
+        expect(run.status).toBe(2);
+        expect(run.stderr).toContain(
+          "Refused: --scope does not apply to --namespace=catalogue:",
+        );
+        expect(run.stdout).toBe("");
+      },
+    );
+
+    it.each([
+      [
+        ["--namespace=orders:"],
+        'Refused: "orders:" is not a fixture namespace',
+      ],
+      [["--namespace"], 'Refused: "" is not a fixture namespace'],
+      [["--scope"], "Refused: --scope needs a value"],
+      [["--namespace=fixture:", "--scope="], "Refused: --scope needs a value"],
+    ])("refuses %j", (args, message) => {
+      const run = reset(...args);
+      expect(run.status).toBe(2);
+      expect(run.stderr).toContain(message);
+      expect(run.stdout).toBe("");
+    });
+
+    it("a well-formed request without credentials stops before any request (the control for the runs above)", () => {
+      for (const args of [["--namespace=catalogue:"], ["--scope=run-1"], []]) {
+        const run = reset(...args);
+        expect(run.status).toBe(2);
+        expect(run.stderr).toContain("Refused before any request:");
+        expect(run.stdout).toBe("");
+      }
+    });
+  },
+);

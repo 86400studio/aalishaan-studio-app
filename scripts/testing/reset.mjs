@@ -14,7 +14,9 @@
  *       when a row the plan names carries a status other than the seed's (a changed status is reported, not
  *       erased). Policy versions, rule versions, orders, snapshots, ledgers and the audit log are never
  *       touched by any reset: they are append-only by design (0002_orders); synthetic rows the integration
- *       suite writes there are retained history until a human rehearses the down files on TEST.
+ *       suite writes there are retained history until a human rehearses the down files on TEST. This form
+ *       always covers every catalogue row the seed plan names, so `--scope` is refused with it: a scope
+ *       that narrowed nothing would read as a narrower reset than the one that runs.
  *
  * Never a whole-database reset, schema drop, truncate, broad delete, auth-user deletion or PROD target.
  */
@@ -206,6 +208,14 @@ async function main() {
   if (namespace !== CATALOGUE_NAMESPACE && !isAllowedNamespace(namespace)) {
     console.error(
       `Refused: "${namespace}" is not a fixture namespace (allowed: ${[...ALLOWED_NAMESPACES, CATALOGUE_NAMESPACE].join(" ")}).`,
+    );
+    process.exitCode = 2;
+    return;
+  }
+  // Before the bare-scope check: with the catalogue form a scope is refused whether or not it has a value.
+  if (namespace === CATALOGUE_NAMESPACE && scopeOption !== undefined) {
+    console.error(
+      "Refused: --scope does not apply to --namespace=catalogue: — that form always covers every catalogue row the seed plan names.",
     );
     process.exitCode = 2;
     return;

@@ -63,8 +63,8 @@ way (`docs/database-changes/S0.2-0000-init.md`). Never run `db reset` against a 
 pnpm db:test:seed                                              # the catalogue plan vs TEST: 22 artworks, 66 variants, 330 image rows, 7 policy versions, business_rules v1
 pnpm db:test:seed --apply                                      # writes missing rows; a differing row is reported, not overwritten (--overwrite applies the plan, referenced variants kept)
 pnpm db:test:upload-catalogue --source-root <checkout of b24dce1b…>          # verifies the pinned checkout and every enumerated WebP by SHA-256
-pnpm db:test:upload-catalogue --source-root <checkout of b24dce1b…> --apply  # uploads 330 objects to the public bucket catalogue-public (idempotent)
-pnpm db:test:reset --namespace=catalogue:                      # deletes only the seeded catalogue rows, refused while an order references a variant
+pnpm db:test:upload-catalogue --source-root <checkout of b24dce1b…> --apply  # uploads the missing objects to the public bucket catalogue-public (330 on an empty bucket); an existing object is kept — reported if its size differs — and replaced only with --overwrite
+pnpm db:test:reset --namespace=catalogue:                      # deletes only the seeded catalogue rows, refused while an order references a variant; --scope is refused with this form
 pnpm db:test:reset                                             # the S0.2 form: synthetic system_checks rows of one namespace (fixture: / integration:)
 ```
 
