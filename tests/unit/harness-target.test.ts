@@ -1142,12 +1142,12 @@ describe("fixture skeleton guards (D-22)", () => {
     return { client: chain as unknown as SupabaseClient, calls };
   }
 
-  it("allows only the three S0.2 namespaces", () => {
+  it("allows only the two fixture namespaces — the S0.2 proof namespace retired by S1.1 is refused", () => {
+    expect(["fixture:", "integration:"].every(isAllowedNamespace)).toBe(true);
     expect(
-      ["fixture:", "integration:", "s0-2-proof:"].every(isAllowedNamespace),
-    ).toBe(true);
-    expect(
-      ["public:", "", "fixture", "orders:", "%"].some(isAllowedNamespace),
+      ["s0-2-proof:", "public:", "", "fixture", "orders:", "%"].some(
+        isAllowedNamespace,
+      ),
     ).toBe(false);
   });
 

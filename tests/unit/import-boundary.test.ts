@@ -324,11 +324,7 @@ describe("transitive protection — the marker the bundler enforces", () => {
   );
 
   it("has the expected server modules", () => {
-    expect(serverFiles.sort()).toEqual([
-      "health.ts",
-      "setup-proof.ts",
-      "supabase.ts",
-    ]);
+    expect(serverFiles.sort()).toEqual(["health.ts", "supabase.ts"]);
   });
 
   it.each(serverFiles)('%s starts with import "server-only"', (name) => {
