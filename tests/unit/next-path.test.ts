@@ -1,0 +1,70 @@
+import { describe, expect, it } from "vitest";
+
+import { ADMIN_HOME, loginUrlFor, safeNextPath } from "@/lib/staff/next-path";
+
+/**
+ * The sign-in return path accepts only a same-origin path under /admin (docs/SECURITY-CHECKLIST.md §3;
+ * docs/ENVIRONMENT-PARITY.md §7.7). Every forged shape falls back to /admin.
+ */
+
+describe("safeNextPath", () => {
+  it.each([
+    ["/admin", "/admin"],
+    ["/admin/", "/admin/"],
+    ["/admin/staff", "/admin/staff"],
+    ["/admin/support", "/admin/support"],
+    ["/admin/support?view=refunds", "/admin/support?view=refunds"],
+    ["%2Fadmin%2Fstaff", "/admin/staff"],
+    ["/admin/support%3Fview%3Drefunds", "/admin/support?view=refunds"],
+  ])("accepts %s as %s", (input, expected) => {
+    expect(safeNextPath(input)).toBe(expected);
+  });
+
+  it.each([
+    ["an absolute URL", "https://evil.example/admin"],
+    ["a protocol-relative URL", "//evil.example/admin"],
+    ["a protocol-relative URL under /admin", "/admin//evil.example"],
+    ["an encoded protocol-relative URL", "%2F%2Fevil.example"],
+    ["a backslash host trick", "/admin\\evil.example"],
+    ["an encoded backslash", "/admin%5Cevil.example"],
+    ["a javascript: scheme", "javascript:alert(1)"],
+    ["a path outside /admin", "/checkout"],
+    ["a look-alike prefix", "/adminx"],
+    ["a look-alike prefix with a path", "/administration/x"],
+    ["the sign-in page itself (a loop)", "/admin/login"],
+    ["a sign-in sub-page (a loop)", "/admin/login/verify?next=%2Fadmin"],
+    ["a dot segment", "/admin/../checkout"],
+    ["a newline", "/admin/staff\nSet-Cookie: x"],
+    ["an encoded newline", "/admin/staff%0ASet-Cookie"],
+    ["a control character", "/admin/staff\u0001"],
+    ["a null byte", "/admin/staff%00"],
+    ["a fragment", "/admin/staff#x"],
+    ["a space", "/admin/sta ff"],
+    ["a malformed percent sequence", "/admin/%E0%A4%A"],
+    ["an empty string", ""],
+    ["an over-long path", `/admin/${"a".repeat(600)}`],
+  ])("falls back to /admin for %s", (_label, input) => {
+    expect(safeNextPath(input)).toBe(ADMIN_HOME);
+  });
+
+  it.each([
+    [undefined],
+    [null],
+    [42],
+    [["/admin/staff"]],
+    [{ next: "/admin" }],
+  ])("falls back to /admin for a non-string %j", (input) => {
+    expect(safeNextPath(input)).toBe(ADMIN_HOME);
+  });
+});
+
+describe("loginUrlFor", () => {
+  it("omits next for the home and encodes a validated path otherwise", () => {
+    expect(loginUrlFor("/admin")).toBe("/admin/login");
+    expect(loginUrlFor(undefined)).toBe("/admin/login");
+    expect(loginUrlFor("https://evil.example")).toBe("/admin/login");
+    expect(loginUrlFor("/admin/support?view=refunds")).toBe(
+      "/admin/login?next=%2Fadmin%2Fsupport%3Fview%3Drefunds",
+    );
+  });
+});

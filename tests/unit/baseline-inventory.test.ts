@@ -25,9 +25,10 @@ describe("supabase/migrations — forward discovery", () => {
     ["0000_init.sql", "0000", "init"],
     ["0001_catalogue.sql", "0001", "catalogue"],
     ["0002_orders.sql", "0002", "orders"],
+    ["0003_staff_auth.sql", "0003", "staff_auth"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline and the two S1.1 migrations under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations and the S1.2 migration under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 
@@ -278,6 +279,7 @@ describe("package.json — the S0.2 script contract", () => {
       "db:test:seed": "node scripts/testing/seed.mjs",
       "db:test:reset": "node scripts/testing/reset.mjs",
       "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs",
+      "db:test:staff-users": "node scripts/testing/staff-users.mjs",
     });
     for (const script of Object.values(pkg.scripts)) {
       expect(script).not.toMatch(
@@ -286,8 +288,10 @@ describe("package.json — the S0.2 script contract", () => {
     }
   });
 
-  it("pins the three S0.2 additions exactly", () => {
+  it("pins the three S0.2 additions, the S1.1 Zod and the S1.2 cookie session package exactly", () => {
     expect(pkg.dependencies["@supabase/supabase-js"]).toBe("2.117.2");
+    expect(pkg.dependencies["zod"]).toBe("4.6.5");
+    expect(pkg.dependencies["@supabase/ssr"]).toBe("0.12.7");
     expect(pkg.devDependencies["@playwright/test"]).toBe("1.63.0");
     expect(pkg.devDependencies["supabase"]).toBe("2.118.0");
   });

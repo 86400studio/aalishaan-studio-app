@@ -36,7 +36,7 @@ const USE_CLIENT = '"use client";\n';
 
 /** Every way a source file can read one of the server-only names from process.env. */
 const SERVER_ONLY_NAMES =
-  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF";
+  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)";
 const SERVER_ONLY_READ = new RegExp(
   `process\\.env(?:\\.|\\[\\s*["'\`])(?:${SERVER_ONLY_NAMES})\\b|\\{[^}]*\\b(?:${SERVER_ONLY_NAMES})\\b[^}]*\\}\\s*=\\s*process\\.env`,
 );
@@ -70,6 +70,16 @@ describe(
         "a client component importing the SDK",
         "src/components/x.tsx",
         `${USE_CLIENT}import { createClient } from "@supabase/supabase-js";\nexport const x = createClient;\n`,
+      ],
+      [
+        "a client component importing the cookie session package (S1.2)",
+        "src/app/admin/login/enrol/enrol-form.tsx",
+        `${USE_CLIENT}import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n`,
+      ],
+      [
+        "a client component importing the staff session module (S1.2)",
+        "src/app/admin/login/enrol/enrol-form.tsx",
+        `${USE_CLIENT}import { guardAction } from "@/lib/server/staff-session";\nexport const x = guardAction;\n`,
       ],
       [
         "a client component re-exporting a server module",
@@ -161,6 +171,21 @@ describe(
         "src/app/page.tsx",
         'import { PostgrestClient } from "@supabase/postgrest-js";\nexport const x = PostgrestClient;\n',
       ],
+      [
+        "an Admin page creating the cookie session client directly (S1.2)",
+        "src/app/admin/page.tsx",
+        'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
+      ],
+      [
+        "a server module other than the staff session module importing the cookie session package (S1.2)",
+        "src/lib/server/staff-access.ts",
+        'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
+      ],
+      [
+        "the proxy creating the cookie session client directly (S1.2)",
+        "src/proxy.ts",
+        'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
+      ],
     ])("reports %s", async (_label, file, code) => {
       expect(await errorRulesFor(file, code)).toContain(IMPORT_RULE);
     });
@@ -205,6 +230,21 @@ describe(
         "the browser factory creating the SDK client",
         "src/lib/supabase/browser.ts",
         'import { createClient } from "@supabase/supabase-js";\nexport const x = createClient;\n',
+      ],
+      [
+        "the staff session module creating the cookie session client (S1.2)",
+        "src/lib/server/staff-session.ts",
+        'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
+      ],
+      [
+        "the proxy importing the staff session module (S1.2)",
+        "src/proxy.ts",
+        'import { refreshStaffSessionCookies } from "@/lib/server/staff-session";\nexport const x = refreshStaffSessionCookies;\n',
+      ],
+      [
+        "an Admin server action importing the guard (S1.2)",
+        "src/app/admin/login/actions.ts",
+        '"use server";\nimport { guardAction } from "@/lib/server/staff-session";\nexport const x = guardAction;\n',
       ],
       [
         "a client component importing the browser factory",
@@ -278,6 +318,21 @@ describe(
         "next.config.ts",
         "const config = { env: { SECRET: process.env.SUPABASE_SECRET_KEY } };\nexport default config;\n",
       ],
+      [
+        "an Admin page reading the Upstash token (S1.2)",
+        "src/app/admin/login/page.tsx",
+        "export const k = process.env.UPSTASH_REDIS_REST_TOKEN;\n",
+      ],
+      [
+        "a server action destructuring the Upstash URL (S1.2)",
+        "src/app/admin/login/actions.ts",
+        "const { UPSTASH_REDIS_REST_URL } = process.env;\nexport const k = UPSTASH_REDIS_REST_URL;\n",
+      ],
+      [
+        "the proxy reading the Upstash URL (S1.2)",
+        "src/proxy.ts",
+        "export const k = process.env.UPSTASH_REDIS_REST_URL;\n",
+      ],
     ])(
       "reports a server-only environment name read in %s",
       async (_label, file, code) => {
@@ -311,6 +366,11 @@ describe(
         "src/lib/server/supabase.ts",
         'export const k = process.env["SUPABASE_SECRET_KEY"];\n',
       ],
+      [
+        "the Upstash names inside the throttle module (S1.2)",
+        "src/lib/server/login-throttle.ts",
+        "export const k = [process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN];\n",
+      ],
     ])("allows %s", async (_label, file, code) => {
       expect(await errorRulesFor(file, code)).not.toContain(SYNTAX_RULE);
     });
@@ -324,7 +384,30 @@ describe("transitive protection — the marker the bundler enforces", () => {
   );
 
   it("has the expected server modules", () => {
-    expect(serverFiles.sort()).toEqual(["health.ts", "supabase.ts"]);
+    expect(serverFiles.sort()).toEqual([
+      "health.ts",
+      "login-throttle.ts",
+      "staff-access.ts",
+      "staff-audit.ts",
+      "staff-session.ts",
+      "supabase.ts",
+    ]);
+  });
+
+  it("only the staff session module imports the cookie session package", () => {
+    const importers: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(ts|tsx)$/.test(entry.name)) {
+          if (/from "@supabase\/ssr"/.test(readFileSync(full, "utf8")))
+            importers.push(path.relative(ROOT, full));
+        }
+      }
+    };
+    walk(path.join(ROOT, "src"));
+    expect(importers).toEqual(["src/lib/server/staff-session.ts"]);
   });
 
   it.each(serverFiles)('%s starts with import "server-only"', (name) => {
@@ -373,7 +456,7 @@ describe("transitive protection — the marker the bundler enforces", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("every route handler and page in src/app is a server module (no client directive) at S0.2", () => {
+  it("every route handler, page and layout in src/app is a server module (no client directive); the one client component is the enrolment form", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {

@@ -40,8 +40,21 @@ export default defineConfig({
     navigationTimeout: 20_000,
   },
   projects: [
+    // S1.2: one auth-setup step per staff role (docs/testing-setup/SETUP-CHECKLIST.md Part 2). It signs each
+    // TEST fixture in through the real pages and saves its storage state under the git-ignored .auth/ folder;
+    // the two required projects depend on it and never run the setup file themselves.
+    {
+      name: "auth-setup",
+      testMatch: /auth\.setup\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
     {
       name: "desktop",
+      testIgnore: /auth\.setup\.ts$/,
+      dependencies: ["auth-setup"],
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },
@@ -49,6 +62,8 @@ export default defineConfig({
     },
     {
       name: "mobile-390",
+      testIgnore: /auth\.setup\.ts$/,
+      dependencies: ["auth-setup"],
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
