@@ -9,10 +9,10 @@
  *       retired by S1.1 with its route);
  *   --namespace=catalogue:   (S1.1) deletes only the catalogue rows the seed plan positively identifies —
  *       the 330 image rows by object_path, the 66 variants by variant_code, the 22 artworks by slug, the 11
- *       art styles and 3 collections by slug, the 3 finishes by code — and refuses before any request when
- *       an order item references one of the seeded variants (a referenced catalogue is never deleted) or
- *       when a row the plan names carries a status other than the seed's (a changed status is reported, not
- *       erased). Policy versions, rule versions, orders, snapshots, ledgers and the audit log are never
+ *       art styles and 3 collections by slug, the 3 finishes by code — and refuses, after its read requests and
+ *       before any delete, when an order item references one of the seeded variants (a referenced catalogue is
+ *       never deleted) or when a row the plan names carries a status other than the seed's (a changed status is
+ *       reported, not erased); `--scope` is refused before the environment is read. Policy versions, rule versions, orders, snapshots, ledgers and the audit log are never
  *       touched by any reset: they are append-only by design (0002_orders); synthetic rows the integration
  *       suite writes there are retained history until a human rehearses the down files on TEST. This form
  *       always covers every catalogue row the seed plan names, so `--scope` is refused with it: a scope

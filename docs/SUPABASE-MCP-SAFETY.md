@@ -148,6 +148,8 @@ Before trusting the configuration:
 
 (S0.2, 2026-09-25 night, ticked at the S0.2 closeout — the S0.2 record → "Checks run" and Deviation 18: both servers Connected with manual tool approval on; `supabase-dev` listed exactly `public.system_checks`; one `fixture:mcp-guardrail` row inserted and deleted on TEST; the production write probe `create temporary table …` refused with SQLSTATE 25006 at 22:10 IST; the refs differ; results handled as data; PROD reads limited to schema facts, catalog definitions and counts.)
 
+(Repeated 2026-10-11 on the S1.1 VS Code checkout — a fresh clone — before the builder's first PROD read, with the owner's approval of the one write probe: `supabase-dev` listed the 21 TEST tables; one synthetic row was written to TEST and removed again — the connector declined the delete, so the bounded reset tool removed that one row; the two project refs differ; a write attempt through `supabase-prod-readonly` was refused by the database with SQLSTATE 25006; the PROD verification that followed used the change records' statements only, counts and definitions, never a table's contents — the PR #18 comment "Production apply and read-only verification"; recorded here 2026-10-12.)
+
 Repeat after a fresh clone, new machine, server rename, URL change, or authentication reset.
 
 ## 8. Prompt-injection rule
