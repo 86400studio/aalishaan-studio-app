@@ -17,8 +17,10 @@ import nextTs from "eslint-config-next/typescript";
  *  2. the browser-shared modules `src/lib/supabase/**` and `src/instrumentation-client.ts` never import a
  *     server module, whatever their directive;
  *  3. `@supabase/*` is imported only by the two factories (`src/lib/supabase/browser.ts`,
- *     `src/lib/server/supabase.ts`);
- *  4. the server-only environment names are read only inside src/lib/server/ — as a member read, a
+ *     `src/lib/server/supabase.ts`) and, for `@supabase/ssr`, by the staff session module
+ *     (`src/lib/server/staff-session.ts` — S1.2);
+ *  4. the server-only environment names (the Supabase secret and refs; since S1.2 the two Upstash names) are
+ *     read only inside src/lib/server/ — as a member read, a
  *     computed read or a destructuring of `process.env` — and never in `next.config.ts`, whose `env` block
  *     is inlined into every bundle. (An aliased `const e = process.env; e.X` is outside the rule; the
  *     unit sweep in tests/unit/import-boundary.test.ts and the `server-only` marker cover the rest.)
@@ -129,7 +131,7 @@ const SUPABASE_SDK_PATTERNS = [
 ];
 
 const SERVER_ONLY_NAMES =
-  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN)$";
+  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN|UPSTASH_REDIS_REST_URL|UPSTASH_REDIS_REST_TOKEN)$";
 const PROCESS_ENV =
   "[object.type='MemberExpression'][object.object.name='process'][object.property.name='env']";
 const SERVER_ONLY_ENV_MESSAGE =
@@ -201,10 +203,15 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": ["error", { patterns: SERVER_MODULE_PATTERNS }],
     },
   },
-  // 3. Everywhere else in the app the SDK is reached only through the factories.
+  // 3. Everywhere else in the app the SDK is reached only through the factories — and, since S1.2, the cookie
+  //    session client (`@supabase/ssr`) only through src/lib/server/staff-session.ts.
   {
     files: APP_FILES,
-    ignores: [...BROWSER_SHARED_FILES, "src/lib/server/supabase.ts"],
+    ignores: [
+      ...BROWSER_SHARED_FILES,
+      "src/lib/server/supabase.ts",
+      "src/lib/server/staff-session.ts",
+    ],
     rules: {
       "no-restricted-imports": ["error", { patterns: SUPABASE_SDK_PATTERNS }],
     },

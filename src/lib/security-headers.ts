@@ -49,7 +49,9 @@ export function contentSecurityPolicy({
       ...(isDevelopment ? ["'unsafe-eval'"] : []),
     ],
     ["style-src", "'self'", "'unsafe-inline'"],
-    ["img-src", "'self'"],
+    // `data:` for one use: the TOTP enrolment QR (S1.2) is a `data:image/svg+xml` returned by Supabase Auth and
+    // rendered through <img>, where an SVG cannot run script; no other scheme and no remote image origin.
+    ["img-src", "'self'", "data:"],
     ["font-src", "'self'"],
     ["connect-src", "'self'", ...(sentryOrigin ? [sentryOrigin] : [])],
     ["object-src", "'none'"],
