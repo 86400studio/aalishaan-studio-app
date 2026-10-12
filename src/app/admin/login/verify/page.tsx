@@ -70,6 +70,7 @@ export default async function VerifyPage({
           <label className="grid gap-1">
             <span>{VERIFY.code}</span>
             <input
+              className="border px-3 py-2"
               name="code"
               type="text"
               inputMode="numeric"
@@ -79,7 +80,9 @@ export default async function VerifyPage({
               maxLength={6}
             />
           </label>
-          <button type="submit">{VERIFY.submit}</button>
+          <button type="submit" className="border px-4 py-2">
+            {VERIFY.submit}
+          </button>
         </form>
       </div>
     </main>

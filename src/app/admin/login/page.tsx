@@ -47,6 +47,7 @@ export default async function SignInPage({
           <label className="grid gap-1">
             <span>{SIGN_IN.email}</span>
             <input
+              className="border px-3 py-2"
               name="email"
               type="email"
               autoComplete="username"
@@ -57,6 +58,7 @@ export default async function SignInPage({
           <label className="grid gap-1">
             <span>{SIGN_IN.password}</span>
             <input
+              className="border px-3 py-2"
               name="password"
               type="password"
               autoComplete="current-password"
@@ -64,7 +66,9 @@ export default async function SignInPage({
               maxLength={256}
             />
           </label>
-          <button type="submit">{SIGN_IN.submit}</button>
+          <button type="submit" className="border px-4 py-2">
+            {SIGN_IN.submit}
+          </button>
         </form>
       </div>
     </main>

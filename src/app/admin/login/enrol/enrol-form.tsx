@@ -20,7 +20,13 @@ export function EnrolForm({ next }: Readonly<{ next: string }>) {
       <input type="hidden" name="next" value={next} />
       {state.error ? <p role="alert">{ENROL.errors[state.error]}</p> : null}
       {state.step === "start" ? (
-        <button type="submit" name="intent" value="start" disabled={pending}>
+        <button
+          type="submit"
+          className="border px-4 py-2"
+          name="intent"
+          value="start"
+          disabled={pending}
+        >
           {ENROL.start}
         </button>
       ) : (
@@ -41,6 +47,7 @@ export function EnrolForm({ next }: Readonly<{ next: string }>) {
           <label className="grid gap-1">
             <span>{ENROL.code}</span>
             <input
+              className="border px-3 py-2"
               name="code"
               type="text"
               inputMode="numeric"
@@ -52,6 +59,7 @@ export function EnrolForm({ next }: Readonly<{ next: string }>) {
           </label>
           <button
             type="submit"
+            className="border px-4 py-2"
             name="intent"
             value="confirm"
             disabled={pending}

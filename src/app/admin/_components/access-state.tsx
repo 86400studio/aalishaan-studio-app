@@ -66,7 +66,9 @@ export function AccessState({
 export function SignOutForm() {
   return (
     <form action={signOut} className="mt-6">
-      <button type="submit">{SHELL.signOut}</button>
+      <button type="submit" className="border px-4 py-2">
+        {SHELL.signOut}
+      </button>
     </form>
   );
 }
