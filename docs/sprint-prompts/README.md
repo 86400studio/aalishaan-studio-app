@@ -19,7 +19,7 @@ No routine closeout PR (WORKFLOW §8); fixes after review still require re-revie
 
 Active sprint: [S1.2 — Staff auth, MFA & server RBAC guard](S1.2-staff-auth.md), prepared 2026-10-12 and **In Progress the same day**
 in the second Claude Code cloud session (`CLOUD.md`, D-41) on the session branch `claude/determined-cannon-rha42x` from `main` =
-`76ef060` (the PR #18 merge): one branch, one PR — the prompt was planned and saved on the branch (Mode A) and executed in the same
+`76ef060` (the PR #18 merge): one branch, one PR — PR #21, opened as a draft from the cloud session — the prompt was planned and saved on the branch (Mode A) and executed in the same
 session as far as the cloud goes — the additive `0003_staff_auth` with its down file and change record, the server guard and the
 cookie session, the sign-in / TOTP enrolment / verification flow, the Upstash login throttle (fail closed), the audit rows and the
 revocation path, the blank protected `/admin` shell with one owner-only section and one finance route, the hermetic tests, the TEST
