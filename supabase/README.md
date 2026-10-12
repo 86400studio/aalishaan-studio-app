@@ -68,6 +68,18 @@ pnpm db:test:reset --namespace=catalogue:                      # deletes only th
 pnpm db:test:reset                                             # the S0.2 form: synthetic system_checks rows of one namespace (fixture: / integration:)
 ```
 
+## S1.2 staff fixtures (TEST only — a dry run without `--apply`)
+
+```bash
+pnpm db:test:staff-users                              # the three fixtures (owner, Operations, Customer support) vs TEST: which users and profiles exist
+pnpm db:test:staff-users --apply                      # creates the missing Auth users (admin API, confirmed, no mail) from E2E_STAFF_<ROLE>_EMAIL / _PASSWORD and inserts their staff_profiles rows; a differing row is reported, never overwritten
+pnpm db:test:staff-users --apply --reset-mfa          # removes every MFA factor of the three fixtures so the Playwright auth-setup project enrols again (delete .auth/ first)
+pnpm db:test:staff-users --apply --revoke operations  # the S1.2 revocation exercise: active = false, revoked_at, an Auth ban, an audit row — the next request is denied
+pnpm db:test:staff-users --apply --restore operations # the reverse, with its audit row (the owner fixture is never revoked by the tool)
+```
+
+Addresses must end in `@example.test`; nothing is written without `--apply`; PROD is refused before any request; no password or secret is ever printed. The guard reads `staff_profiles.active` on every request, so `--revoke` is visible on the next `/admin` request of that fixture.
+
 ## Recovery
 
 Prefer forward fixes: every planned migration is additive. When a schema rollback is unavoidable, the paired

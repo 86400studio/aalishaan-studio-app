@@ -82,6 +82,7 @@ or paste real values into any committed file.
 | `prototype/docs/ADMIN-FINAL-FEATURES.md` | *AF1 — the canonical Admin scope: 26 capabilities and acceptance stories US01–US23. Its §3 menu layout is superseded by the final Admin (D-PRE-23).* |
 | `prototype/admin/CAPABILITY-MAP.md` | *Where does each AF1 capability ID (O1–G6) live in the final Admin, and which 23 acceptance-story entry points does it keep?* |
 | `docs/SECURITY-CHECKLIST.md` | *Which security checks gate every merge and the launch?* |
+| `docs/THREAT-MODEL.md` | *What does the staff side protect, who can reach it, where are the trust boundaries, and which invariants does every Admin merge keep? (S1.2)* |
 | `docs/QA-CHECKLIST.md` · `docs/LAUNCH-CHECKLIST.md` | *What gets tested before merge and before launch?* |
 | `docs/testing-setup/` · `docs/error-tracking/` | *The Launch Gate (whole-site Playwright suite, morning check) and the post-launch incident lane.* |
 | `docs/ROLLBACK.md` | *Something broke in production — what now?* |

@@ -384,6 +384,6 @@ Bracketed tokens that intentionally remain in the docs pack and who fills them:
 grep -rnoP "\[[A-Z][A-Za-z0-9_/ .:-]{2,}\](?!\()" README.md CLAUDE.md CLOUD.md AGENTS.md docs .claude/skills --include=*.md --exclude-dir=templates | grep -vE "\[(SPRINT_ID|SLUG|DATE|YYYY-MM-DD|HEAD_SHA|MERGE_BASE_SHA|BRANCH_NAME|DOMAIN|ID|PASS/FAIL/PENDING/N/A|CANDIDATE SHA|DEPLOYMENT/CALLBACK SHA|SANITIZED EVIDENCE LINK|OWNER/NEXT ACTION|EXACT_PATHS|A-Z|A-Za-z0-9_/ .:-|RESOLVED \[DATE\]|Setup Gate / Stage 0|Not Started / In Progress|ERROR)"
 ```
 
-Expected output: none (every remaining token is in the register above; markdown link text is excluded by the lookahead and the command's own regex fragments are allow-listed); the skills' own bracket tokens (`[EXACT_PATHS]` etc.) inside per-use templates are excluded by `--exclude-dir=templates`. The `/close` skill references `docs/THREAT-MODEL.md`, created in S1.2.
+Expected output: none (every remaining token is in the register above; markdown link text is excluded by the lookahead and the command's own regex fragments are allow-listed); the skills' own bracket tokens (`[EXACT_PATHS]` etc.) inside per-use templates are excluded by `--exclude-dir=templates`. The `/close` skill references `docs/THREAT-MODEL.md`, created in S1.2 (2026-10-12 — the cloud build leg; a new asset, actor or boundary is added there by the sprint that introduces it).
 
 Next step → open the active sprint in `docs/ROADMAP.md` and run it via `docs/WORKFLOW.md`.
