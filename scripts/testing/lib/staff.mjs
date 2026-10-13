@@ -42,6 +42,8 @@ export function isFixtureRole(value) {
 
 /** The only domain a fixture address may use. */
 export const FIXTURE_ADDRESS_SUFFIX = "@example.test";
+/** A whole fixture address: one plain local part and the reserved domain, nothing before or after. */
+export const FIXTURE_ADDRESS = /^[a-z0-9._+-]+@example\.test$/;
 export const MIN_FIXTURE_PASSWORD = 12;
 
 /** The reason the tool writes when it revokes and restores a fixture (also the audit row's reason). */
@@ -92,10 +94,8 @@ export function readStaffFixtures(env) {
       reasons.push(`${names.email} is not set`);
     else {
       const normalised = email.trim().toLowerCase();
-      if (
-        !normalised.endsWith(FIXTURE_ADDRESS_SUFFIX) ||
-        !/^[a-z0-9._+-]+@/.test(normalised)
-      )
+      // The whole address, not its two ends: "x@evil.example@example.test" is not a fixture address.
+      if (!FIXTURE_ADDRESS.test(normalised))
         reasons.push(
           `${names.email} must be an obviously fake address ending in ${FIXTURE_ADDRESS_SUFFIX} (a reserved domain)`,
         );
@@ -138,6 +138,8 @@ export function parseStaffArgs(argv) {
     else if (arg === "--reset-mfa") resetMfa = true;
     else if (arg === "--revoke" || arg === "--restore") {
       const role = argv[i + 1];
+      if (arg === "--revoke" ? revoke : restore)
+        errors.push(`${arg} is given more than once`);
       if (!isFixtureRole(role)) {
         errors.push(`${arg} needs one of: ${STAFF_ROLES.join(", ")}`);
       } else if (arg === "--revoke") revoke = role;
@@ -145,6 +147,8 @@ export function parseStaffArgs(argv) {
       i += 1;
     } else if (arg.startsWith("--revoke=") || arg.startsWith("--restore=")) {
       const [flag, role] = arg.split("=");
+      if (flag === "--revoke" ? revoke : restore)
+        errors.push(`${flag} is given more than once`);
       if (!isFixtureRole(role))
         errors.push(`${flag} needs one of: ${STAFF_ROLES.join(", ")}`);
       else if (flag === "--revoke") revoke = role;
@@ -198,4 +202,99 @@ export function planStaffUsers(fixtures, users, profiles) {
       profileAction,
     };
   });
+}
+
+/**
+ * The revocation exercise and its reverse, as pure payloads — the same three writes the server's
+ * `revokeStaffAccess()` performs (src/lib/server/staff-access.ts): the staff row, the Auth ban, the audit row.
+ * The audit row states what the tool read before the change (`before`), never an assumed state, and whether the
+ * Auth ban was set or lifted; audit rows are insert-only, so a wrong one could never be corrected.
+ *
+ * @param {{ revoking: boolean, userId: string, before: { active: boolean, revoked_at: string | null }, now: string }} exercise
+ */
+export function accessExercise(exercise) {
+  const { revoking, userId, before, now } = exercise;
+  return {
+    /** The staff_profiles update: a revoked row is never active (the 0003 check constraint). */
+    profile: revoking
+      ? {
+          active: false,
+          revoked_at: now,
+          revoked_reason: REVOCATION_EXERCISE_REASON,
+        }
+      : { active: true, revoked_at: null, revoked_reason: null },
+    /** The `ban_duration` for auth.admin.updateUserById: a century, or "none" to lift it. */
+    banDuration: revoking ? REVOCATION_BAN_DURATION : "none",
+    /**
+     * The audit_log row, written once the staff row has changed — whatever the ban answered.
+     * @param {boolean} banApplied
+     */
+    audit: (banApplied) => ({
+      actor_type: "system",
+      actor_id: null,
+      action: revoking ? "staff.access_revoked" : "staff.access_restored",
+      entity_type: "staff_profile",
+      entity_id: userId,
+      previous: { active: before.active, revoked_at: before.revoked_at },
+      next: revoking
+        ? {
+            active: false,
+            revoked_at: now,
+            auth_ban: banApplied ? "set" : "failed",
+          }
+        : {
+            active: true,
+            revoked_at: null,
+            auth_ban: banApplied ? "lifted" : "failed",
+          },
+      reason: REVOCATION_EXERCISE_REASON,
+      external_ref: null,
+    }),
+  };
+}
+
+/**
+ * Whether the exercise may run on a fixture's TEST row, from what the tool read: never on a row that differs
+ * from the fixture (a role or name someone changed on TEST), never on a row that holds the owner role, and not
+ * when the row is already in the requested state (a repeated flag would only add an audit row).
+ *
+ * @param {{ revoking: boolean, profileAction: "insert" | "unchanged" | "differs", profile: { role: string, active: boolean, revoked_at?: string | null } | null }} input
+ * @returns {{ run: true } | { run: false, refusal: boolean, reason: string }}
+ */
+export function accessExerciseGate(input) {
+  const { revoking, profileAction, profile } = input;
+  if (profileAction === "differs")
+    return {
+      run: false,
+      refusal: true,
+      reason:
+        "the TEST row differs from the fixture (role or name) — not touched",
+    };
+  if (!profile)
+    return {
+      run: false,
+      refusal: true,
+      reason: "no staff_profiles row on TEST — run --apply first",
+    };
+  if (profile.role === "owner_admin")
+    return {
+      run: false,
+      refusal: true,
+      reason:
+        "the TEST row holds the owner role — the tool never revokes an owner",
+    };
+  const revoked = profile.active === false && Boolean(profile.revoked_at);
+  if (revoking && revoked)
+    return {
+      run: false,
+      refusal: false,
+      reason: "already revoked — nothing written",
+    };
+  if (!revoking && profile.active === true && !profile.revoked_at)
+    return {
+      run: false,
+      refusal: false,
+      reason: "not revoked — nothing written",
+    };
+  return { run: true };
 }

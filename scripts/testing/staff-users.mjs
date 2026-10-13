@@ -13,20 +13,26 @@
  *                      auth-setup project enrols them again (the harness keeps each secret under .auth/);
  *   --revoke <role>    with --apply: the S1.2 revocation exercise on one fixture (never the owner) — active = false,
  *                      revoked_at, revoked_reason, an Auth ban, an audit row — the same three writes the server's
- *                      revokeStaffAccess() performs; the next request of that member is denied;
+ *                      revokeStaffAccess() performs; the next request of that member is denied. The audit row
+ *                      states what the tool read before the change; a fixture already revoked, a TEST row that
+ *                      differs from the fixture or one that holds the owner role is left alone;
  *   --restore <role>   with --apply: the reverse (active = true, the ban lifted, an audit row).
  *
- * Addresses must end in @example.test (a reserved domain — never a real person); passwords are read from the
- * environment and never printed, nor is any TOTP secret or token. PROD, an unknown target, missing names or a
- * mismatched ref are refused before any request, with names only. Nothing is written without --apply.
+ * Addresses must be whole @example.test addresses (a reserved domain — never a real person); passwords are read
+ * from the environment and never printed, nor is any TOTP secret or token. PROD, an unknown target, missing
+ * names or a mismatched ref are refused before any request, with names only. Nothing is written without --apply.
+ *
+ * What --apply leaves on TEST stays there: no tool or grant in this repository deletes an Auth user or a
+ * staff_profiles row, and audit rows are insert-only for every role.
  */
 import { createClient } from "@supabase/supabase-js";
 
 import { loadLocalEnv } from "./lib/env.mjs";
+import { redact } from "./lib/http.mjs";
 import {
-  REVOCATION_BAN_DURATION,
-  REVOCATION_EXERCISE_REASON,
   STAFF_ENV_NAMES,
+  accessExercise,
+  accessExerciseGate,
   parseStaffArgs,
   planStaffUsers,
   readStaffFixtures,
@@ -40,13 +46,15 @@ import {
 const TIMEOUT_MS = 15_000;
 
 /**
- * @param {{ code?: string, message?: string } | null} error
+ * What an error is called in the tool's output: the platform's code, else the HTTP status, else "no response" —
+ * never a library or upstream message, which could carry a page of markup or a value.
+ * @param {{ code?: string, status?: number } | null | undefined} error
  * @param {number} [status]
  */
 function describe(error, status) {
   if (error?.code) return error.code;
-  if (!error) return "no answer";
-  return status ? `HTTP ${status}` : (error.message ?? "error");
+  const http = status ?? error?.status;
+  return http ? `HTTP ${http}` : "no response";
 }
 
 /**
@@ -155,9 +163,20 @@ async function main() {
       : "Dry run — comparing the fixtures with TEST, writing nothing.",
   );
   for (const entry of plan) {
-    const line = `${entry.fixture.role.padEnd(12)} user ${entry.userAction === "exists" ? `exists (${entry.userId})` : "to create"}; profile ${entry.profileAction}${
+    // The factors are what the Auth server holds (a read); `mfa_enrolled_at` is the informational column, which
+    // an MFA reset or a schema rollback leaves out of step with them — so both are shown, each under its name.
+    let factors = "";
+    if (entry.userId) {
+      const listed = await client.auth.admin.mfa.listFactors({
+        userId: entry.userId,
+      });
+      factors = listed.error
+        ? `, factors not read (${describe(listed.error)})`
+        : `, verified factors ${(listed.data?.factors ?? []).filter((f) => f.status === "verified").length}`;
+    }
+    const line = `${entry.fixture.role.padEnd(12)} user ${entry.userAction === "exists" ? `exists (${entry.userId})` : "to create"}${factors}; profile ${entry.profileAction}${
       entry.profile
-        ? ` (active ${entry.profile.active}, mfa ${entry.profile.mfa_enrolled_at ? "enrolled" : "not enrolled"}${entry.profile.revoked_at ? ", REVOKED" : ""})`
+        ? ` (active ${entry.profile.active}, mfa_enrolled_at ${entry.profile.mfa_enrolled_at ? "set" : "empty"}${entry.profile.revoked_at ? ", REVOKED" : ""})`
         : ""
     }`;
     console.log(`  ${line}`);
@@ -194,20 +213,30 @@ async function main() {
     }
     ids.set(entry.fixture.role, userId);
     if (entry.profileAction === "insert" && userId) {
-      const { error } = await client.from("staff_profiles").insert({
+      const insertion = await client.from("staff_profiles").insert({
         user_id: userId,
         role: entry.fixture.role,
         display_name: entry.fixture.displayName,
         active: true,
       });
-      if (error) {
+      if (insertion.error) {
         console.error(
-          `  ${entry.fixture.role}: staff_profiles insert failed (${describe(error)})`,
+          `  ${entry.fixture.role}: staff_profiles insert failed (${describe(insertion.error, insertion.status)})`,
         );
         process.exitCode = 1;
         return;
       }
       inserted += 1;
+      // The row as this run has just written it — what a --revoke in the same run finds.
+      entry.profile = {
+        user_id: userId,
+        role: entry.fixture.role,
+        display_name: entry.fixture.displayName,
+        active: true,
+        mfa_enrolled_at: null,
+        revoked_at: null,
+      };
+      entry.profileAction = "unchanged";
       console.log(`  ${entry.fixture.role}: staff profile inserted`);
     }
   }
@@ -250,7 +279,8 @@ async function main() {
   const exercise = args.revoke ?? args.restore;
   if (exercise) {
     const userId = ids.get(exercise);
-    if (!userId) {
+    const entry = plan.find((e) => e.fixture.role === exercise);
+    if (!userId || !entry) {
       console.error(
         `  ${exercise}: no fixture user on TEST — run --apply first`,
       );
@@ -258,51 +288,57 @@ async function main() {
       return;
     }
     const revoking = Boolean(args.revoke);
-    const now = new Date().toISOString();
-    const update = revoking
-      ? {
-          active: false,
-          revoked_at: now,
-          revoked_reason: REVOCATION_EXERCISE_REASON,
-        }
-      : { active: true, revoked_at: null, revoked_reason: null };
+    // Only on the fixture's own, unchanged row, and only when there is something to change.
+    const gate = accessExerciseGate({
+      revoking,
+      profileAction: entry.profileAction,
+      profile: entry.profile,
+    });
+    if (!gate.run) {
+      if (gate.refusal) {
+        console.error(`  ${exercise}: refused — ${gate.reason}`);
+        process.exitCode = 1;
+      } else console.log(`  ${exercise}: ${gate.reason}`);
+      return;
+    }
+    const before = {
+      active: entry.profile?.active ?? true,
+      revoked_at: entry.profile?.revoked_at ?? null,
+    };
+    const writes = accessExercise({
+      revoking,
+      userId,
+      before,
+      now: new Date().toISOString(),
+    });
     const profile = await client
       .from("staff_profiles")
-      .update(update)
-      .eq("user_id", userId);
-    if (profile.error) {
+      .update(writes.profile)
+      .eq("user_id", userId)
+      .select("user_id");
+    if (profile.error || (profile.data ?? []).length !== 1) {
       console.error(
-        `  ${exercise}: staff_profiles update failed (${describe(profile.error)})`,
+        `  ${exercise}: staff_profiles update failed (${profile.error ? describe(profile.error, profile.status) : "no row changed"}) — nothing else written`,
       );
       process.exitCode = 1;
       return;
     }
     const ban = await client.auth.admin.updateUserById(userId, {
-      ban_duration: revoking ? REVOCATION_BAN_DURATION : "none",
+      ban_duration: writes.banDuration,
     });
-    if (ban.error) {
+    // The staff row has changed, so the audit row is written whatever the ban answered — and says which.
+    const audit = await client
+      .from("audit_log")
+      .insert(writes.audit(!ban.error));
+    if (audit.error)
       console.error(
-        `  ${exercise}: auth.admin.updateUserById failed (${describe(ban.error)})`,
+        `  ${exercise}: audit_log insert failed (${describe(audit.error, audit.status)})`,
       );
-      process.exitCode = 1;
-      return;
-    }
-    const audit = await client.from("audit_log").insert({
-      actor_type: "system",
-      actor_id: null,
-      action: revoking ? "staff.access_revoked" : "staff.access_restored",
-      entity_type: "staff_profile",
-      entity_id: userId,
-      previous: { active: !revoking },
-      next: revoking
-        ? { active: false, revoked_at: now }
-        : { active: true, revoked_at: null },
-      reason: REVOCATION_EXERCISE_REASON,
-    });
-    if (audit.error) {
+    if (ban.error)
       console.error(
-        `  ${exercise}: audit_log insert failed (${describe(audit.error)})`,
+        `  ${exercise}: auth.admin.updateUserById failed (${describe(ban.error)}) — the staff row is ${revoking ? "inactive" : "active"}, the Auth ban is unchanged`,
       );
+    if (audit.error || ban.error) {
       process.exitCode = 1;
       return;
     }
@@ -312,7 +348,19 @@ async function main() {
   }
 }
 
+/** The values a thrown message must never show (a malformed key can end up quoted in a library error). */
+const NEVER_PRINTED = [
+  "SUPABASE_SECRET_KEY",
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  ...STAFF_ENV_NAMES.filter((name) => name.endsWith("_PASSWORD")),
+];
+
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
+  console.error(
+    redact(
+      error instanceof Error ? error.message : String(error),
+      NEVER_PRINTED.map((name) => process.env[name]),
+    ),
+  );
   process.exitCode = 1;
 });
