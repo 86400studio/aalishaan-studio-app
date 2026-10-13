@@ -12,6 +12,9 @@ import { describe, expect, it } from "vitest";
  */
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
+/** A repository-relative path with forward slashes, whatever the platform's separator (Windows: `\`). */
+const toPosix = (relativePath: string) =>
+  relativePath.split(path.sep).join("/");
 const eslint = new ESLint({
   cwd: ROOT,
   overrideConfigFile: path.join(ROOT, "eslint.config.mjs"),
@@ -186,6 +189,16 @@ describe(
         "src/proxy.ts",
         'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
       ],
+      [
+        "the staff session module importing the SDK itself — its exemption is for @supabase/ssr alone (S1.2)",
+        "src/lib/server/staff-session.ts",
+        'import { createClient } from "@supabase/supabase-js";\nexport const x = createClient;\n',
+      ],
+      [
+        "the staff session module importing another SDK sub-package (S1.2)",
+        "src/lib/server/staff-session.ts",
+        'import { GoTrueClient } from "@supabase/auth-js";\nexport const x = GoTrueClient;\n',
+      ],
     ])("reports %s", async (_label, file, code) => {
       expect(await errorRulesFor(file, code)).toContain(IMPORT_RULE);
     });
@@ -235,6 +248,11 @@ describe(
         "the staff session module creating the cookie session client (S1.2)",
         "src/lib/server/staff-session.ts",
         'import { createServerClient } from "@supabase/ssr";\nexport const x = createServerClient;\n',
+      ],
+      [
+        "the staff session module importing an SDK type (S1.2)",
+        "src/lib/server/staff-session.ts",
+        'import type { SupabaseClient } from "@supabase/supabase-js";\nexport type X = SupabaseClient;\n',
       ],
       [
         "the proxy importing the staff session module (S1.2)",
@@ -402,7 +420,7 @@ describe("transitive protection — the marker the bundler enforces", () => {
         if (entry.isDirectory()) walk(full);
         else if (/\.(ts|tsx)$/.test(entry.name)) {
           if (/from "@supabase\/ssr"/.test(readFileSync(full, "utf8")))
-            importers.push(path.relative(ROOT, full));
+            importers.push(toPosix(path.relative(ROOT, full)));
         }
       }
     };
@@ -456,7 +474,7 @@ describe("transitive protection — the marker the bundler enforces", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("every route handler, page and layout in src/app is a server module (no client directive); the one client component is the enrolment form", () => {
+  it("every route handler, page and layout in src/app is a server module (no client directive)", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -471,5 +489,22 @@ describe("transitive protection — the marker the bundler enforces", () => {
     };
     walk(path.join(ROOT, "src", "app"));
     expect(offenders).toEqual([]);
+  });
+
+  it("the enrolment form is the only client module under src/app/admin", () => {
+    const clientModules: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.tsx?$/.test(entry.name)) {
+          // The directive counts only as the file's first statement.
+          if (/^\s*["']use client["'];/.test(readFileSync(full, "utf8")))
+            clientModules.push(toPosix(path.relative(ROOT, full)));
+        }
+      }
+    };
+    walk(path.join(ROOT, "src", "app", "admin"));
+    expect(clientModules).toEqual(["src/app/admin/login/enrol/enrol-form.tsx"]);
   });
 });

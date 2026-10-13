@@ -35,7 +35,9 @@ export function safeNextPath(value: unknown): string {
     if (/[\u0000-\u001f\u007f]/.test(candidate)) return ADMIN_HOME;
   }
   if (!SAFE_PATH.test(decoded)) return ADMIN_HOME;
-  if (decoded === LOGIN_PREFIX || decoded.startsWith(`${LOGIN_PREFIX}/`))
+  // The sign-in pages are never a return target — with or without a query, which would otherwise slip past.
+  const pathOnly = decoded.split("?")[0];
+  if (pathOnly === LOGIN_PREFIX || pathOnly.startsWith(`${LOGIN_PREFIX}/`))
     return ADMIN_HOME;
   // A path that decodes differently is kept only in its decoded, re-validated form.
   return decoded;

@@ -77,7 +77,9 @@ export function holdsAreas(
 /**
  * The S1.2 routes and the areas each requires beyond an active staff session at aal2. Every later sprint adds
  * its routes here (and nowhere else), so the guard and the tests read one table. `null` means the path is not
- * an Admin route this model knows — the guard treats it as forbidden, never as open.
+ * an Admin route this model knows — never an empty requirement: each page substitutes the owner-only `settings`
+ * area for it (`?? ["settings"]`, pinned by tests/unit/staff-permissions.test.ts), so an unknown path is never
+ * open to a role that lacks `settings`.
  *
  * - `/admin` — the blank shell: any active staff member (the final Admin's Orders landing page is S1.9).
  * - `/admin/staff` — Staff & Access: owner-only (`settings`; TECH-ARCHITECTURE §3b).

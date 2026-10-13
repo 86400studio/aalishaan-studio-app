@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
+  classifyAuthFailure,
   decideAccess,
   type AccessDecision,
   type AssuranceLevel,
@@ -169,6 +170,7 @@ export async function collectStaffFacts(
     facts: {
       available: false,
       user: null,
+      revokedByAuth: false,
       aal: null,
       hasVerifiedTotp: false,
       profile: null,
@@ -180,16 +182,35 @@ export async function collectStaffFacts(
   if (!client.ok) return unavailable(null);
   const { supabase } = client;
 
+  try {
+    return await gatherStaffFacts(supabase, required, unavailable);
+  } catch {
+    // A library call that throws instead of answering — a cookie that is not a session at all is decoded before
+    // any request is made — has established nothing: unavailable, never an unhandled error and never a pass.
+    return unavailable(supabase);
+  }
+}
+
+/** The Auth and database reads of `collectStaffFacts`, in the one order that makes the level trustworthy. */
+async function gatherStaffFacts(
+  supabase: SupabaseClient,
+  required: readonly PermissionArea[],
+  unavailable: (supabase: SupabaseClient | null) => StaffFactsResult,
+): Promise<StaffFactsResult> {
   const userResult = await supabase.auth.getUser();
   if (userResult.error) {
-    // An Auth-server or network failure is unavailable; a missing, expired or invalid session is simply no user.
-    const status = userResult.error.status;
-    if (status !== undefined && status >= 500) return unavailable(supabase);
+    // An Auth-server or network failure is unavailable; a missing, expired or invalid session is simply no user
+    // (`classifyAuthFailure` — a network failure carries status 0, an unreadable answer none at all).
+    if (classifyAuthFailure(userResult.error.status) === "unavailable")
+      return unavailable(supabase);
     return {
       supabase,
       facts: {
         available: true,
         user: null,
+        // Revocation bans the Auth user, and the Auth server then refuses that member's own token. That refusal
+        // is the revoked state — the member is told why nothing opens — not a sign-in form that cannot work.
+        revokedByAuth: userResult.error.code === "user_banned",
         aal: null,
         hasVerifiedTotp: false,
         profile: null,
@@ -204,6 +225,7 @@ export async function collectStaffFacts(
       facts: {
         available: true,
         user: null,
+        revokedByAuth: false,
         aal: null,
         hasVerifiedTotp: false,
         profile: null,
@@ -211,6 +233,9 @@ export async function collectStaffFacts(
       },
     };
 
+  // The level is the `aal` claim of the session's access token, decoded locally by auth-js. It is trusted here
+  // only because `getUser()` above has just had the Auth server validate that very token (same cookie store, same
+  // request): keep this call after it, and never read a level from a token the Auth server has not vouched for.
   const aalResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aalResult.error) return unavailable(supabase);
 
@@ -228,6 +253,7 @@ export async function collectStaffFacts(
     facts: {
       available: true,
       user: { id: user.id, email: user.email ?? null },
+      revokedByAuth: false,
       aal: assuranceLevelOf(aalResult.data.currentLevel),
       hasVerifiedTotp: hasVerifiedTotp(user as UserLike),
       profile: (profileResult.data as StaffProfileRow | null) ?? null,
@@ -335,7 +361,12 @@ export async function refreshStaffSessionCookies(
     },
   );
   // Reading the claims refreshes an expired access token when a refresh token is present; nothing else is done
-  // with the result here — the page's guard asks the Auth server itself.
-  await supabase.auth.getClaims();
+  // with the result here — the page's guard asks the Auth server itself. A cookie that is not a session at all
+  // can make the decode throw: the proxy stays a pass-through and the page's guard decides.
+  try {
+    await supabase.auth.getClaims();
+  } catch {
+    // Deliberately empty: the proxy decides nothing and must not fail the request.
+  }
   return response;
 }

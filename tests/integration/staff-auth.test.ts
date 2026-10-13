@@ -1,7 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { readStaffFixtures } from "../../scripts/testing/lib/staff.mjs";
+import {
+  STAFF_FIXTURES,
+  readStaffFixtures,
+} from "../../scripts/testing/lib/staff.mjs";
 import { resolveTestTarget } from "../../scripts/testing/lib/supabase-target.mjs";
 
 /**
@@ -10,9 +13,11 @@ import { resolveTestTarget } from "../../scripts/testing/lib/supabase-target.mjs
  * stays closed to the publishable key with privileged post-checks that nothing changed; the mapping function is
  * closed to anon and exact for the privileged role; a signed-in staff member at aal1 (password only) reads no row —
  * their own included — because the own-row policy needs aal2, holds no write on the table, and may call the
- * mapping function. The aal2 path (MFA) is exercised by the Playwright auth-setup project on the Preview and by the
- * hermetic decision-table tests; this suite does not enrol a factor. It never skips: missing names fail with the
- * names only.
+ * mapping function. This suite does not enrol a factor, so it does not read through the policy at aal2: the
+ * policy's allowed branch (an aal2 member reads exactly their own row) is proved by the read-only probe of the
+ * change record (Verification 5b), and the server guard's aal2 path — which reads the row with the privileged
+ * client, not through the policy — by the Playwright auth-setup project on the Preview and the hermetic
+ * decision-table tests. It never skips: missing names fail with the names only.
  */
 
 const NO_SESSION = {
@@ -43,6 +48,8 @@ async function staffCount(): Promise<number> {
     .from("staff_profiles")
     .select("*", { count: "exact", head: true });
   expect(error).toBeNull();
+  // A null count would make "before" and "after" compare equal without anything having been counted.
+  expect(count, "staff_profiles: privileged count").not.toBeNull();
   return count ?? -1;
 }
 
@@ -125,6 +132,28 @@ describe("staff_profiles stays private to the publishable key", () => {
   });
 });
 
+describe("the three TEST fixtures", () => {
+  it("each have an active staff_profiles row with their role (pnpm db:test:staff-users --apply)", async () => {
+    const { data, error } = await privileged
+      .from("staff_profiles")
+      .select("role, display_name, active")
+      .in(
+        "display_name",
+        STAFF_FIXTURES.map((fixture) => fixture.displayName),
+      )
+      // The enum's own order: owner_admin, operations, support — the order of STAFF_FIXTURES.
+      .order("role");
+    expect(error).toBeNull();
+    expect(data).toEqual(
+      STAFF_FIXTURES.map((fixture) => ({
+        role: fixture.role,
+        display_name: fixture.displayName,
+        active: true,
+      })),
+    );
+  });
+});
+
 describe("a staff member's password session (aal1)", () => {
   let session: SupabaseClient;
   let supportUserId = "";
@@ -144,6 +173,11 @@ describe("a staff member's password session (aal1)", () => {
     const aal = await session.auth.mfa.getAuthenticatorAssuranceLevel();
     expect(aal.error).toBeNull();
     expect(aal.data?.currentLevel).toBe("aal1");
+  });
+
+  // The suite leaves no session behind on TEST: this one is ended on the Auth server when the block is done.
+  afterAll(async () => {
+    await session?.auth.signOut({ scope: "local" });
   });
 
   it("has a staff_profiles row that the privileged client sees, with the support role", async () => {

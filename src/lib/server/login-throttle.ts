@@ -4,13 +4,20 @@ import { createHash } from "node:crypto";
 
 /**
  * The staff sign-in throttle — S1.2 (docs/TECH-ARCHITECTURE.md §5, §7; docs/SECURITY-CHECKLIST.md §5).
- * Upstash Redis over its REST pipeline: one request counts the attempt against two fixed windows — the e-mail
- * address (5 attempts per 15 minutes) and the client address (20 per 15 minutes) — before the password is ever
- * checked, so a wrong guess and a right one cost the same. Both identifiers reach Redis only as SHA-256 hashes:
- * no address of either kind is stored or logged in clear.
+ * Upstash Redis over its REST pipeline, in two steps of the sign-in:
+ *
+ *   - the password step: one request counts the attempt against two fixed windows — the e-mail address
+ *     (5 attempts per 15 minutes) and the client address (20 per 15 minutes) — before the password is ever
+ *     checked, so a wrong guess and a right one cost the same;
+ *   - the code step: each six-digit code tried against a member's authenticator counts against that member
+ *     (5 per 15 minutes), so a stolen password cannot be followed by an unbounded run of code guesses.
+ *
+ * The identifiers reach Redis only as SHA-256 hashes: no address of either kind and no user id is stored or
+ * logged in clear (a hash, not a secret: someone who can read the database can still test a known address
+ * against a key).
  *
  * Fails closed, everywhere: a missing or malformed name, a network error, a timeout, a non-2xx answer or an
- * unexpected body refuses the sign-in with `unavailable`. The owner sets the TEST database's values in the
+ * unexpected body refuses the step with `unavailable`. The owner sets the TEST database's values in the
  * Preview and Development scopes and the PROD database's in Production (ENVIRONMENT-PARITY §4); without them
  * nobody can sign in, which is the intended failure mode of an abuse control. The two names are read here and
  * nowhere else in `src/` (the eslint server-only names rule).
@@ -19,6 +26,7 @@ import { createHash } from "node:crypto";
 export const LOGIN_LIMITS = {
   email: { max: 5, windowMs: 15 * 60 * 1000 },
   ip: { max: 20, windowMs: 15 * 60 * 1000 },
+  code: { max: 5, windowMs: 15 * 60 * 1000 },
 } as const;
 
 export const THROTTLE_TIMEOUT_MS = 3000;
@@ -54,7 +62,16 @@ export function upstashOrigin(value: string | undefined): string | null {
   return url.origin;
 }
 
-/** A stable, non-reversible key part: lower-cased, trimmed, SHA-256 hex. */
+/**
+ * The e-mail address as every sink sees it — trimmed and lower-cased once. The sign-in action sends this one
+ * string to the throttle, to the audit hash and to the Auth server, so two spellings of one address can never
+ * be counted under two keys while the Auth server folds them into one account.
+ */
+export function normaliseEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/** A stable key part that carries no identifier in clear: lower-cased, trimmed, SHA-256 hex (unsalted). */
 export function hashIdentifier(value: string): string {
   return createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
 }
@@ -110,26 +127,50 @@ export function evaluateCounts(counts: {
   return { ok: true };
 }
 
+/** The key of the code step: one counter per member, by the hash of their user id. */
+export function codeThrottleKey(userId: string): string {
+  return `login:code:${hashIdentifier(userId)}`;
+}
+
+export function codeThrottleCommands(key: string): unknown[][] {
+  return [
+    ["INCR", key],
+    ["PEXPIRE", key, LOGIN_LIMITS.code.windowMs, "NX"],
+  ];
+}
+
+/**
+ * The count out of the code step's pipeline answer, or null for anything other than two `{ result }` entries
+ * whose INCR result is a non-negative integer.
+ */
+export function parseCodeCount(body: unknown): number | null {
+  if (!Array.isArray(body) || body.length !== 2) return null;
+  for (const entry of body) {
+    if (typeof entry !== "object" || entry === null) return null;
+    if ("error" in entry) return null;
+  }
+  const count = (body[0] as { result?: unknown }).result;
+  if (!Number.isInteger(count) || (count as number) < 0) return null;
+  return count as number;
+}
+
 export type ThrottleDependencies = {
   env: UpstashEnv;
   fetch: typeof fetch;
 };
 
-/**
- * Counts one sign-in attempt for `email` from `ip` and says whether it may proceed. Every failure path answers
- * `unavailable`; nothing about the attempt is logged.
- */
-export async function consumeLoginAttempt(
-  attempt: { email: string; ip: string },
-  deps: ThrottleDependencies = {
-    env: readUpstashEnv(),
-    fetch: globalThis.fetch,
-  },
-): Promise<ThrottleOutcome> {
+function defaultDependencies(): ThrottleDependencies {
+  return { env: readUpstashEnv(), fetch: globalThis.fetch };
+}
+
+/** One pipeline request; the parsed JSON body, or `null` for every way the request can fail. */
+async function runPipeline(
+  commands: unknown[][],
+  deps: ThrottleDependencies,
+): Promise<{ body: unknown } | null> {
   const origin = upstashOrigin(deps.env.UPSTASH_REDIS_REST_URL);
   const token = deps.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!origin || typeof token !== "string" || token.trim() === "")
-    return { ok: false, reason: "unavailable" };
+  if (!origin || typeof token !== "string" || token.trim() === "") return null;
   let response: Response;
   try {
     response = await deps.fetch(`${origin}/pipeline`, {
@@ -138,25 +179,58 @@ export async function consumeLoginAttempt(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(
-        throttleCommands(throttleKeys(attempt.email, attempt.ip)),
-      ),
+      body: JSON.stringify(commands),
       signal: AbortSignal.timeout(THROTTLE_TIMEOUT_MS),
       cache: "no-store",
     });
   } catch {
-    return { ok: false, reason: "unavailable" };
+    return null;
   }
-  if (!response.ok) return { ok: false, reason: "unavailable" };
-  let body: unknown;
+  if (!response.ok) return null;
   try {
-    body = await response.json();
+    return { body: await response.json() };
   } catch {
-    return { ok: false, reason: "unavailable" };
+    return null;
   }
-  const counts = parsePipelineCounts(body);
+}
+
+/**
+ * Counts one sign-in attempt for `email` from `ip` and says whether it may proceed. Every failure path answers
+ * `unavailable`; nothing about the attempt is logged.
+ */
+export async function consumeLoginAttempt(
+  attempt: { email: string; ip: string },
+  deps: ThrottleDependencies = defaultDependencies(),
+): Promise<ThrottleOutcome> {
+  const answer = await runPipeline(
+    throttleCommands(throttleKeys(attempt.email, attempt.ip)),
+    deps,
+  );
+  if (!answer) return { ok: false, reason: "unavailable" };
+  const counts = parsePipelineCounts(answer.body);
   if (!counts) return { ok: false, reason: "unavailable" };
   return evaluateCounts(counts);
+}
+
+/**
+ * Counts one code tried against the authenticator of the member `userId` and says whether it may be checked.
+ * Counted before the Auth server sees the code, right or wrong; every failure path answers `unavailable`.
+ */
+export async function consumeCodeAttempt(
+  userId: string,
+  deps: ThrottleDependencies = defaultDependencies(),
+): Promise<ThrottleOutcome> {
+  if (userId.trim() === "") return { ok: false, reason: "unavailable" };
+  const answer = await runPipeline(
+    codeThrottleCommands(codeThrottleKey(userId)),
+    deps,
+  );
+  if (!answer) return { ok: false, reason: "unavailable" };
+  const count = parseCodeCount(answer.body);
+  if (count === null) return { ok: false, reason: "unavailable" };
+  return count > LOGIN_LIMITS.code.max
+    ? { ok: false, reason: "rate_limited" }
+    : { ok: true };
 }
 
 /**

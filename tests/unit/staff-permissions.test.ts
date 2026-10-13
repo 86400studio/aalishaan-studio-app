@@ -128,10 +128,23 @@ describe("the S1.2 routes and the areas they require", () => {
     ]);
   });
 
-  it("answers null for an unknown path, which the guard treats as forbidden", () => {
+  it("answers null for an unknown path — never an empty requirement — and every page turns null into the owner-only area", () => {
     expect(requiredAreasFor("/admin/orders")).toBeNull();
     expect(requiredAreasFor("/")).toBeNull();
     expect(requiredAreasFor("/adminx")).toBeNull();
+    // No guard code handles null: each page that asks the table substitutes the owner-only requirement, so a
+    // path the table does not know can never be opened by a role that lacks `settings`.
+    for (const page of ["page.tsx", "staff/page.tsx", "support/page.tsx"]) {
+      const source = readFileSync(
+        path.join(ROOT, "src", "app", "admin", page),
+        "utf8",
+      );
+      const asks = source.match(/requiredAreasFor\(/g) ?? [];
+      const guarded =
+        source.match(/requiredAreasFor\([^)]*\) \?\? \["settings"\]/g) ?? [];
+      expect(asks.length, page).toBeGreaterThan(0);
+      expect(guarded.length, page).toBe(asks.length);
+    }
   });
 
   it("mirrors the architecture's matrix: the owner opens all three, Operations only the shell, Customer support the shell and Support but not Refunds", () => {

@@ -29,7 +29,9 @@ export default async function SupportPage({
         <h1>{view ? ADMIN_LABELS.refunds : ADMIN_LABELS.support}</h1>
         <p className="mt-6">{view ? ARRIVES_IN.refunds : ARRIVES_IN.support}</p>
         <p className="mt-6">
-          <a href="/admin">{ADMIN_LABELS.brand}</a>
+          <a href="/admin" className="underline">
+            {ADMIN_LABELS.brand}
+          </a>
         </p>
         <SignOutForm />
       </div>

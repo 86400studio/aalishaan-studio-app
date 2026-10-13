@@ -1,8 +1,9 @@
 /**
  * The staff-facing strings of S1.2 (docs/content/new-strings.md, rows NS-10 and NS-19–NS-25; decision D-24 —
- * honest technical states approved by the delivery lead, owner review at the next check-in). Labels the final
- * Admin contains are quoted exactly from it (docs/content/locked-facts.md §9a); everything else is registered in
- * the register before it is used here. Nothing is invented inline in a page.
+ * honest technical states, which ship on the delivery lead's approval with owner review at the next check-in;
+ * the register's §4 records the approval). Labels the final Admin contains are quoted exactly from it
+ * (docs/content/locked-facts.md §9a); everything else is registered in the register before it is used here.
+ * Nothing is invented inline in a page.
  */
 
 /** Labels the final Admin contains (quoted exactly). */
@@ -43,6 +44,7 @@ export const VERIFY = {
   submit: "Verify",
   errors: {
     code: "That code did not work. Enter the current code from your authenticator app.",
+    throttled: "Too many codes tried. Wait 15 minutes and try again.",
     unavailable:
       "Verification is not available right now. Try again in a few minutes.",
   },

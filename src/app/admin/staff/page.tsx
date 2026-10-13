@@ -21,7 +21,9 @@ export default async function StaffAccessPage() {
         <h1>{ADMIN_LABELS.staffAndAccess}</h1>
         <p className="mt-6">{ARRIVES_IN.staff}</p>
         <p className="mt-6">
-          <a href="/admin">{ADMIN_LABELS.brand}</a>
+          <a href="/admin" className="underline">
+            {ADMIN_LABELS.brand}
+          </a>
         </p>
         <SignOutForm />
       </div>

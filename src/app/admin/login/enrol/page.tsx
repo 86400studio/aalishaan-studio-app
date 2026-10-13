@@ -3,15 +3,15 @@ import { redirect } from "next/navigation";
 import { getStaffAccess } from "@/lib/server/staff-session";
 import { loginUrlFor, safeNextPath } from "@/lib/staff/next-path";
 
-import { AccessState } from "../../_components/access-state";
+import { AccessState, SignOutForm } from "../../_components/access-state";
 import { ADMIN_LABELS, ENROL } from "../../_components/strings";
 import { EnrolForm } from "./enrol-form";
 
 /**
  * TOTP enrolment — S1.2 (MFA is mandatory: an active staff account without a verified factor lands here after
  * its password sign-in and nowhere else). The form is a client component only because the QR and the key come
- * back from the `start` intent of the server action and must be shown before the `confirm` intent; it imports
- * the action, never a server module or the SDK.
+ * back from the start action and must be shown before the confirm action runs; it imports the two actions,
+ * never a server module or the SDK.
  */
 export default async function EnrolPage({
   searchParams,
@@ -53,6 +53,8 @@ export default async function EnrolPage({
         <h1 className="mt-2">{ENROL.heading}</h1>
         <p className="mt-6">{ENROL.intro}</p>
         <EnrolForm next={next} />
+        {/* The way out of a password-only session, for a member who signed in with the wrong account. */}
+        <SignOutForm />
       </div>
     </main>
   );

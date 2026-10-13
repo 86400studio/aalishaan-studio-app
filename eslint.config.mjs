@@ -216,6 +216,26 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": ["error", { patterns: SUPABASE_SDK_PATTERNS }],
     },
   },
+  //    The staff session module is exempt from rule 3 for one package only: it may import `@supabase/ssr` and
+  //    the SDK's types, never the SDK itself — a client built there would bypass the two factories.
+  {
+    files: ["src/lib/server/staff-session.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@supabase/*", "!@supabase/ssr"],
+              allowTypeImports: true,
+              message:
+                "src/lib/server/staff-session.ts may import @supabase/ssr and SDK types only; create Supabase clients through the factories.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // 4. Server-only environment names are read inside src/lib/server only — never in next.config.ts either.
   {
     files: [...APP_FILES, "next.config.ts"],

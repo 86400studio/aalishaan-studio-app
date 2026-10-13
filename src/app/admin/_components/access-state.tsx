@@ -26,7 +26,9 @@ export function AccessState({
             <h1>{ADMIN_LABELS.accessRestricted}</h1>
             <p className="mt-6">{DENIED.body}</p>
             <p className="mt-6">
-              <a href="/admin">{DENIED.back}</a>
+              <a href="/admin" className="underline">
+                {DENIED.back}
+              </a>
             </p>
           </div>
         </main>

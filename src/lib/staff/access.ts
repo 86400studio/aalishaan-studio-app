@@ -17,6 +17,8 @@ import {
  *
  * The decision table, in order of precedence:
  *   1. the facts could not be established (configuration, Auth or database failure) → `unavailable` (never a pass);
+ *   1a. the Auth server refused the member's own token because the user is banned — revocation bans the Auth
+ *       user — → `revoked` (the same state as row 4, reached before the staff row can be read);
  *   2. no verified user behind the cookies → `login`;
  *   3. a user without a `staff_profiles` row → `not_staff` (an Auth account is not a staff account);
  *   4. an inactive row (revoked, or disabled by S2.1) → `revoked`;
@@ -42,6 +44,11 @@ export type SessionFacts = {
   available: boolean;
   /** The user the Auth server vouched for (`auth.getUser()`), or null. */
   user: { id: string; email: string | null } | null;
+  /**
+   * True when the Auth server refused the session because its user is banned. Revocation bans the Auth user, so
+   * this is a revoked member presenting their own, otherwise valid token — nobody else can cause it.
+   */
+  revokedByAuth: boolean;
   /** The current assurance level of the session, from the validated token's claims. */
   aal: AssuranceLevel | null;
   /** Whether the user carries at least one verified TOTP factor. */
@@ -65,7 +72,8 @@ export type AccessDecision =
   | { kind: "unavailable" }
   | { kind: "login" }
   | { kind: "not_staff"; userId: string }
-  | { kind: "revoked"; userId: string }
+  /** `userId` is null when the Auth server itself refused the banned member's token (no user was returned). */
+  | { kind: "revoked"; userId: string | null }
   | { kind: "enrol"; userId: string }
   | { kind: "verify"; userId: string }
   | {
@@ -75,8 +83,25 @@ export type AccessDecision =
     }
   | { kind: "allowed"; staff: StaffSession };
 
+/**
+ * How a failed `auth.getUser()` counts, by the status auth-js reports with the error. A 4xx is the Auth server's
+ * own answer — no session, or a token it rejects (missing, expired, forged, revoked, its session deleted) — and
+ * is simply "no user". Everything else is the Auth server not answering as itself: no connection (auth-js
+ * reports status 0), an answer that is not JSON (no status at all), a 5xx, or its own rate limit (429). That is
+ * `unavailable` — never "no user", which would show a sign-in form that cannot work and let every attempt during
+ * the outage count against the throttle.
+ */
+export function classifyAuthFailure(
+  status: number | undefined,
+): "no_user" | "unavailable" {
+  if (status === undefined || status === 0 || status === 429 || status >= 500)
+    return "unavailable";
+  return "no_user";
+}
+
 export function decideAccess(facts: SessionFacts): AccessDecision {
   if (!facts.available) return { kind: "unavailable" };
+  if (facts.revokedByAuth) return { kind: "revoked", userId: null };
   if (!facts.user) return { kind: "login" };
   const userId = facts.user.id;
   const profile = facts.profile;

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getStaffAccess } from "@/lib/server/staff-session";
 import { loginUrlFor, safeNextPath } from "@/lib/staff/next-path";
 
-import { AccessState } from "../../_components/access-state";
+import { AccessState, SignOutForm } from "../../_components/access-state";
 import {
   ADMIN_LABELS,
   VERIFY,
@@ -84,6 +84,8 @@ export default async function VerifyPage({
             {VERIFY.submit}
           </button>
         </form>
+        {/* The way out of a password-only session: the wrong account, or an authenticator that is not at hand. */}
+        <SignOutForm />
       </div>
     </main>
   );
