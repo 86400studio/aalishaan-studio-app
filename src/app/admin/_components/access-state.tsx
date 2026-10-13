@@ -59,6 +59,8 @@ export function AccessState({
           <div>
             <h1>{UNAVAILABLE.heading}</h1>
             <p className="mt-6">{UNAVAILABLE.body}</p>
+            {/* The way out while nothing can be checked: a member on a shared device can still end the session. */}
+            <SignOutForm />
           </div>
         </main>
       );

@@ -392,18 +392,27 @@ export async function confirmEnrolment(
 
 /**
  * Ends this browser's session (the other sessions of the account are untouched) and returns to the sign-in. The
- * Auth server is asked to end the session; the cookies are then deleted whatever it answered — the library keeps
- * them when the session's token has expired and that server cannot be reached, and "Sign out" must not depend on
- * an answer.
+ * Auth server is asked first — the library reads the session's tokens from the cookies — and the cookies are then
+ * deleted whatever it answered: the library keeps them when the session's token has expired and that server
+ * cannot be reached. The deletion travels with this action's response, and while the Auth server does not answer
+ * that response waits for the library's retries; what stays open then is docs/THREAT-MODEL.md §5 ("A sign-out
+ * that cannot reach the Auth server"). A sign-out the Auth server did not confirm is logged, with no identifier.
  */
 export async function signOut(): Promise<void> {
   const client = await staffCookieClient();
   if (client.ok) {
+    let unconfirmed: string | null = null;
     try {
-      await client.supabase.auth.signOut({ scope: "local" });
+      const { error } = await client.supabase.auth.signOut({ scope: "local" });
+      if (error && classifyAuthFailure(error.status) === "unavailable")
+        unconfirmed = `status ${error.status ?? "none"}`;
     } catch {
-      // Deliberately empty: the cookies are deleted below whatever happened here.
+      unconfirmed = "the call threw";
     }
+    if (unconfirmed)
+      console.error(
+        `[staff-session] the Auth server did not confirm a sign-out (${unconfirmed}): the cookies are deleted, the session may still be valid there`,
+      );
   }
   await forgetStaffSessionCookies();
   redirect(loginUrlFor(ADMIN_HOME));

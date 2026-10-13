@@ -756,13 +756,14 @@ describe("guardAdminPage and guardAction — what is done with the decision", ()
 
 type CookieWrite = { name: string; value: string; options: unknown };
 
-/** A cookie store that holds the named cookies and records every write made to it. */
-function cookieJar(names: string[]): CookieWrite[] {
+/** A cookie store that holds the named cookies and records every write made to it (and in `events`, when). */
+function cookieJar(names: string[], events: string[] = []): CookieWrite[] {
   const writes: CookieWrite[] = [];
   mocks.cookieStore = {
     getAll: () => names.map((name) => ({ name, value: "held" })),
     set: (name: string, value: string, options?: unknown) => {
       writes.push({ name, value, options });
+      events.push(`cookie ${name}`);
     },
   };
   return writes;
@@ -794,22 +795,29 @@ describe("signing out — this browser forgets the session whatever the Auth ser
   async function signOutWith(librarySignOut: () => Promise<unknown>) {
     arrange({ auth: {} });
     const asked: unknown[] = [];
+    const events: string[] = [];
     mocks.cookieClient = {
       auth: {
         signOut: async (options: unknown) => {
           asked.push(options);
+          events.push("the library's sign-out");
           return librarySignOut();
         },
       },
     };
-    const writes = cookieJar([...SESSION_COOKIES, ...OTHER_COOKIES]);
+    const writes = cookieJar([...SESSION_COOKIES, ...OTHER_COOKIES], events);
+    const errorLog = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    errorLog.mockClear();
     let redirected = "no redirect";
     try {
       await signOut();
     } catch (error) {
       redirected = error instanceof Error ? error.message : String(error);
     }
-    return { asked, writes, redirected };
+    const logged = errorLog.mock.calls.map((call) => String(call[0]));
+    return { asked, events, writes, redirected, logged };
   }
 
   it("deletes the session value, its chunks and the library's keys with their own attributes, and no other cookie", async () => {
@@ -845,6 +853,46 @@ describe("signing out — this browser forgets the session whatever the Auth ser
     });
     expect(writes).toEqual(deletions);
     expect(redirected).toBe("REDIRECT /admin/login");
+  });
+
+  it("asks the library before it deletes anything — the library reads the session's tokens from the cookies", async () => {
+    const { events } = await signOutWith(async () => ({ error: null }));
+    expect(events).toEqual([
+      "the library's sign-out",
+      ...SESSION_COOKIES.map((name) => `cookie ${name}`),
+    ]);
+  });
+
+  it("logs a sign-out the Auth server did not confirm, without an identifier, and nothing when that server answered", async () => {
+    const unconfirmed: Array<() => Promise<unknown>> = [
+      async () => ({ error: { name: "AuthRetryableFetchError", status: 0 } }),
+      async () => ({ error: { name: "AuthApiError", status: 503 } }),
+      async () => ({ error: { name: "AuthUnknownError" } }),
+      async () => {
+        throw new TypeError("fetch failed");
+      },
+    ];
+    for (const answer of unconfirmed) {
+      const { logged, writes } = await signOutWith(answer);
+      expect(logged).toHaveLength(1);
+      expect(logged[0]).toContain(
+        "[staff-session] the Auth server did not confirm a sign-out (",
+      );
+      expect(logged[0]).not.toContain(USER.id);
+      expect(logged[0]).not.toContain("@");
+      expect(writes).toEqual(deletions);
+    }
+
+    const answered: Array<() => Promise<unknown>> = [
+      async () => ({ error: null }),
+      // The Auth server's own refusal — a session it no longer knows — is an answer: nothing is left to end.
+      async () => ({ error: { name: "AuthApiError", status: 400 } }),
+    ];
+    for (const answer of answered) {
+      const { logged, writes } = await signOutWith(answer);
+      expect(logged).toEqual([]);
+      expect(writes).toEqual(deletions);
+    }
   });
 
   it("deletes the cookies when no session client can be built at all", async () => {
