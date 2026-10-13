@@ -10,9 +10,12 @@ const mocks = vi.hoisted(() => ({
   identity: null as unknown,
   privileged: null as unknown,
   cookieOptions: null as unknown,
+  cookieStore: null as unknown,
 }));
 vi.mock("next/headers", () => ({
-  cookies: async () => ({ getAll: () => [], set: () => undefined }),
+  cookies: async () =>
+    mocks.cookieStore ?? { getAll: () => [], set: () => undefined },
+  headers: async () => new Headers(),
 }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -34,6 +37,7 @@ vi.mock("@/lib/server/supabase", () => ({
   createPrivilegedClient: () => mocks.privileged,
 }));
 
+import { signOut } from "@/app/admin/login/actions";
 import { auditLogInputSchema } from "@/lib/schemas/orders";
 import {
   REVOCATION_BAN_DURATION,
@@ -51,6 +55,7 @@ import {
 import {
   STAFF_COOKIE_OPTIONS,
   collectStaffFacts,
+  forgetStaffSessionCookies,
   guardAction,
   guardAdminPage,
   hasVerifiedTotp,
@@ -455,6 +460,7 @@ function arrange(options: {
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
+  mocks.cookieStore = null;
 });
 
 describe("collectStaffFacts — every fact from the server, and no pass without them", () => {
@@ -743,6 +749,126 @@ describe("guardAdminPage and guardAction — what is done with the decision", ()
       ok: false,
       decision: { kind: "verify", userId: USER.id },
     });
+  });
+});
+
+// --- signing out: this browser forgets the session whatever the Auth server answered ----------------------------
+
+type CookieWrite = { name: string; value: string; options: unknown };
+
+/** A cookie store that holds the named cookies and records every write made to it. */
+function cookieJar(names: string[]): CookieWrite[] {
+  const writes: CookieWrite[] = [];
+  mocks.cookieStore = {
+    getAll: () => names.map((name) => ({ name, value: "held" })),
+    set: (name: string, value: string, options?: unknown) => {
+      writes.push({ name, value, options });
+    },
+  };
+  return writes;
+}
+
+describe("signing out — this browser forgets the session whatever the Auth server answered", () => {
+  const SESSION_COOKIES = [
+    "aalishaan-staff",
+    "aalishaan-staff.0",
+    "aalishaan-staff.1",
+    "aalishaan-staff-code-verifier",
+  ];
+  const OTHER_COOKIES = ["aalishaan-staffing", "staff", "_vercel_jwt"];
+  // A cookie is only deleted by the path it was set with: these are the session cookie's own attributes.
+  const DELETED = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/admin",
+    maxAge: 0,
+  };
+  const deletions = SESSION_COOKIES.map((name) => ({
+    name,
+    value: "",
+    options: DELETED,
+  }));
+
+  /** Runs the sign-out action against a library sign-out that answers as told. */
+  async function signOutWith(librarySignOut: () => Promise<unknown>) {
+    arrange({ auth: {} });
+    const asked: unknown[] = [];
+    mocks.cookieClient = {
+      auth: {
+        signOut: async (options: unknown) => {
+          asked.push(options);
+          return librarySignOut();
+        },
+      },
+    };
+    const writes = cookieJar([...SESSION_COOKIES, ...OTHER_COOKIES]);
+    let redirected = "no redirect";
+    try {
+      await signOut();
+    } catch (error) {
+      redirected = error instanceof Error ? error.message : String(error);
+    }
+    return { asked, writes, redirected };
+  }
+
+  it("deletes the session value, its chunks and the library's keys with their own attributes, and no other cookie", async () => {
+    const writes = cookieJar([...SESSION_COOKIES, ...OTHER_COOKIES]);
+    await forgetStaffSessionCookies();
+    expect(writes).toEqual(deletions);
+    expect(DELETED.path).toBe(STAFF_COOKIE_OPTIONS.path);
+    expect(DELETED.sameSite).toBe(STAFF_COOKIE_OPTIONS.sameSite);
+  });
+
+  it("asks the Auth server to end this session only, then deletes the cookies and returns to the sign-in", async () => {
+    const { asked, writes, redirected } = await signOutWith(async () => ({
+      error: null,
+    }));
+    expect(asked).toEqual([{ scope: "local" }]);
+    expect(writes).toEqual(deletions);
+    expect(redirected).toBe("REDIRECT /admin/login");
+  });
+
+  it("deletes the cookies when the Auth server could not be reached and the library kept them", async () => {
+    // What auth-js answers when the session's token has expired and cannot be renewed: an error, no cookie write.
+    const { asked, writes, redirected } = await signOutWith(async () => ({
+      error: { name: "AuthRetryableFetchError", status: 0 },
+    }));
+    expect(asked).toHaveLength(1);
+    expect(writes).toEqual(deletions);
+    expect(redirected).toBe("REDIRECT /admin/login");
+  });
+
+  it("deletes the cookies when the library's sign-out throws instead of answering", async () => {
+    const { writes, redirected } = await signOutWith(async () => {
+      throw new TypeError("fetch failed");
+    });
+    expect(writes).toEqual(deletions);
+    expect(redirected).toBe("REDIRECT /admin/login");
+  });
+
+  it("deletes the cookies when no session client can be built at all", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
+    let asked = 0;
+    mocks.cookieClient = {
+      auth: {
+        signOut: async () => {
+          asked += 1;
+          return { error: null };
+        },
+      },
+    };
+    const writes = cookieJar(SESSION_COOKIES);
+    let redirected = "no redirect";
+    try {
+      await signOut();
+    } catch (error) {
+      redirected = error instanceof Error ? error.message : String(error);
+    }
+    expect(asked).toBe(0);
+    expect(writes).toEqual(deletions);
+    expect(redirected).toBe("REDIRECT /admin/login");
   });
 });
 

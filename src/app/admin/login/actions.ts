@@ -15,7 +15,11 @@ import {
   recordStaffAudit,
   type StaffAuditEntry,
 } from "@/lib/server/staff-audit";
-import { getStaffAccess, staffCookieClient } from "@/lib/server/staff-session";
+import {
+  forgetStaffSessionCookies,
+  getStaffAccess,
+  staffCookieClient,
+} from "@/lib/server/staff-session";
 import { createPrivilegedClient } from "@/lib/server/supabase";
 import { classifyAuthFailure } from "@/lib/staff/access";
 import { ADMIN_HOME, loginUrlFor, safeNextPath } from "@/lib/staff/next-path";
@@ -386,9 +390,21 @@ export async function confirmEnrolment(
   redirect(next);
 }
 
-/** Ends this browser's session (the other sessions of the account are untouched) and returns to the sign-in. */
+/**
+ * Ends this browser's session (the other sessions of the account are untouched) and returns to the sign-in. The
+ * Auth server is asked to end the session; the cookies are then deleted whatever it answered — the library keeps
+ * them when the session's token has expired and that server cannot be reached, and "Sign out" must not depend on
+ * an answer.
+ */
 export async function signOut(): Promise<void> {
   const client = await staffCookieClient();
-  if (client.ok) await client.supabase.auth.signOut({ scope: "local" });
+  if (client.ok) {
+    try {
+      await client.supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Deliberately empty: the cookies are deleted below whatever happened here.
+    }
+  }
+  await forgetStaffSessionCookies();
   redirect(loginUrlFor(ADMIN_HOME));
 }

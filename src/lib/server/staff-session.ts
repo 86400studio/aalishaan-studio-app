@@ -132,6 +132,26 @@ export async function staffCookieClient(): Promise<
   return { ok: true, supabase: createCookieClient(config.config, store) };
 }
 
+/**
+ * Deletes the staff session's cookies from this browser: the session value, its numbered chunks and the keys the
+ * library derives from the cookie name, each with the attributes it was set with (a cookie is only deleted by its
+ * own path). For a server action — a page cannot write cookies. The library's own sign-out does this when it can;
+ * it does not when the session's token has expired and the Auth server cannot be reached to renew it, and a
+ * member who pressed "Sign out" must not stay signed in on that browser.
+ */
+export async function forgetStaffSessionCookies(): Promise<void> {
+  const { name, ...attributes } = STAFF_COOKIE_OPTIONS;
+  const store = await cookies();
+  for (const cookie of store.getAll()) {
+    if (
+      cookie.name === name ||
+      cookie.name.startsWith(`${name}.`) ||
+      cookie.name.startsWith(`${name}-`)
+    )
+      store.set(cookie.name, "", { ...attributes, maxAge: 0 });
+  }
+}
+
 const PROFILE_COLUMNS =
   "user_id, role, display_name, active, mfa_enrolled_at, revoked_at";
 
