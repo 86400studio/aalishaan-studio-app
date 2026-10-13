@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   STAFF_FIXTURES,
@@ -20,7 +19,9 @@ export const STAFF_FIXTURE_ROLES = STAFF_FIXTURES.map(
   (f) => f.role,
 ) as StaffFixtureRole[];
 
-const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+// Playwright compiles this project's TypeScript to CommonJS (package.json has no "type": "module"), where
+// `import.meta` is a syntax error that stops every test file from loading; `__dirname` is what exists there.
+const ROOT = path.resolve(__dirname, "..", "..", "..");
 export const AUTH_STATE_DIR = path.join(ROOT, ".auth");
 
 export function storageStatePath(role: StaffFixtureRole): string {

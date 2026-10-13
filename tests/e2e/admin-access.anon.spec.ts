@@ -56,18 +56,20 @@ test.describe("S1.2 — anonymous access to /admin", () => {
   });
 
   test("the sign-in and verification pages answer with the six headers and noindex; the verification page without a session returns to the sign-in", async ({
+    page,
     target,
   }) => {
-    const login = await exactRequest(target, "/admin/login");
-    expect(login.status).toBe(200);
-    for (const name of [
+    const SIX_HEADERS = [
       "content-security-policy",
       "strict-transport-security",
       "x-frame-options",
       "x-content-type-options",
       "referrer-policy",
       "permissions-policy",
-    ])
+    ];
+    const login = await exactRequest(target, "/admin/login");
+    expect(login.status).toBe(200);
+    for (const name of SIX_HEADERS)
       expect(login.headers[name], name).toBeTruthy();
     expect(login.headers["x-robots-tag"]).toContain("noindex");
     expect(login.headers["content-security-policy"]).toContain(
@@ -75,6 +77,16 @@ test.describe("S1.2 — anonymous access to /admin", () => {
     );
     const verify = await exactRequest(target, "/admin/login/verify");
     expect([302, 303, 307, 308]).toContain(verify.status);
-    expect(verify.headers.location).toMatch(/\/admin\/login(\?|$)/);
+    for (const name of SIX_HEADERS)
+      expect(verify.headers[name], `verify ${name}`).toBeTruthy();
+    expect(verify.headers["x-robots-tag"]).toContain("noindex");
+    // The harness never keeps a Location value (it could carry a token) — only its origin; the browser proves
+    // the path the redirect leads to.
+    expect(verify.locationOrigin).toBe(target.origin);
+    await page.goto("/admin/login/verify", { waitUntil: "load" });
+    expect(new URL(page.url()).pathname).toBe("/admin/login");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Sign in" }),
+    ).toBeVisible();
   });
 });

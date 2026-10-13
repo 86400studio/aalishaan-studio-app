@@ -1,10 +1,15 @@
+import { bootstrapBypassCookie } from "./harness/bypass";
 import { expect, test } from "./harness/fixtures";
 import { ROLE_LABELS, fixtureFor, storageStatePath } from "./harness/staff";
 
 /**
  * S1.2 — Customer support (support) opens the shell and Support, and is denied the Refunds view (finance) and the
- * owner-only section (docs/ROADMAP.md S1.2 acceptance; TECH-ARCHITECTURE §5). The last test signs out and proves
- * the session is gone; it runs last in this file, which runs last of the role specs.
+ * owner-only section (docs/ROADMAP.md S1.2 acceptance; TECH-ARCHITECTURE §5).
+ *
+ * The last test signs out. Signing out ends that session on the Auth server, and both required projects replay
+ * the one saved Customer-support session — so the test carries `@sign-out` in its title, the two required
+ * projects leave it out (`grepInvert`) and the `auth-teardown` project runs it once, after both
+ * (playwright.config.ts).
  */
 
 test.use({ storageState: storageStatePath("support") });
@@ -41,12 +46,15 @@ test.describe("S1.2 — Customer support", () => {
       await expect(
         page.getByRole("heading", { level: 1, name: "Staff & Access" }),
       ).toHaveCount(0);
-      await expect(page.getByText("arrives with sprint")).toHaveCount(0);
+      // "arrives" (Staff & Access, Support) and "arrive" (Refunds): neither placeholder line may show.
+      await expect(page.getByText(/arrives? with sprint/)).toHaveCount(0);
     });
   }
 
-  test("signs out: the next request is sent to the sign-in", async ({
+  test("signs out: the session is ended on the server and the next request is sent to the sign-in @sign-out", async ({
     page,
+    browser,
+    target,
   }) => {
     await page.goto("/admin", { waitUntil: "load" });
     await page.getByRole("button", { name: "Sign out" }).click();
@@ -54,5 +62,22 @@ test.describe("S1.2 — Customer support", () => {
     await page.goto("/admin/support", { waitUntil: "load" });
     expect(new URL(page.url()).pathname).toBe("/admin/login");
     await expect(page.getByText("Signed in as")).toHaveCount(0);
+
+    // Clearing this browser's cookies would give the same result. A second browser that replays the saved
+    // cookies proves the session itself is gone: the Auth server no longer vouches for them.
+    const replay = await browser.newContext({
+      storageState: storageStatePath("support"),
+    });
+    try {
+      await bootstrapBypassCookie(replay, target);
+      const replayPage = await replay.newPage();
+      await replayPage.goto(new URL("/admin", target.origin).toString(), {
+        waitUntil: "load",
+      });
+      expect(new URL(replayPage.url()).pathname).toBe("/admin/login");
+      await expect(replayPage.getByText("Signed in as")).toHaveCount(0);
+    } finally {
+      await replay.close();
+    }
   });
 });

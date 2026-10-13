@@ -42,7 +42,8 @@ test.describe("S1.2 — Operations", () => {
       await expect(
         page.getByRole("heading", { level: 1, name: "Refunds" }),
       ).toHaveCount(0);
-      await expect(page.getByText("arrives with sprint")).toHaveCount(0);
+      // "arrives" (Staff & Access, Support) and "arrive" (Refunds): neither placeholder line may show.
+      await expect(page.getByText(/arrives? with sprint/)).toHaveCount(0);
       await expect(
         page.getByRole("link", { name: "Return to your workspace" }),
       ).toHaveAttribute("href", "/admin");

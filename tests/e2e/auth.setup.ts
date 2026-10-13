@@ -31,9 +31,35 @@ for (const role of STAFF_FIXTURE_ROLES) {
       page.getByRole("heading", { level: 1, name: "Sign in" }),
     ).toBeVisible();
     await page.getByLabel("Email").fill(fixture.email);
-    await page.getByLabel("Password").fill(fixture.password);
+    // A failed fill prints its call log, and the call log quotes the value: the password never gets that far.
+    await page
+      .getByLabel("Password")
+      .fill(fixture.password)
+      .catch(() => {
+        throw new Error(
+          `${role}: the password field of the sign-in page could not be filled`,
+        );
+      });
     await page.getByRole("button", { name: "Sign in" }).click();
-    await page.waitForURL(/\/admin\/login\/(verify|enrol)(\?|$)/);
+    // The next step, or the sign-in page's own refusal — named here, so a used-up throttle window or a missing
+    // setting does not surface as a bare navigation timeout. The value is one of the page's fixed error codes.
+    await page.waitForURL(
+      (url) =>
+        /^\/admin\/login\/(verify|enrol)$/.test(url.pathname) ||
+        url.searchParams.has("error"),
+    );
+    const refused = new URL(page.url()).searchParams.get("error");
+    if (refused)
+      throw new Error(
+        `${role}: the sign-in was refused with "${refused}" — throttled: the app's own limit (5 sign-ins per address, 20 per client address, per 15 minutes) is used up, wait for the window; unavailable: the Upstash names in the Preview scope or the TEST project's settings; credentials: the fixture's password, or run pnpm db:test:staff-users --apply under the owner's TEST authorisation`,
+      );
+
+    // MFA cannot be skipped: a password session alone opens nothing — /admin sends it back to the second step.
+    await page.goto("/admin", { waitUntil: "load" });
+    expect(new URL(page.url()).pathname).toMatch(
+      /^\/admin\/login\/(verify|enrol)$/,
+    );
+    await expect(page.getByText("Signed in as")).toHaveCount(0);
 
     const atEnrolment = /\/admin\/login\/enrol/.test(page.url());
     let secret = readTotpSecret(role);
@@ -55,9 +81,20 @@ for (const role of STAFF_FIXTURE_ROLES) {
       secret = shown;
       // Kept for the later runs of this project; the file is git-ignored and never printed.
       writeTotpSecret(role, secret);
-      await expect(
-        page.getByRole("img", { name: "QR code for your authenticator app" }),
-      ).toBeVisible();
+      const qr = page.getByRole("img", {
+        name: "QR code for your authenticator app",
+      });
+      // Not a locator assertion: when one fails, Playwright writes a snapshot of the page's text into
+      // test-results/, and the key for manual entry is on this page. A wait and a value check leave no snapshot.
+      await qr.waitFor({ state: "visible" });
+      // Visible is not enough — a broken image is visible too: the picture must have decoded.
+      await expect
+        .poll(
+          () =>
+            qr.evaluate((image) => (image as HTMLImageElement).naturalWidth),
+          { message: "the enrolment QR decodes as an image" },
+        )
+        .toBeGreaterThan(0);
     } else {
       await expect(
         page.getByRole("heading", { level: 1, name: "Two-step verification" }),
@@ -72,11 +109,34 @@ for (const role of STAFF_FIXTURE_ROLES) {
     if (millisecondsLeftInStep() < 4000) await page.waitForTimeout(4000);
     await page
       .getByLabel("Code from your authenticator app")
-      .fill(totpCode(secret!));
+      .fill(totpCode(secret!))
+      .catch(() => {
+        throw new Error(`${role}: the code field could not be filled`);
+      });
     await page
       .getByRole("button", { name: atEnrolment ? "Confirm" : "Verify" })
       .click();
-    await page.waitForURL(/\/admin(\?|$)/);
+    // The shell, or the page's own refusal — named, so a refused or throttled code is not a bare timeout. The
+    // notice is the page's (inside <main>); its text is one of the registered strings.
+    const notice = page.locator('main [role="alert"]');
+    const outcome = await Promise.race([
+      page
+        .waitForURL((url) => url.pathname === "/admin")
+        .then(
+          () => "shell" as const,
+          () => "timeout" as const,
+        ),
+      notice.waitFor({ state: "visible" }).then(
+        () => "refused" as const,
+        () => "timeout" as const,
+      ),
+    ]);
+    if (outcome !== "shell")
+      throw new Error(
+        outcome === "refused"
+          ? `${role}: the code step was refused — the page says: "${((await notice.textContent()) ?? "").trim()}" (five codes per member per 15 minutes; a clock that is off by more than a step)`
+          : `${role}: the code step did not reach the shell`,
+      );
     await expect(
       page.getByText(`Signed in as ${fixture.displayName}`, { exact: false }),
     ).toBeVisible();
