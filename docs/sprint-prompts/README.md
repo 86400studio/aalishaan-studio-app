@@ -24,7 +24,10 @@ session as far as the cloud goes — the additive `0003_staff_auth` with its dow
 cookie session, the sign-in / TOTP enrolment / verification flow, the Upstash login throttle (fail closed), the audit rows and the
 revocation path, the blank protected `/admin` shell with one owner-only section and one finance route, the hermetic tests, the TEST
 integration suite, the Playwright auth-setup project and the `pnpm db:test:staff-users` tool; the TEST apply, the TEST staff users,
-the integration run, the Preview test and the review are the VS Code leg (the record's "Hand-off to VS Code"). Its paired
+the integration run, the Preview test and the review are the VS Code leg (the record's "Hand-off to VS Code"). **Picked up in
+VS Code on 2026-10-12** (the record's "VS Code leg"): a read-only pre-TEST audit and its corrections, the owner's decisions of
+2026-10-13, the branch rewritten once on the owner's authorisation for the secret scanner's false positive; the TEST plan waits
+for the owner's written authorisation. Its paired
 [review record](../code-reviews/S1.2-staff-auth-review.md) holds the review context (verdict pending); the database record is
 `docs/database-changes/S1.2-0003-staff-auth.md`.
 
