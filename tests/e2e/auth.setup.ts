@@ -20,9 +20,10 @@ import { millisecondsLeftInStep, totpCode } from "./harness/totp";
  */
 
 /**
- * The limit of each of the two steps that wait on the Auth server — the password step and the code step — inside
- * the project's 90-second test timeout (playwright.config.ts). A Preview whose functions start cold has taken
- * well over the suite's default limits for the first fixture.
+ * The limit of each step that waits on the Preview or, through it, on the Auth server — the two page loads, the
+ * password step, the key and the QR of the enrolment, the code step — inside the project's 90-second test timeout
+ * (playwright.config.ts). A Preview whose functions start cold has taken well over the suite's default limits
+ * for the first fixture.
  */
 const STEP_TIMEOUT_MS = 45_000;
 
@@ -33,7 +34,10 @@ for (const role of STAFF_FIXTURE_ROLES) {
     const fixture = fixtureFor(role);
     mkdirSync(AUTH_STATE_DIR, { recursive: true });
 
-    await page.goto("/admin/login", { waitUntil: "load" });
+    await page.goto("/admin/login", {
+      waitUntil: "load",
+      timeout: STEP_TIMEOUT_MS,
+    });
     await expect(
       page.getByRole("heading", { level: 1, name: "Sign in" }),
     ).toBeVisible();
@@ -63,7 +67,10 @@ for (const role of STAFF_FIXTURE_ROLES) {
       );
 
     // MFA cannot be skipped: a password session alone opens nothing — /admin sends it back to the second step.
-    await page.goto("/admin", { waitUntil: "load" });
+    await page.goto("/admin", {
+      waitUntil: "load",
+      timeout: STEP_TIMEOUT_MS,
+    });
     expect(new URL(page.url()).pathname).toMatch(
       /^\/admin\/login\/(verify|enrol)$/,
     );
@@ -81,7 +88,11 @@ for (const role of STAFF_FIXTURE_ROLES) {
       ).toBeVisible();
       await page.getByRole("button", { name: "Start setup" }).click();
       const shown =
-        (await page.getByTestId("totp-secret").textContent())?.trim() ?? "";
+        (
+          await page
+            .getByTestId("totp-secret")
+            .textContent({ timeout: STEP_TIMEOUT_MS })
+        )?.trim() ?? "";
       expect(
         shown.length,
         "the enrolment page shows the key for manual entry",
@@ -94,7 +105,7 @@ for (const role of STAFF_FIXTURE_ROLES) {
       });
       // Not a locator assertion: when one fails, Playwright writes a snapshot of the page's text into
       // test-results/, and the key for manual entry is on this page. A wait and a value check leave no snapshot.
-      await qr.waitFor({ state: "visible" });
+      await qr.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
       // Visible is not enough — a broken image is visible too: the picture must have decoded.
       await expect
         .poll(
