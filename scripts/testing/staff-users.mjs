@@ -272,7 +272,7 @@ async function main() {
       }
     }
     console.log(
-      `MFA reset: ${removed} factor(s) removed. Delete the harness's .auth/ state so the auth-setup project enrols again.`,
+      `MFA reset: ${removed} factor(s) removed. The auth-setup project enrols each fixture again on its next run and replaces the kept keys itself — keep the harness's .auth/ folder.`,
     );
   }
 

@@ -19,6 +19,13 @@ import { millisecondsLeftInStep, totpCode } from "./harness/totp";
  * Every step is the application's own UI; nothing here calls Supabase directly.
  */
 
+/**
+ * The limit of each of the two steps that wait on the Auth server — the password step and the code step — inside
+ * the project's 90-second test timeout (playwright.config.ts). A Preview whose functions start cold has taken
+ * well over the suite's default limits for the first fixture.
+ */
+const STEP_TIMEOUT_MS = 45_000;
+
 for (const role of STAFF_FIXTURE_ROLES) {
   test(`signs in the ${role} fixture through the sign-in, MFA and shell`, async ({
     page,
@@ -47,6 +54,7 @@ for (const role of STAFF_FIXTURE_ROLES) {
       (url) =>
         /^\/admin\/login\/(verify|enrol)$/.test(url.pathname) ||
         url.searchParams.has("error"),
+      { timeout: STEP_TIMEOUT_MS },
     );
     const refused = new URL(page.url()).searchParams.get("error");
     if (refused)
@@ -117,16 +125,21 @@ for (const role of STAFF_FIXTURE_ROLES) {
       .getByRole("button", { name: atEnrolment ? "Confirm" : "Verify" })
       .click();
     // The shell, or the page's own refusal — named, so a refused or throttled code is not a bare timeout. The
-    // notice is the page's (inside <main>); its text is one of the registered strings.
+    // notice is the page's (inside <main>); its text is one of the registered strings. Both waits carry the same
+    // explicit limit: left to their defaults the wait for the notice (the action timeout) gives up before the
+    // wait for the shell (the navigation timeout), and a code the Auth server accepted slowly — a cold Preview —
+    // would be reported as "did not reach the shell".
     const notice = page.locator('main [role="alert"]');
     const outcome = await Promise.race([
       page
-        .waitForURL((url) => url.pathname === "/admin")
+        .waitForURL((url) => url.pathname === "/admin", {
+          timeout: STEP_TIMEOUT_MS,
+        })
         .then(
           () => "shell" as const,
           () => "timeout" as const,
         ),
-      notice.waitFor({ state: "visible" }).then(
+      notice.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS }).then(
         () => "refused" as const,
         () => "timeout" as const,
       ),

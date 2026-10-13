@@ -58,6 +58,10 @@ export default defineConfig({
       name: "auth-setup",
       testMatch: /auth\.setup\.ts$/,
       teardown: "auth-teardown",
+      // One test walks the whole sign-in — password, enrolment or verification, the shell — and may wait out the
+      // end of a 30-second code step on the way. Against a Preview whose functions start cold the first fixture
+      // needed just over the suite's 30 seconds (the first TEST run, 2026-10-13); the two warm ones took 14.
+      timeout: 90_000,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },
