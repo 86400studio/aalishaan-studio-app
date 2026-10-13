@@ -54,8 +54,13 @@ accepts it too, but whether it outranks the link file there was not tested (on 2
 file and the flag all named TEST — read the link file back before each `db query`), and
 neither the dry run nor the push prints which project it reaches. A fresh clone is not linked — `--linked`
 then fails, or follows a stray `SUPABASE_PROJECT_ID`. The human PROD procedure uses the PROD ref the same
-way (`docs/database-changes/S0.2-0000-init.md`). Never run `db reset` against a remote project, never
-`--include-seed` (seeding is disabled in `config.toml` as well), never a down file through `db push`.
+way (`docs/database-changes/S0.2-0000-init.md`). Shown on 2026-10-11: from a checkout whose link file named
+TEST, `migration list`, `db push --dry-run` and `db push` carrying `--project-ref <PROD_REF>` reached
+Production (the owner's apply of 0001 and 0002, verified read-only afterwards — PR #18). Never run `db reset`
+against a remote project, never `--include-seed` (seeding is disabled in `config.toml` as well), never a down
+file through `db push`, and never `config push`: `config.toml` carries the CLI's local Auth defaults (sign-up
+on, TOTP off) — the opposite of the dashboard settings the staff sign-in rests on (`ENVIRONMENT-PARITY.md`
+§7.5) — and pushing it would send them to the named project.
 
 ## S1.1 data tools (TEST only — every one a dry run without `--apply`)
 
@@ -83,8 +88,10 @@ Addresses must end in `@example.test`; nothing is written without `--apply`; PRO
 ## Recovery
 
 Prefer forward fixes: every planned migration is additive. When a schema rollback is unavoidable, the paired
-`rollbacks/*.down.sql` is run by hand after the checks in the change record, on TEST first (for S1.1,
-`0002_orders.down.sql` before `0001_catalogue.down.sql` — `order_items` references the catalogue), and the
+`rollbacks/*.down.sql` is run by hand after the checks in the change record, on TEST first, newest file
+first: from S1.2 on `0003_staff_auth.down.sql`, then `0002_orders.down.sql`, then `0001_catalogue.down.sql`
+(0003's function depends on the `staff_role` type that 0002's down file drops; `order_items` references the
+catalogue), and the
 reversal is then recorded in the ledger with `supabase migration repair --status reverted <version>
 --project-ref <REF>`. Who may run a down file and through which channel is stated once, in
 `docs/database-changes/S1.1-0001-catalogue.md` → "Rollback rehearsal": on TEST the owner in the SQL editor,

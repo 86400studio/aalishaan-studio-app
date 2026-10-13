@@ -70,12 +70,14 @@ grant execute on function public.staff_permission_areas(public.staff_role) to au
 -- UPDATE or DELETE for authenticated: every write to this table is the server's, after its own guard.
 grant select on table public.staff_profiles to authenticated;
 
+-- Both Auth helpers sit in their own scalar sub-select — `(select auth.uid())`, `(select auth.jwt())` — so each
+-- is evaluated once per statement, not once per row (the form the platform's Performance Advisor expects).
 create policy staff_profiles_select_own on public.staff_profiles
   for select
   to authenticated
   using (
     user_id = (select auth.uid())
-    and (select auth.jwt() ->> 'aal') = 'aal2'
+    and ((select auth.jwt()) ->> 'aal') = 'aal2'
   );
 
 comment on policy staff_profiles_select_own on public.staff_profiles is

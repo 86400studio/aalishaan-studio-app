@@ -19,10 +19,13 @@ const upLower = up.toLowerCase();
 const down = read("supabase/rollbacks/0003_staff_auth.down.sql");
 const downLower = down.toLowerCase();
 
-/** The SQL without its comments (so a word in a comment never satisfies a check on the statements). */
+/**
+ * The SQL without its comments (so a word in a comment never satisfies a check on the statements). Lines are
+ * split on LF or CRLF: on a CRLF working copy a `$` would otherwise stop before the `\r` and strip nothing.
+ */
 function statementsOnly(sql: string): string {
   return sql
-    .split("\n")
+    .split(/\r?\n/)
     .map((line) => line.replace(/--.*$/, ""))
     .join("\n")
     .toLowerCase();
@@ -40,10 +43,14 @@ describe("supabase/migrations/0003_staff_auth.sql — additive", () => {
       "revoked_reason  text",
     ])
       expect(code).toContain(column);
-    expect(code).toContain(
-      "check (revoked_reason is null or char_length(revoked_reason) <= 500)",
+    // Each constraint by its name and its rule — the names are the ones the down file drops.
+    expect(code.match(/add constraint/g)).toHaveLength(2);
+    expect(code.replace(/\s+/g, " ")).toContain(
+      "add constraint staff_profiles_revoked_reason_length check (revoked_reason is null or char_length(revoked_reason) <= 500)",
     );
-    expect(code).toContain("check (revoked_at is null or active = false)");
+    expect(code.replace(/\s+/g, " ")).toContain(
+      "add constraint staff_profiles_revoked_not_active check (revoked_at is null or active = false)",
+    );
   });
 
   it("creates the six-area enum and the one immutable, pinned, non-definer mapping function", () => {
@@ -55,12 +62,16 @@ describe("supabase/migrations/0003_staff_auth.sql — additive", () => {
       "create or replace function public.staff_permission_areas(role public.staff_role)",
     );
     expect(code).toContain("returns public.permission_area[]");
-    expect(code).toContain("immutable");
-    expect(code).toContain("set search_path = ''");
+    // The properties are read from the function's own statement: the catalogue comment that follows it also
+    // says "Immutable; pinned empty search_path", and prose must never satisfy a check on the code.
     const definition = code.slice(
       code.indexOf("create or replace function"),
       code.indexOf("$$;") + 3,
     );
+    expect(definition).toMatch(/\bimmutable\b/);
+    expect(definition).not.toMatch(/\b(volatile|stable)\b/);
+    expect(definition).toContain("set search_path = ''");
+    expect(definition).toContain("language sql");
     expect(definition).not.toContain("security definer");
     // Outside string literals (the comments the file stores in the catalogue), the words never appear.
     expect(code.replace(/'[^']*'/g, "''")).not.toContain("security definer");
@@ -83,15 +94,17 @@ describe("supabase/migrations/0003_staff_auth.sql — additive", () => {
       code.indexOf("create policy"),
       code.indexOf("comment on policy"),
     );
-    expect(policy).toContain("on public.staff_profiles");
-    expect(policy).toContain("for select");
-    expect(policy).toContain("to authenticated");
-    expect(policy).toContain("user_id = (select auth.uid())");
-    expect(policy).toContain("(select auth.jwt() ->> 'aal') = 'aal2'");
+    // The whole statement, not two fragments of it: an `or`, a dropped condition, a second role or another
+    // command would change this one string.
+    expect(policy.replace(/\s+/g, " ").trim()).toBe(
+      "create policy staff_profiles_select_own on public.staff_profiles for select to authenticated using ( user_id = (select auth.uid()) and ((select auth.jwt()) ->> 'aal') = 'aal2' );",
+    );
     // Non-recursive: the policy body names no table (no `from public.`, no join, no function of the project).
     expect(policy).not.toContain("from public.");
     expect(policy).not.toContain("staff_permission_areas");
     expect(policy).not.toContain("exists");
+    // 0002 enabled row level security on the table; this file neither repeats nor relaxes it.
+    expect(code).not.toContain("row level security");
   });
 
   it("touches no other table, opens nothing to anon and never SECURITY DEFINER", () => {
@@ -154,6 +167,26 @@ describe("supabase/rollbacks/0003_staff_auth.down.sql — schema recovery only",
     // The S1.1 role enum is referenced as the function's argument type and never dropped.
     expect(code).not.toMatch(/drop type if exists public\.staff_role/);
     expect(code).not.toMatch(/\bdelete\b/);
+  });
+
+  it("is exactly those statements and nothing more — no cascade, no truncate, nothing that relaxes row level security", () => {
+    // The whole file's code, statement by statement: a `cascade` on a drop (which would silently take a later
+    // sprint's dependent column with it), an added `truncate` or a `disable row level security` changes this.
+    expect(
+      code
+        .replace(/\s+/g, " ")
+        .split(";")
+        .map((statement) => statement.trim())
+        .filter(Boolean),
+    ).toEqual([
+      "drop policy if exists staff_profiles_select_own on public.staff_profiles",
+      "revoke select on table public.staff_profiles from authenticated",
+      "drop function if exists public.staff_permission_areas(public.staff_role)",
+      "drop type if exists public.permission_area",
+      "alter table public.staff_profiles drop constraint if exists staff_profiles_revoked_not_active, drop constraint if exists staff_profiles_revoked_reason_length, drop column if exists revoked_reason, drop column if exists revoked_at, drop column if exists mfa_enrolled_at",
+    ]);
+    for (const never of ["cascade", "truncate", "row level security", "grant "])
+      expect(code, never).not.toContain(never);
   });
 
   it("says plainly that it deletes the recorded values and does not restore them, and names the ledger repair", () => {
