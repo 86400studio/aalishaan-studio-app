@@ -4,13 +4,15 @@ vi.mock("server-only", () => ({}));
 
 // The session module's edges, replaced so `collectStaffFacts` and `guardAdminPage` run without a request, a
 // network or a redirect: the cookie store, the redirect (thrown, so the target can be read), the SSR client
-// factory and the privileged factory. `mocks` is filled by each test.
+// factory and the privileged factory — and, for the code step, the throttle's code counter (its own tests are in
+// login-throttle.test.ts). `mocks` is filled by each test.
 const mocks = vi.hoisted(() => ({
   cookieClient: null as unknown,
   identity: null as unknown,
   privileged: null as unknown,
   cookieOptions: null as unknown,
   cookieStore: null as unknown,
+  codeAttempt: null as unknown,
 }));
 vi.mock("next/headers", () => ({
   cookies: async () =>
@@ -36,8 +38,13 @@ vi.mock("@/lib/server/supabase", () => ({
   resolveServerIdentity: () => mocks.identity,
   createPrivilegedClient: () => mocks.privileged,
 }));
+vi.mock("@/lib/server/login-throttle", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  consumeCodeAttempt: async (userId: string) =>
+    (mocks.codeAttempt as (userId: string) => Promise<unknown>)(userId),
+}));
 
-import { signOut } from "@/app/admin/login/actions";
+import { signOut, verifyTotp } from "@/app/admin/login/actions";
 import { auditLogInputSchema } from "@/lib/schemas/orders";
 import {
   REVOCATION_BAN_DURATION,
@@ -461,6 +468,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
   mocks.cookieStore = null;
+  mocks.codeAttempt = null;
 });
 
 describe("collectStaffFacts — every fact from the server, and no pass without them", () => {
@@ -1084,6 +1092,140 @@ describe("the audit writer", () => {
       expect(line).not.toContain(emailHashFor("owner@example.test"));
     },
   );
+});
+
+// --- the code step: every code counted before the Auth server sees it; a refused code audited ---------------------
+
+describe("the code step — each code is counted before the Auth server sees it, and a refused code leaves its own audit row", () => {
+  const FACTOR = "33333333-3333-4333-8333-333333333333";
+  const CHALLENGE = "44444444-4444-4444-8444-444444444444";
+  const ERROR_PAGE =
+    "REDIRECT /admin/login/verify?next=%2Fadmin%2Fstaff&error=";
+
+  /** A member at aal1 with one verified factor submits a code; the counter and the Auth server answer as told. */
+  async function submitCode(
+    code: string,
+    script: {
+      attempt?:
+        { ok: true } | { ok: false; reason: "rate_limited" | "unavailable" };
+      verifyError?: { status?: number; code?: string };
+    } = {},
+  ) {
+    const { cookie } = arrange({ auth: { user: AUTH_USER, aal: "aal1" } });
+    const steps: string[] = [];
+    Object.assign(
+      (cookie.client as { auth: { mfa: Record<string, unknown> } }).auth.mfa,
+      {
+        listFactors: async () => {
+          steps.push("list factors");
+          return { data: { totp: [{ id: FACTOR }] }, error: null };
+        },
+        challenge: async ({ factorId }: { factorId: string }) => {
+          steps.push(`challenge ${factorId}`);
+          return { data: { id: CHALLENGE }, error: null };
+        },
+        verify: async (params: {
+          factorId: string;
+          challengeId: string;
+          code: string;
+        }) => {
+          steps.push(
+            `verify ${params.factorId} ${params.challengeId} ${params.code}`,
+          );
+          return script.verifyError
+            ? { data: null, error: script.verifyError }
+            : { data: {}, error: null };
+        },
+      },
+    );
+    mocks.codeAttempt = async (userId: string) => {
+      steps.push(`count ${userId}`);
+      return script.attempt ?? { ok: true };
+    };
+    const privileged = fakePrivileged({
+      read: { data: profile(), error: null },
+    });
+    mocks.privileged = { ok: true, client: privileged.client };
+    const form = new FormData();
+    form.set("code", code);
+    form.set("next", "/admin/staff");
+    let redirected = "no redirect";
+    try {
+      await verifyTotp(form);
+    } catch (error) {
+      redirected = error instanceof Error ? error.message : String(error);
+    }
+    return { steps, inserted: privileged.inserted, redirected };
+  }
+
+  it("counts a refused code first, shows the code notice, and writes one staff.sign_in_failed row (code_rejected) without the code", async () => {
+    const { steps, inserted, redirected } = await submitCode("123456", {
+      verifyError: { status: 422, code: "mfa_verification_failed" },
+    });
+    expect(steps).toEqual([
+      `count ${USER.id}`,
+      "list factors",
+      `challenge ${FACTOR}`,
+      `verify ${FACTOR} ${CHALLENGE} 123456`,
+    ]);
+    expect(redirected).toBe(`${ERROR_PAGE}code`);
+    expect(inserted).toEqual([
+      staffAuditRow({
+        action: "staff.sign_in_failed",
+        entityId: USER.id,
+        actorId: USER.id,
+        reason: "code_rejected",
+      }),
+    ]);
+    expect(JSON.stringify(inserted)).not.toContain("123456");
+  });
+
+  it("refuses a code over the limit before the Auth server sees it, and writes nothing", async () => {
+    const { steps, inserted, redirected } = await submitCode("123456", {
+      attempt: { ok: false, reason: "rate_limited" },
+    });
+    expect(steps).toEqual([`count ${USER.id}`]);
+    expect(redirected).toBe(`${ERROR_PAGE}throttled`);
+    expect(inserted).toEqual([]);
+  });
+
+  it("refuses the code when the counter cannot be consulted (fail closed), and writes nothing", async () => {
+    const { steps, inserted, redirected } = await submitCode("123456", {
+      attempt: { ok: false, reason: "unavailable" },
+    });
+    expect(steps).toEqual([`count ${USER.id}`]);
+    expect(redirected).toBe(`${ERROR_PAGE}unavailable`);
+    expect(inserted).toEqual([]);
+  });
+
+  it("does not record a code check the Auth server did not answer as itself as a refused code", async () => {
+    const { inserted, redirected } = await submitCode("123456", {
+      verifyError: { status: 503 },
+    });
+    expect(redirected).toBe(`${ERROR_PAGE}unavailable`);
+    expect(inserted).toEqual([]);
+  });
+
+  it("refuses a code that is not six digits before it is counted, and writes nothing", async () => {
+    const { steps, inserted, redirected } = await submitCode("12345");
+    expect(steps).toEqual([]);
+    expect(redirected).toBe(`${ERROR_PAGE}code`);
+    expect(inserted).toEqual([]);
+  });
+
+  it("writes one staff.sign_in row at aal2 for an accepted code and returns to the validated path", async () => {
+    const { steps, inserted, redirected } = await submitCode("654321");
+    expect(steps[0]).toBe(`count ${USER.id}`);
+    expect(redirected).toBe("REDIRECT /admin/staff");
+    expect(inserted).toEqual([
+      staffAuditRow({
+        action: "staff.sign_in",
+        entityId: USER.id,
+        actorId: USER.id,
+        next: { aal: "aal2" },
+      }),
+    ]);
+  });
 });
 
 describe("revokeStaffAccess", () => {
