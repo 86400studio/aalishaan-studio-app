@@ -279,6 +279,8 @@ describe("package.json — the S0.2 script contract", () => {
       "db:test:seed": "node scripts/testing/seed.mjs",
       "db:test:reset": "node scripts/testing/reset.mjs",
       "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs",
+      "db:test:upload-site-images":
+        "node scripts/testing/upload-site-images.mjs",
       "db:test:staff-users": "node scripts/testing/staff-users.mjs",
     });
     for (const script of Object.values(pkg.scripts)) {

@@ -10,6 +10,12 @@ export type HttpHeader = { key: string; value: string };
 export type SecurityHeaderOptions = {
   /** The browser DSN (`NEXT_PUBLIC_SENTRY_DSN`); its origin is the only third-party `connect-src`. */
   sentryDsn?: string;
+  /**
+   * The project's API origin (`NEXT_PUBLIC_SUPABASE_URL`, exactly `https://<ref>.supabase.co`); its origin
+   * is the only remote `img-src` — the public bucket the catalogue and site images are served from (S1.3,
+   * D-48). TEST on Preview and locally, PROD in Production: the narrowest origin per environment.
+   */
+  supabaseUrl?: string;
   /** True only for `next dev`, which needs `'unsafe-eval'` for React's development tooling. */
   isDevelopment?: boolean;
 };
@@ -32,11 +38,31 @@ export function sentryIngestOrigin(dsn: string | undefined): string | null {
   return url.protocol === "https:" && url.hostname !== "" ? url.origin : null;
 }
 
+/** The https origin of the project's API URL, or null unless it is exactly `https://<ref>.supabase.co`. */
+export function storageOrigin(url: string | undefined): string | null {
+  if (!url) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" || parsed.username || parsed.password)
+    return null;
+  if (parsed.search !== "" || parsed.hash !== "") return null;
+  if (parsed.pathname !== "/" && parsed.pathname !== "") return null;
+  return /^[a-z]{20}\.supabase\.co$/.test(parsed.hostname)
+    ? parsed.origin
+    : null;
+}
+
 export function contentSecurityPolicy({
   sentryDsn,
+  supabaseUrl,
   isDevelopment = false,
 }: SecurityHeaderOptions = {}): string {
   const sentryOrigin = sentryIngestOrigin(sentryDsn);
+  const imageOrigin = storageOrigin(supabaseUrl);
   const directives: [string, ...string[]][] = [
     ["default-src", "'self'"],
     // The App Router streams its React Server Components payload through inline <script> tags. Without a
@@ -50,8 +76,10 @@ export function contentSecurityPolicy({
     ],
     ["style-src", "'self'", "'unsafe-inline'"],
     // `data:` for one use: the TOTP enrolment QR (S1.2) is a `data:image/svg+xml` returned by Supabase Auth and
-    // rendered through <img>, where an SVG cannot run script; no other scheme and no remote image origin.
-    ["img-src", "'self'", "data:"],
+    // rendered through <img>, where an SVG cannot run script. The one remote origin (S1.3, D-48) is the
+    // project's own Storage origin — the public bucket that serves the catalogue and site images — derived
+    // from NEXT_PUBLIC_SUPABASE_URL per environment, never typed; no other scheme or origin.
+    ["img-src", "'self'", "data:", ...(imageOrigin ? [imageOrigin] : [])],
     ["font-src", "'self'"],
     ["connect-src", "'self'", ...(sentryOrigin ? [sentryOrigin] : [])],
     ["object-src", "'none'"],

@@ -150,6 +150,8 @@ Before trusting the configuration:
 
 (Repeated 2026-10-11 on the S1.1 VS Code checkout — a fresh clone — before the builder's first PROD read, with the owner's approval of the one write probe: `supabase-dev` listed the 21 TEST tables; one synthetic row was written to TEST and removed again — the connector declined the delete, so the bounded reset tool removed that one row; the two project refs differ; a write attempt through `supabase-prod-readonly` was refused by the database with SQLSTATE 25006; the PROD verification that followed used the change records' statements only — counts and definitions, and never the contents of a table that can hold customer, order, payment or staff data (the one counter row, the migration ledger and the bucket's settings were read, as D-40 allows) — the PR #18 comment "Production apply and read-only verification"; recorded here 2026-10-12, the clause in brackets made exact on 2026-10-13.)
 
+(The S1.2 PROD reads of 2026-10-15 — before and after the owner's apply of `0003_staff_auth` — and of 2026-10-16 after the merge were verification-only through `supabase-prod-readonly`: the 0003 record's read-only items, the P8 definition comparison and counts (0 staff rows, 0 Auth users, 0 orders); nothing was written, and no command of the builder carried the PROD ref — the PR #21 comments "Production apply and read-only verification" and "Merge and Production note". Recorded 2026-10-16 at the S1.3 step 0.)
+
 Repeat after a fresh clone, new machine, server rename, URL change, or authentication reset.
 
 ## 8. Prompt-injection rule
