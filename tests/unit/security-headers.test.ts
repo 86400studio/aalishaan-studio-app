@@ -142,7 +142,7 @@ describe("Content-Security-Policy", () => {
     expect(policy.has("upgrade-insecure-requests")).toBe(true);
   });
 
-  it("has no wildcard or scheme-wide source", () => {
+  it("has no wildcard or scheme-wide source, except data: on img-src alone (the S1.2 enrolment QR)", () => {
     for (const options of [
       {},
       { sentryDsn: EXAMPLE_DSN },
@@ -153,12 +153,25 @@ describe("Content-Security-Policy", () => {
       )) {
         for (const source of sources) {
           expect(source, `${name} ${source}`).not.toContain("*");
+          if (name === "img-src" && source === "data:") continue;
           expect(
             ["http:", "https:", "ws:", "wss:", "data:", "blob:"],
             `${name} ${source}`,
           ).not.toContain(source);
         }
       }
+    }
+  });
+
+  it("allows images from self and data: URLs only — the TOTP enrolment QR is a data: SVG rendered through <img>", () => {
+    for (const options of [
+      {},
+      { sentryDsn: EXAMPLE_DSN },
+      { isDevelopment: true },
+    ]) {
+      expect(
+        parsePolicy(contentSecurityPolicy(options)).get("img-src"),
+      ).toEqual(["'self'", "data:"]);
     }
   });
 

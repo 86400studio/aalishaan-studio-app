@@ -21,10 +21,12 @@
     "db:test:preflight": "node scripts/testing/preflight.mjs",
     "db:test:seed": "node scripts/testing/seed.mjs",
     "db:test:reset": "node scripts/testing/reset.mjs",
-    "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs"
+    "db:test:upload-catalogue": "node scripts/testing/upload-catalogue.mjs",
+    "db:test:staff-users": "node scripts/testing/staff-users.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "10.75.3",
+    "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",
     "next": "16.3.7",
     "react": "19.3.0",
