@@ -2,16 +2,14 @@ import { exactRequest } from "./harness/bypass";
 import { expect, test } from "./harness/fixtures";
 
 /**
- * The S0.2 smoke (docs/ROADMAP.md S0.2 acceptance): the deployed candidate serves the NS-17 holding page
- * through the application (not Vercel's login), with no runtime or console error and no horizontal
- * overflow, the seven headers and read-only health on every response, the S0.1 diagnostic route and the
- * S0.2 proof route gone (both retired, the latter by S1.1) — on the desktop and mobile-390 projects. It
- * performs no write. Direct HTTP checks go through Node `fetch` (tests/e2e/harness/bypass.ts), never
- * through Playwright's request context with the secret.
+ * The deployment smoke (S0.2, rewritten at S1.3 for the storefront): the deployed candidate serves Home
+ * through the application (not Vercel's login), with no runtime or console error and no horizontal overflow;
+ * the six headers, noindex and read-only health hold on every response; the retired routes stay gone; and
+ * the CSP's img-src names the project's Storage origin and nothing else remote (D-48). Desktop and mobile-390
+ * projects both run it. It performs no write. Direct HTTP checks go through Node `fetch`
+ * (tests/e2e/harness/bypass.ts), never through Playwright's request context with the secret.
  */
 
-const HOLDING_LINE =
-  "This website is being built and is not taking orders yet.";
 const SIX_HEADERS = [
   "content-security-policy",
   "strict-transport-security",
@@ -21,8 +19,8 @@ const SIX_HEADERS = [
   "permissions-policy",
 ] as const;
 
-test.describe("S0.2 smoke — the deployed holding page", () => {
-  test("renders the NS-17 holding page through the app with no errors and no overflow", async ({
+test.describe("smoke — the deployed storefront", () => {
+  test("renders Home through the app with no errors and no overflow", async ({
     page,
     target,
   }) => {
@@ -42,13 +40,33 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
     expect(response?.status()).toBe(200);
 
     await expect(
-      page.getByRole("heading", { level: 1, name: "Aalishaan Studio" }),
+      page.getByRole("heading", {
+        level: 1,
+        name: "Bring beauty into everyday life.",
+      }),
     ).toBeVisible();
-    await expect(page.getByText(HOLDING_LINE, { exact: true })).toBeVisible();
-    // The closed holding state (D-03): no link, form, control, price or payment surface.
+    await expect(page).toHaveTitle(
+      "Aalishaan Studio | Museum-Grade Giclée Wall Art",
+    );
+    // Closed to sales (D-03): no price-bearing purchase control; the hearts and drawers are the only buttons
+    // besides the carousel dots, and no form on Home accepts input (NS-02 newsletter is disabled).
+    await expect(page.locator("form input:not([disabled])")).toHaveCount(0);
     await expect(
-      page.locator("a[href], form, input, button, select, textarea"),
+      page.locator('button[type="submit"]:not([disabled])'),
     ).toHaveCount(0);
+
+    // The Home images come from the public bucket on the project's Storage origin (D-48) and load.
+    const hero = page.locator("img.hero-scene__room");
+    await expect(hero).toHaveAttribute(
+      "src",
+      /\.supabase\.co\/storage\/v1\/object\/public\/catalogue-public\/site\//,
+    );
+    expect(
+      await hero.evaluate(
+        (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+      ),
+      "the hero room image decoded",
+    ).toBe(true);
 
     const width = await page.evaluate(() => ({
       scroll: document.documentElement.scrollWidth,
@@ -58,19 +76,19 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
       width.client,
     );
 
-    // The browser's automatic /favicon.ico probe answers 404 by design until the brand assets arrive (S1.3).
+    // The browser's automatic /favicon.ico probe answers 404 by design until the brand icon lands (S3.2).
     expect(consoleErrors.filter((text) => !/favicon\.ico/.test(text))).toEqual(
       [],
     );
     expect(pageErrors).toEqual([]);
   });
 
-  test("every response carries the six security headers and noindex", async ({
+  test("every response carries the six security headers and noindex; img-src names the Storage origin only", async ({
     target,
   }) => {
     const expected: Array<[string, number[]]> = [
       ["/", [200]],
-      ["/s0-2-smoke-missing-path", [404]],
+      ["/s1-3-smoke-missing-path", [404]],
       ["/api/health", [200, 503]],
     ];
     for (const [path, statuses] of expected) {
@@ -85,6 +103,12 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
         /max-age=63072000/,
       );
       expect(response.headers["x-frame-options"]).toBe("DENY");
+      const imgSrc = /img-src ([^;]+)/.exec(
+        response.headers["content-security-policy"] ?? "",
+      )?.[1];
+      expect(imgSrc, `${path} img-src`).toMatch(
+        /^'self' data: https:\/\/[a-z]{20}\.supabase\.co$/,
+      );
     }
   });
 
@@ -113,66 +137,19 @@ test.describe("S0.2 smoke — the deployed holding page", () => {
     expect(post.status, "GET-only route").toBe(405);
   });
 
-  test("the S0.1 diagnostic route is gone", async ({ target }) => {
-    for (const method of ["POST", "GET"]) {
-      const response = await exactRequest(target, "/api/sentry-test", {
-        method,
-      });
-      expect(response.status, `${method} /api/sentry-test`).toBe(404);
-    }
-  });
-
-  test("the S0.2 proof route is gone (retired by S1.1): GET and POST both 404", async ({
+  test("the S0.1 diagnostic route and the S0.2 proof route stay gone", async ({
     target,
   }) => {
-    for (const method of ["POST", "GET"]) {
-      const response = await exactRequest(target, "/api/setup-proof", {
-        method,
-        headers: { "content-type": "application/json" },
-        body:
-          method === "POST"
-            ? JSON.stringify({
-                action: "read",
-                marker: "s0-2-proof:smokecheck",
-              })
-            : undefined,
-      });
-      expect(response.status, `${method} /api/setup-proof`).toBe(404);
-      // A removed route answers with the framework's 404, never the route's old JSON shape.
-      expect(response.body).not.toContain('"status":"not_found"');
-    }
-  });
-
-  test("without the bypass the deployment stays protected (local mode: the bare origin answers directly)", async ({
-    playwright,
-    target,
-  }) => {
-    // A fresh request context: no cookie, no header, no secret anywhere near it.
-    const bare = await playwright.request.newContext();
-    try {
-      const response = await bare.get(`${target.origin}/`, { maxRedirects: 0 });
-      if (target.mode === "local") {
-        // No deployment protection exists locally; the check still runs and never skips.
-        expect(response.status(), "local origin without protection").toBe(200);
-        return;
+    for (const path of ["/api/sentry-test", "/api/setup-proof"]) {
+      for (const method of ["POST", "GET"]) {
+        const response = await exactRequest(target, path, {
+          method,
+          headers: { "content-type": "application/json" },
+          body:
+            method === "POST" ? JSON.stringify({ action: "read" }) : undefined,
+        });
+        expect(response.status, `${method} ${path}`).toBe(404);
       }
-      const status = response.status();
-      expect([302, 303, 307, 401], "protected without the bypass").toContain(
-        status,
-      );
-      if (status === 401) {
-        // Vercel's challenge for a non-browser client: no redirect, and the app is not reached.
-        expect(response.headers()["location"]).toBeUndefined();
-        expect(await response.text()).not.toContain(HOLDING_LINE);
-      } else {
-        const location = response.headers()["location"] ?? "";
-        expect(
-          new URL(location, target.origin).origin,
-          "redirects to Vercel's login",
-        ).toBe("https://vercel.com");
-      }
-    } finally {
-      await bare.dispose();
     }
   });
 });
