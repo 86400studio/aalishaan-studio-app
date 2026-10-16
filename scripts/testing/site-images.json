@@ -1,0 +1,218 @@
+{
+  "commit": "b24dce1bf498a5c8131694fef5fb1602139e1653",
+  "bucket": "catalogue-public",
+  "prefix": "site/",
+  "baseline": "prototype/data/development-baseline.json (E10)",
+  "entries": [
+    {
+      "name": "page-hero",
+      "size": "600",
+      "width": 600,
+      "height": 338,
+      "object_path": "site/page-hero-600.webp",
+      "source_path": "assets/site/responsive/page-hero-600.webp",
+      "sha256": "e3a5c5be95951ff138d81d222d0dbd03bb38681f512f04b46931a15ba059479f",
+      "encode": false
+    },
+    {
+      "name": "page-hero",
+      "size": "1200",
+      "width": 1200,
+      "height": 675,
+      "object_path": "site/page-hero-1200.webp",
+      "source_path": "assets/site/responsive/page-hero-1200.webp",
+      "sha256": "51401fb40f8cf0b3c82588a85a14263f5513ac1760a9630747ea3110d39f15ff",
+      "encode": false
+    },
+    {
+      "name": "page-hero",
+      "size": "1600",
+      "width": 1600,
+      "height": 900,
+      "object_path": "site/page-hero-1600.webp",
+      "source_path": "assets/site/responsive/page-hero-1600.webp",
+      "sha256": "44cc9f25a4e84f037ed98ecef47fc14f4d3054bc60b1cbc891c612d66add8b32",
+      "encode": false
+    },
+    {
+      "name": "hero-artwork",
+      "size": "600",
+      "width": 600,
+      "height": 657,
+      "object_path": "site/hero-artwork-600.webp",
+      "source_path": "assets/site/responsive/hero-artwork-600.webp",
+      "sha256": "3da90f34c42233cae6b03f2cd0c02aa9c8bf1d1b6c8942810bef378fa18fa277",
+      "encode": false
+    },
+    {
+      "name": "hero-artwork",
+      "size": "1200",
+      "width": 1199,
+      "height": 1312,
+      "object_path": "site/hero-artwork-1200.webp",
+      "source_path": "assets/site/responsive/hero-artwork-1200.webp",
+      "sha256": "d31c76d34d27891045a392c8d4ff04cedb5f0b382b43591885a907206638843e",
+      "encode": false
+    },
+    {
+      "name": "card-1-shop-all",
+      "size": "600",
+      "width": 600,
+      "height": 600,
+      "object_path": "site/card-1-shop-all-600.webp",
+      "source_path": "assets/site/responsive/card-1---shop-all-image-600.webp",
+      "sha256": "06fa23b358f3bebe5a327998769761dd57885b5c4c3a30689908c079fb6b6e6e",
+      "encode": false
+    },
+    {
+      "name": "card-1-shop-all",
+      "size": "1200",
+      "width": 1200,
+      "height": 1200,
+      "object_path": "site/card-1-shop-all-1200.webp",
+      "source_path": "assets/site/responsive/card-1---shop-all-image-1200.webp",
+      "sha256": "501bba0fc839195113af35d5755cfd0e0bd6a99bd88c26542f45768dff13de06",
+      "encode": false
+    },
+    {
+      "name": "card-2-collection",
+      "size": "600",
+      "width": 600,
+      "height": 600,
+      "object_path": "site/card-2-collection-600.webp",
+      "source_path": "assets/site/responsive/card-2---collection-image-600.webp",
+      "sha256": "d3bedc6d13a3cf091d196a4277a3c8c846c35ee02704cefd3ed43b47c4fba8e7",
+      "encode": false
+    },
+    {
+      "name": "card-2-collection",
+      "size": "1200",
+      "width": 1200,
+      "height": 1200,
+      "object_path": "site/card-2-collection-1200.webp",
+      "source_path": "assets/site/responsive/card-2---collection-image-1200.webp",
+      "sha256": "f4e024237a470bdb1654c03db561525c83f9d21aa04c640d09fe8c525d448399",
+      "encode": false
+    },
+    {
+      "name": "card-2-collection",
+      "size": "1600",
+      "width": 1600,
+      "height": 1600,
+      "object_path": "site/card-2-collection-1600.webp",
+      "source_path": "assets/site/responsive/card-2---collection-image-1600.webp",
+      "sha256": "df929a6a1b4790857cf4f84e9483568262091962ebb3e4ffd3b37e2b47c0628f",
+      "encode": false
+    },
+    {
+      "name": "card-3-artstyle",
+      "size": "600",
+      "width": 600,
+      "height": 750,
+      "object_path": "site/card-3-artstyle-600.webp",
+      "source_path": "assets/site/responsive/card-3---artstyle-image-600.webp",
+      "sha256": "04ec1105c29d2525764bc350f21db7df6ea82948aeeea32a5d13cc4f8b91e0fe",
+      "encode": false
+    },
+    {
+      "name": "card-3-artstyle",
+      "size": "1200",
+      "width": 1122,
+      "height": 1402,
+      "object_path": "site/card-3-artstyle-1200.webp",
+      "source_path": "assets/site/responsive/card-3---artstyle-image-1200.webp",
+      "sha256": "2768387000130a0a92cbe4c93f106abcb5b392311534677b420a19c80418535a",
+      "encode": false
+    },
+    {
+      "name": "about-page-hero",
+      "size": "600",
+      "width": 600,
+      "height": 338,
+      "object_path": "site/about-page-hero-600.webp",
+      "source_path": "assets/site/responsive/about-page-hero-600.webp",
+      "sha256": "9737f5ea2adec2a3dd180d327a716e50ca84c4adeaa4f174e81a1f3787f66717",
+      "encode": false
+    },
+    {
+      "name": "about-page-hero",
+      "size": "1600",
+      "width": 1600,
+      "height": 900,
+      "object_path": "site/about-page-hero-1600.webp",
+      "source_path": "assets/site/responsive/about-page-hero-1600.webp",
+      "sha256": "06114229dea887ce2206c382737a215881d37a27d1607f7cbfc58984cb100fc8",
+      "encode": false
+    },
+    {
+      "name": "gen-01-craft-detail-gold-frame",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-01-craft-detail-gold-frame-1254.webp",
+      "source_path": "assets/site/GEN 01 - Craft Detail - Gold Frame.png",
+      "sha256": "1e373629c08b22c20730c1cbae0e3086d46f1c5df944dc8071e0be9d870c82b3",
+      "encode": true
+    },
+    {
+      "name": "gen-02-paper-closeup",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-02-paper-closeup-1254.webp",
+      "source_path": "assets/site/GEN-02 - Paper Closeup.png",
+      "sha256": "cb7c1cd0e03fcfa1c4724bf35f2b8f560d3d0b457f2a5c66fcc243c7c8cd2c28",
+      "encode": true
+    },
+    {
+      "name": "gen-03-acrylic-glazing",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-03-acrylic-glazing-1254.webp",
+      "source_path": "assets/site/GEN-03 - Acrylic Glazing.png",
+      "sha256": "712a85cfe4d4a8d63ddfc87bd2ef25e73ed8fc4a99b076cf94573b148d8179b8",
+      "encode": true
+    },
+    {
+      "name": "gen-03-back-of-frame-and-hanging-system",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-03-back-of-frame-and-hanging-system-1254.webp",
+      "source_path": "assets/site/GEN-03 - Back of Frame and Hanging System.png",
+      "sha256": "e79297e9e5f986378e53e1056691bd686a2d7fa725c9746f125bc62f164616c2",
+      "encode": true
+    },
+    {
+      "name": "gen-04-print-closeup",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-04-print-closeup-1254.webp",
+      "source_path": "assets/site/GEN-04-Print Closeup.png",
+      "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
+      "encode": true
+    },
+    {
+      "name": "size-comparison-a2",
+      "size": "2048",
+      "width": 2048,
+      "height": 1035,
+      "object_path": "site/size-comparison-a2-2048.webp",
+      "source_path": "assets/site/size-comparison-A2.png",
+      "sha256": "b3a561d3b13726eeb2770676a2dee422bc2fcd0af160cb5f8a993e15bf5850f6",
+      "encode": true
+    },
+    {
+      "name": "before-you-buy",
+      "size": "native",
+      "width": null,
+      "height": null,
+      "object_path": "site/before-you-buy-native.webp",
+      "source_path": "assets/site/Before you buy.png",
+      "sha256": "05379b53a1103dabdf9f75e61c048107173212d2d7faeec8dc19d6c55e40ed64",
+      "encode": true
+    }
+  ]
+}
