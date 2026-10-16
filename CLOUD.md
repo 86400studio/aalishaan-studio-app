@@ -24,7 +24,9 @@ One sprint = one branch = one PR, wherever it runs. After the hand-off, the spri
     cdn.playwright.dev
     playwright.download.prss.microsoft.com
     *.vercel.app
+    *.supabase.co
     ```
+    (`*.supabase.co` — S1.3: the storefront's images are served from the TEST project's public bucket, so the cloud's quick looks can show them once `NEXT_PUBLIC_SUPABASE_URL` — a public value, not a secret — is set in the environment variables below; without it the local build renders the pages with their alt text, which is the honest state, not an error.)
   - **Environment variables** — settings and fake placeholders only. Anyone using the environment can read them, so never a value from `.env.local`:
     ```
     PLAYWRIGHT_BROWSERS_PATH=/opt/qa/browsers
