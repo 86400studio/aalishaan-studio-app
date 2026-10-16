@@ -1,6 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
+import { ALIAS_REDIRECTS } from "./src/lib/redirects";
 import {
   ALL_PATHS,
   HOLDING_NOINDEX_HEADER,
@@ -33,12 +34,23 @@ const nextConfig: NextConfig = {
         headers: [
           ...securityHeaders({
             sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+            supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
             isDevelopment: process.env.NODE_ENV === "development",
           }),
           HOLDING_NOINDEX_HEADER,
         ],
       },
     ];
+  },
+  // The manifest aliases of the S1.3 routes (docs/TECH-ARCHITECTURE.md §3d): duplicates → 301 to the
+  // canonical route, query strings preserved by the framework; /order/demo → /track (D-09). The S1.4 and
+  // S1.5 route groups add theirs; the whole map is verified on the live domain at S3.4.
+  async redirects() {
+    return ALIAS_REDIRECTS.map(({ source, destination }) => ({
+      source,
+      destination,
+      statusCode: 301,
+    }));
   },
 };
 
