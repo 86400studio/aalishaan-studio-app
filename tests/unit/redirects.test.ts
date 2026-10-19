@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import type { NextConfig } from "next";
+import { describe, expect, it, vi } from "vitest";
 
 import { ALIAS_REDIRECTS } from "@/lib/redirects";
 
@@ -33,13 +34,30 @@ describe("src/lib/redirects.ts — the S1.3 aliases", () => {
     }
   });
 
-  it("next.config.ts applies them as permanent redirects with the configured status", () => {
-    const config = readFileSync(path.join(ROOT, "next.config.ts"), "utf8");
-    expect(config).toMatch(
-      /import \{ ALIAS_REDIRECTS \} from "\.\/src\/lib\/redirects"/,
-    );
-    expect(config).toMatch(/async redirects\(\)/);
-    expect(config).toMatch(/statusCode: 301/);
-    expect(config).not.toMatch(/permanent: (true|false)/);
-  });
+  // Loading next.config.ts pulls in the Sentry build tooling; on a cold runner that first import can exceed
+  // Vitest's 5 s default, so this test gets a longer (still bounded) limit.
+  it(
+    "next.config.ts answers exactly these four, each with status 301, and no other redirect",
+    { timeout: 30_000 },
+    async () => {
+      vi.resetModules();
+      const loaded = (await import("../../next.config")).default as
+        | NextConfig
+        | ((
+            phase: string,
+            context: { defaultConfig: NextConfig },
+          ) => Promise<NextConfig> | NextConfig);
+      const config =
+        typeof loaded === "function"
+          ? await loaded("phase-production-build", { defaultConfig: {} })
+          : loaded;
+      expect(await config.redirects?.()).toEqual(
+        ALIAS_REDIRECTS.map(({ source, destination }) => ({
+          source,
+          destination,
+          statusCode: 301,
+        })),
+      );
+    },
+  );
 });

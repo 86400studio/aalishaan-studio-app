@@ -98,6 +98,30 @@ describe(
       expect(connect).toEqual(["'self'", EXAMPLE_INGEST_ORIGIN]);
     });
 
+    // S1.3 (D-48): the deployed policy's img-src, as next.config.ts wires it from the public build value.
+    it.each([
+      [
+        "https://abcdefghijklmnopqrst.supabase.co",
+        ["'self'", "data:", "https://abcdefghijklmnopqrst.supabase.co"],
+      ],
+      [undefined, ["'self'", "data:"]],
+      ["https://abcdefghijklmnopqrst.supabase.co:8443", ["'self'", "data:"]],
+      ["https://example.com", ["'self'", "data:"]],
+      ["not a url", ["'self'", "data:"]],
+    ])(
+      "serves img-src %j → %j from NEXT_PUBLIC_SUPABASE_URL",
+      async (supabaseUrl, expected) => {
+        const config = await loadNextConfig({
+          NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
+        });
+        const rules = (await config.headers?.()) ?? [];
+        const csp = rules[0]?.headers.find(
+          (h) => h.key.toLowerCase() === "content-security-policy",
+        );
+        expect(parsePolicy(csp?.value ?? "").get("img-src")).toEqual(expected);
+      },
+    );
+
     it.each([
       ["production", "production"],
       ["preview", "preview"],

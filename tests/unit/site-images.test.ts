@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   PUBLIC_BUCKET,
@@ -35,8 +35,9 @@ import {
  * The S1.3 site-image route (D-48), hermetically: the manifest is pinned to the prototype commit and the E10
  * development baseline's hashes; the registry mirrors the manifest exactly (every key and size both ways);
  * every object path is `site/<key>-<size>.webp`; the public URL builder accepts only the project's own
- * Storage origin; and the upload tool refuses escaping paths, links, wrong signatures and wrong hashes on a
- * scratch directory. No network, no database.
+ * Storage origin, and without a valid public URL the pages render the app's own relative paths, never another
+ * origin; and the upload tool refuses escaping paths, links, wrong signatures and wrong hashes on a scratch
+ * directory. No network, no database.
  */
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -86,7 +87,7 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         `baseline hash for ${entry.source_path}`,
       ).toBe(entry.sha256);
     }
-    expect(manifest.entries).toHaveLength(21);
+    expect(manifest.entries).toHaveLength(20);
   });
 
   it("the encoded copies are the PNG-only sources at native size; the rest are the prototype's responsive WebP copies", () => {
@@ -140,6 +141,81 @@ describe("src/lib/site-images.ts — the registry mirrors the manifest", () => {
     expect(() => catalogueImagePath("../x", "paper", "480")).toThrow();
     expect(() => catalogueImagePath("Ship", "paper", "480")).toThrow();
   });
+
+  it("an artwork is stored only at full size, every other slot only at 480 and 1200 (scripts/testing/lib/catalogue.mjs)", () => {
+    const slug = "the-ship-between-two-storms";
+    expect(catalogueImagePath(slug, "artwork", "full")).toBe(
+      `artworks/${slug}/artwork-full.webp`,
+    );
+    expect(catalogueImagePath(slug, "paper", "480")).toBe(
+      `artworks/${slug}/paper-480.webp`,
+    );
+    expect(catalogueImagePath(slug, "close-antique-gold", "1200")).toBe(
+      `artworks/${slug}/close-antique-gold-1200.webp`,
+    );
+    // The types already refuse these pairs; the runtime guard holds for a caller the types do not reach.
+    expect(() => catalogueImagePath(slug, "artwork", "1200" as "full")).toThrow(
+      /no 1200 copy/,
+    );
+    expect(() => catalogueImagePath(slug, "paper", "full" as "480")).toThrow(
+      /no full copy/,
+    );
+  });
+});
+
+describe("the rendered URLs follow the build's public Supabase URL (read once at module load)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  async function registryBuiltWith(supabaseUrl: string | undefined) {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", supabaseUrl);
+    return import("@/lib/site-images");
+  }
+
+  it("renders the project's Storage origin when the value is valid", async () => {
+    const { catalogueImage, siteImage } = await registryBuiltWith(
+      "https://abcdefghijklmnopqrst.supabase.co/",
+    );
+    const base =
+      "https://abcdefghijklmnopqrst.supabase.co/storage/v1/object/public/catalogue-public";
+    expect(siteImage("page-hero", "1200")).toBe(
+      `${base}/site/page-hero-1200.webp`,
+    );
+    expect(
+      catalogueImage("the-ship-between-two-storms", "artwork", "full"),
+    ).toBe(`${base}/artworks/the-ship-between-two-storms/artwork-full.webp`);
+  });
+
+  it.each([
+    [undefined],
+    [""],
+    ["not a url"],
+    ["https://abcdefghijklmnopqrst.supabase.co:8443"],
+    ["https://example.com"],
+  ])(
+    "renders the app's own relative paths, never another origin, for %j",
+    async (supabaseUrl) => {
+      const { catalogueImage, siteImage, siteImageSrcSet } =
+        await registryBuiltWith(supabaseUrl);
+      const base = "/storage/v1/object/public/catalogue-public";
+      expect(siteImage("page-hero", "1200")).toBe(
+        `${base}/site/page-hero-1200.webp`,
+      );
+      expect(
+        siteImageSrcSet("hero-artwork", [
+          ["600", "600w"],
+          ["1200", "1200w"],
+        ]),
+      ).toBe(
+        `${base}/site/hero-artwork-600.webp 600w, ${base}/site/hero-artwork-1200.webp 1200w`,
+      );
+      expect(
+        catalogueImage("the-ship-between-two-storms", "paper", "480"),
+      ).toBe(`${base}/artworks/the-ship-between-two-storms/paper-480.webp`);
+    },
+  );
 });
 
 describe("storageOriginFromUrl / publicObjectUrl — only the project's own Storage origin", () => {
@@ -154,8 +230,8 @@ describe("storageOriginFromUrl / publicObjectUrl — only the project's own Stor
     ],
   ])("accepts %s", (input, origin) => {
     expect(storageOriginFromUrl(input)).toBe(origin);
-    expect(publicObjectUrl(origin, "site/page-hero-600.webp")).toBe(
-      `${origin}/storage/v1/object/public/catalogue-public/site/page-hero-600.webp`,
+    expect(publicObjectUrl(origin, "site/page-hero-1200.webp")).toBe(
+      `${origin}/storage/v1/object/public/catalogue-public/site/page-hero-1200.webp`,
     );
   });
 
@@ -169,6 +245,7 @@ describe("storageOriginFromUrl / publicObjectUrl — only the project's own Stor
     ["https://abcdefghijklmnopqrst.supabase.co/?x=1"],
     ["https://abcdefghijklmnopqrst.supabase.co/#f"],
     ["https://user:pw@abcdefghijklmnopqrst.supabase.co"],
+    ["https://abcdefghijklmnopqrst.supabase.co:8443"],
     ["https://example.com"],
     ["https://abc.supabase.co"],
     ["https://abcdefghijklmnopqrst.supabase.co.evil.test"],
@@ -210,10 +287,20 @@ describe("scripts/testing/upload-site-images.mjs — bounded verification on a s
   writeFileSync(path.join(root, "assets/site/Craft.png"), PNG);
   writeFileSync(path.join(root, "assets/site/fake.webp"), PNG);
   writeFileSync(path.join(scratch, "outside.webp"), WEBP);
-  symlinkSync(
-    path.join(scratch, "outside.webp"),
-    path.join(root, "assets/site/link.webp"),
-  );
+  const link = path.join(root, "assets/site/link.webp");
+  try {
+    symlinkSync(path.join(scratch, "outside.webp"), link);
+  } catch (error) {
+    // Windows grants a file symbolic link only in Developer Mode or to an administrator. A directory junction
+    // needs no privilege and is a symbolic link to lstat all the same, so the refusal is exercised either way
+    // (the fallback of tests/unit/catalogue-tools.test.ts).
+    if ((error as NodeJS.ErrnoException).code !== "EPERM") throw error;
+    symlinkSync(
+      mkdtempSync(path.join(tmpdir(), "site-images-outside-")),
+      link,
+      "junction",
+    );
+  }
   const entry = (over: Partial<Entry>): Entry => ({
     name: "ok",
     size: "600",

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,11 +41,14 @@ import {
   policyBySlug,
 } from "@/content/public/policies";
 import {
+  BRAND,
   CART_DRAWER,
   FOOTER,
   FOOTER_CTA,
+  HEADER,
   MENU_DRAWER,
   PRIMARY_NAV,
+  SKIP_LINK,
 } from "@/content/public/shell";
 import {
   CLEAR_PREVIEW,
@@ -54,14 +57,21 @@ import {
   TRACK_FORM,
   WISHLIST,
 } from "@/content/public/strings";
+import {
+  POLICY_CARVE_OUTS,
+  buildSeedPlan,
+} from "../../scripts/testing/lib/catalogue.mjs";
 
 /**
- * Copy parity — S1.3 (CLAUDE.md "Approved content and design"; docs/APPROVED-INPUTS.md §2; D-08): every
- * string the storefront's content modules carry is read back from the frozen prototype page it comes from,
- * decoded as the browser renders it. The deliberate omissions (NS-15 — the two E10 FAQ entries and the two
- * E10 policy sentences) are asserted as omissions, so a later edit cannot silently reintroduce or drop them.
- * The three notices of the disabled forms (NS-01–NS-03) are asserted against the register's rules: honest,
- * no "sent" or "saved", and absent from the prototype. Hermetic: files only.
+ * Copy parity — S1.3 (CLAUDE.md "Approved content and design"; docs/APPROVED-INPUTS.md §2; D-08): the strings
+ * and link destinations the storefront's content modules carry are read back from the frozen prototype page
+ * they come from, decoded as the browser renders them (a no-break space stays one: the collapsing only touches
+ * ordinary white space); a destination is compared through the prototype's own route map
+ * (`prototype/site-manifest.json` aliases). The deliberate omissions (NS-15 — the two E10 FAQ entries and the
+ * E10 policy sentences) are asserted as omissions, so a later edit cannot silently reintroduce or drop them, and
+ * the policy pages are held equal to the policy text S1.1 seeds. The three notices of the disabled forms
+ * (NS-01–NS-03) are asserted against the register's rules: honest, no "sent" or "saved", and absent from the
+ * prototype. Hermetic: files only.
  */
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -86,8 +96,7 @@ function decode(html: string): string {
     .replace(/&#(\d+);/g, (_, code: string) =>
       String.fromCodePoint(Number(code)),
     )
-    .replace(/&([a-z]+);/g, (match, name: string) => ENTITIES[name] ?? match)
-    .replace(/ /g, " ");
+    .replace(/&([a-z]+);/g, (match, name: string) => ENTITIES[name] ?? match);
 }
 function page(relative: string): string {
   return decode(readFileSync(path.join(ROOT, "prototype", relative), "utf8"));
@@ -98,14 +107,48 @@ function text(html: string): string {
     .replace(/<script[\s\S]*?<\/script>/g, "")
     .replace(/<style[\s\S]*?<\/style>/g, "")
     .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ");
+    .replace(/[ \t\n\r\f]+/g, " ");
 }
 const HOME = page("index.html");
 const HOME_TEXT = text(HOME);
 const expectIn = (haystack: string, needle: string) =>
   expect(haystack, `expected the prototype to contain: ${needle}`).toContain(
-    needle.replace(/\s+/g, " "),
+    needle.replace(/[ \t\n\r\f]+/g, " "),
   );
+const E10_QUESTIONS = [
+  "Can I pay cash on delivery?",
+  "What happens if ordering is paused?",
+];
+
+/** The prototype's route map: each app route to the frozen page it serves. */
+const ALIASES = (
+  JSON.parse(
+    readFileSync(path.join(ROOT, "prototype/site-manifest.json"), "utf8"),
+  ) as { aliases: Record<string, string> }
+).aliases;
+/**
+ * The prototype href an app href stands for (query and hash kept). The route must be the canonical one — the
+ * first route the manifest lists for its page; the later ones are the 301 aliases (TECH-ARCHITECTURE §3d).
+ */
+function prototypeHref(appHref: string): string {
+  const [, route, rest] = /^([^?#]*)(.*)$/.exec(appHref)!;
+  const file = ALIASES[route!];
+  expect(file, `the manifest maps ${route}`).toBeDefined();
+  const canonical = Object.entries(ALIASES).find(([, f]) => f === file)![0];
+  expect(route, `${route} is the canonical route of ${file}`).toBe(canonical);
+  return `${file}${rest}`;
+}
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** The page links `label` to the app href's prototype page, as `<a … href="…">label` (leading tags allowed). */
+function expectLink(html: string, link: { label: string; href: string }) {
+  const href = prototypeHref(link.href);
+  expect(
+    new RegExp(
+      `href="${escapeRegExp(href)}"[^>]*>(?:\\s|<[^>]+>)*${escapeRegExp(link.label)}`,
+    ).test(html),
+    `expected the prototype to link "${link.label}" to ${href}`,
+  ).toBe(true);
+}
 
 describe("Home — prototype/index.html", () => {
   it("carries the head, the hero, the promises and the materials verbatim", () => {
@@ -175,6 +218,14 @@ describe("Home — prototype/index.html", () => {
     expect(HOME_FAQ.items).toHaveLength(5);
   });
 
+  it("the two no-break spaces of the materials strip are the prototype's (index.html:584, :592)", () => {
+    const nbsp = String.fromCharCode(160);
+    expect(SPECS[3]!.line).toContain(`350${nbsp}gsm`);
+    expect(SPECS[5]!.line).toContain(`59.4${nbsp}cm`);
+    expect(HOME).toContain(`350${nbsp}gsm`);
+    expect(HOME).toContain(`59.4${nbsp}cm`);
+  });
+
   it("prices are the locked launch prices in integer paise (locked-facts §2)", () => {
     expect(FINISHES.white.pricePaise).toBe(1_900_000);
     expect(FINISHES.black.pricePaise).toBe(2_100_000);
@@ -210,6 +261,57 @@ describe("Home — prototype/index.html", () => {
     for (const room of FOOTER_CTA.rooms) expectIn(HOME_TEXT, room.label);
   });
 
+  it("the shell's labels and every shell and Home destination are the prototype's", () => {
+    expectIn(HOME, `href="#main">${SKIP_LINK}</a>`);
+    expectIn(HOME, `aria-label="${BRAND.homeLabel}"`);
+    expectIn(HOME, `aria-label="${BRAND.backToTopLabel}"`);
+    expectIn(
+      HOME,
+      `src="assets/brand/aalishaan-studio.png" width="${BRAND.logo.width}" height="${BRAND.logo.height}" alt="${BRAND.logoAlt}"`,
+    );
+    expectIn(HOME, `aria-label="${HEADER.menuOpen}"`);
+    expectIn(HOME, `aria-label="${HEADER.cartOpen(0)}"`);
+    expectIn(HOME, `aria-label="${MENU_DRAWER.close}"`);
+    expectIn(HOME, `aria-label="${CART_DRAWER.close}"`);
+    expectIn(HOME_TEXT, FOOTER_CTA.eyebrow);
+    expectIn(HOME, `aria-label="${FOOTER_CTA.roomsLabel}"`);
+    expectIn(HOME, `aria-label="${FOOTER.socialsLabel}"`);
+    expectIn(HOME, `aria-label="${FOOTER.legalLabel}"`);
+    expectIn(HOME, `aria-label="${FOOTER.newsletter.inputLabel}"`);
+
+    type Link = { readonly label: string; readonly href: string };
+    const columnLinks: readonly Link[] = FOOTER.columns.flatMap(
+      (column): readonly Link[] => column.links,
+    );
+    const links: readonly Link[] = [
+      ...PRIMARY_NAV,
+      { label: HEADER.trackOrder, href: HEADER.trackHref },
+      ...MENU_DRAWER.items,
+      MENU_DRAWER.footerAction,
+      CART_DRAWER.empty.primary,
+      CART_DRAWER.empty.secondary,
+      CART_DRAWER.footerAction,
+      ...FOOTER_CTA.rooms,
+      FOOTER_CTA.primary,
+      FOOTER_CTA.help,
+      ...columnLinks,
+      ...FOOTER.mobileLegal.links,
+      ...FOOTER.legal,
+      HERO.primary,
+      HERO.secondary,
+      ...ROUTES.cards.map((card) => card.action),
+      FEATURED.action,
+      HOME_FAQ.action,
+    ];
+    expect(links).toHaveLength(45);
+    for (const link of links) expectLink(HOME, link);
+    // Each featured card links its artwork page three times (image, title, "View artwork").
+    for (const card of FEATURED.cards) {
+      const href = prototypeHref(`/artworks/${card.slug}`);
+      expect(HOME.split(`href="${href}"`)).toHaveLength(4);
+    }
+  });
+
   it("the wishlist toast lines are the prototype's own runtime strings (rule 7)", () => {
     expectIn(HOME, `'${WISHLIST.saved}'`);
     expectIn(HOME, `'${WISHLIST.removed}'`);
@@ -222,10 +324,6 @@ describe("Home — prototype/index.html", () => {
 describe("Help — prototype/pages/help/index.html", () => {
   const HELP = page("pages/help/index.html");
   const HELP_TEXT = text(HELP);
-  const E10_QUESTIONS = [
-    "Can I pay cash on delivery?",
-    "What happens if ordering is paused?",
-  ];
 
   it("carries the head, the page copy, the filter labels and the related rows verbatim", () => {
     expectIn(HELP, `<title>${HELP_HEAD.title}</title>`);
@@ -255,6 +353,15 @@ describe("Help — prototype/pages/help/index.html", () => {
       expectIn(HELP, `<summary>${q}</summary>`);
       expect(HELP_QUESTIONS.map((item) => item.q)).not.toContain(q);
     }
+    const blocks = [
+      ...HELP.matchAll(
+        /<div data-topic="([^"]+)">(?:(?!<summary>)[\s\S])*?<summary>([^<]*)<\/summary>/g,
+      ),
+    ].map((m) => [m[1], m[2]]);
+    expect(blocks).toHaveLength(13);
+    expect(HELP_QUESTIONS.map((item) => [item.topic, item.q])).toEqual(
+      blocks.filter(([, q]) => !E10_QUESTIONS.includes(q as string)),
+    );
     expect(HELP_PAGE.status(11)).toBe("11 answers");
     expect((HELP.match(/<summary>/g) ?? []).length).toBe(13);
   });
@@ -310,7 +417,7 @@ describe("The seven policies — prototype/pages/policies/<slug>/index.html", ()
           `<section id="section-${i}"><h2>${section.heading}</h2>`,
         );
         // The body is the prototype's, except where NS-15 shortens it (asserted below); the cookies
-        // "Clear your preview" sentence is the E8 reconstruction the VS Code leg checks against the pinned checkout.
+        // "Clear your preview" sentence is the E8 wording (the S1.1 carve-out; asserted below and against the seed).
         if (!(slug === "cookies" && section.heading === "Clear your preview"))
           expectIn(html, section.body.split(". ")[0]!);
       }
@@ -364,6 +471,30 @@ describe("The seven policies — prototype/pages/policies/<slug>/index.html", ()
     expect(clear.body).not.toContain("waiting-list");
   });
 
+  it("the pages are exactly the policy text S1.1 seeds (buildSeedPlan: E10 with the three carve-outs — the E8 wording)", () => {
+    const seeded = new Map(
+      buildSeedPlan().policy_versions.map((version) => [
+        version.policy_key,
+        version,
+      ]),
+    );
+    expect([...seeded.keys()].sort()).toEqual([...POLICY_SLUGS].sort());
+    for (const policy of POLICIES) {
+      const seed = seeded.get(policy.slug)!;
+      expect(policy.title, policy.slug).toBe(seed.title);
+      expect(policy.intro, policy.slug).toBe(seed.intro);
+      // The seed stores the preview note as a body entry with an empty heading.
+      expect(
+        seed.body.filter((s) => s.heading === "").map((s) => s.text),
+        policy.slug,
+      ).toEqual(policy.previewNote ? [POLICY_PREVIEW_NOTE] : []);
+      expect(
+        policy.sections.map((s) => ({ heading: s.heading, text: s.body })),
+        policy.slug,
+      ).toEqual(seed.body.filter((s) => s.heading !== ""));
+    }
+  });
+
   it("the Cookies clear-control strings are the prototype's own (rule 7)", () => {
     const pending = readFileSync(
       path.join(ROOT, "prototype/shared/pending.js"),
@@ -402,6 +533,44 @@ describe("About hub, About the Studio, Contact, Track, 404, 500", () => {
     }
     expect(ABOUT_HUB.results.status(1)).toBe("1 article found");
     expect(ABOUT_HUB.results.status(2)).toBe("2 articles found");
+  });
+
+  it("each search-index entry is the prototype's data-search, without the NS-15 entries and sentences, linking the same page", () => {
+    const html = page("pages/about/index.html");
+    const entries = [
+      ...html.matchAll(
+        /<div data-help-entry data-search="([^"]*)"><a class="help-row" href="([^"]*)"/g,
+      ),
+    ].map((m) => ({ search: m[1]!, href: m[2]! }));
+    expect(entries).toHaveLength(HELP_INDEX.length);
+    // The two E10 FAQ entries, as the hub's builder writes them into the FAQ entry: " <topic> <q> <a>".
+    const triples = [
+      ...page("pages/help/index.html").matchAll(
+        /<div data-topic="([^"]+)">(?:(?!<summary>)[\s\S])*?<summary>([^<]*)<\/summary><p>([^<]*)<\/p>/g,
+      ),
+    ]
+      .filter((m) => E10_QUESTIONS.includes(m[2]!))
+      .map((m) => ` ${m[1]} ${m[2]} ${m[3]}`);
+    expect(triples).toHaveLength(2);
+    const withoutNs15 = (search: string) => {
+      let out = search;
+      for (const removed of [
+        ...triples.map((sentence) => ({ sentence, replacement: "" })),
+        ...POLICY_CARVE_OUTS,
+      ])
+        if (out.includes(removed.sentence)) {
+          expect(out.split(removed.sentence)).toHaveLength(2);
+          out = out.replace(removed.sentence, () => removed.replacement);
+        }
+      return out;
+    };
+    for (const [i, entry] of HELP_INDEX.entries()) {
+      expect(entry.search, entry.title).toBe(withoutNs15(entries[i]!.search));
+      // the hub's links are relative to pages/about/
+      expect(path.posix.join("pages/about", entries[i]!.href)).toBe(
+        prototypeHref(entry.href),
+      );
+    }
   });
 
   it("About the Studio is the signed-off article (D-PRE-17), verbatim", () => {
@@ -478,10 +647,12 @@ describe("About hub, About the Studio, Contact, Track, 404, 500", () => {
     for (const mode of ["order", "awb", "mobile"] as const) {
       expectIn(script, `'${TRACK.modes[mode].label}'`);
     }
+    // the hint the page loads with, then each tab's own hint (commerce-r9.js writes it on every tab choice)
     expectIn(
       html,
-      `<p id="track-hint" class="flow-fine">${TRACK.modes.order.hint}</p>`,
+      `<p id="track-hint" class="flow-fine">${TRACK.initialHint}</p>`,
     );
+    expectIn(script, `'${TRACK.modes.order.hint}'`);
     expectIn(script, TRACK.modes.awb.hint);
     expectIn(
       script,
@@ -513,6 +684,39 @@ describe("About hub, About the Studio, Contact, Track, 404, 500", () => {
       expectIn(html, `>${RECOVERY.primary.label}</a>`);
       expectIn(html, `>${RECOVERY.secondary.label}</a>`);
     }
+  });
+});
+
+describe("prototype-only wording — not ported (the S1.3 record, step-1 contracts)", () => {
+  const sources = (dir: string): string[] =>
+    readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap(
+      (entry) =>
+        entry.isDirectory()
+          ? sources(path.join(dir, entry.name))
+          : /\.(tsx?|css)$/.test(entry.name)
+            ? [readFileSync(path.join(ROOT, dir, entry.name), "utf8")]
+            : [],
+    );
+  const app = [
+    ...sources("src/content/public"),
+    ...sources("src/components"),
+    ...sources("src/app/(public)"),
+  ].join("\n");
+
+  it.each([
+    "Preview enquiry",
+    "Enquiry preview complete",
+    "Sample form. Use sample details only",
+    "Preview only. No subscription is created.",
+    "Signup preview complete",
+    "Explore a sample journey",
+    "No matching sample found",
+    "This preview shows a sample journey",
+    "Use 9000000000 for this sample",
+    "AS-PREVIEW-001",
+    "Interactive previews need JavaScript",
+  ])("%s", (phrase) => {
+    expect(app).not.toContain(phrase);
   });
 });
 

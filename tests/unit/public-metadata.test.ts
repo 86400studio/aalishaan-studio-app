@@ -8,8 +8,8 @@ import { metadata as aboutMetadata } from "@/app/(public)/about/page";
 import { metadata as studioMetadata } from "@/app/(public)/about/studio/page";
 import { metadata as contactMetadata } from "@/app/(public)/contact/page";
 import { metadata as helpMetadata } from "@/app/(public)/help/page";
-import { metadata as notFoundMetadata } from "@/app/(public)/not-found";
 import { metadata as homeMetadata } from "@/app/(public)/page";
+import { metadata as notFoundMetadata } from "@/app/global-not-found";
 import {
   dynamicParams,
   generateMetadata,
