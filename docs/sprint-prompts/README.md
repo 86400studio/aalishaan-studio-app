@@ -25,8 +25,9 @@ menu and cart drawers, toast), Home with the desktop and mobile wall-to-material
 Help with its FAQ filter, Contact, Track, the seven policy pages, the 404 and 500 pages, the alias redirects, the honest disabled forms
 (NS-01–NS-03), the site-image registry with its manifest and upload tool, the hermetic tests and the Preview specs; the site-image upload to
 the TEST bucket, the Preview test with `/browser-qa` evidence, the axe scan, the Lighthouse measurement and the review are the VS Code leg
-(the record's "Hand-off to VS Code"). Its paired [review record](../code-reviews/S1.3-public-shell-review.md) holds the review context
-(verdict pending).
+(the record's "Hand-off to VS Code"). The VS Code leg (from 2026-10-17) audited the cloud build read-only and corrected it locally before any
+TEST step; its decisions are with the owner (the record's "VS Code leg"). Its paired [review record](../code-reviews/S1.3-public-shell-review.md)
+holds the review context (verdict pending).
 
 Latest completed sprint: [S1.2 — Staff auth, MFA & server RBAC guard](S1.2-staff-auth.md), prepared 2026-10-12 and In Progress the same
 day in the second Claude Code cloud session on `claude/determined-cannon-rha42x` (PR #21) with the VS Code leg from 2026-10-12 (the pre-TEST
