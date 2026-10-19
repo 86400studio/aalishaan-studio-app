@@ -6,16 +6,6 @@
   "entries": [
     {
       "name": "page-hero",
-      "size": "600",
-      "width": 600,
-      "height": 338,
-      "object_path": "site/page-hero-600.webp",
-      "source_path": "assets/site/responsive/page-hero-600.webp",
-      "sha256": "e3a5c5be95951ff138d81d222d0dbd03bb38681f512f04b46931a15ba059479f",
-      "encode": false
-    },
-    {
-      "name": "page-hero",
       "size": "1200",
       "width": 1200,
       "height": 675,

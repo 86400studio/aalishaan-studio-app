@@ -69,8 +69,8 @@ pnpm db:test:seed                                              # the catalogue p
 pnpm db:test:seed --apply                                      # writes missing rows; a differing row is reported, not overwritten (--overwrite applies the plan, referenced variants kept)
 pnpm db:test:upload-catalogue --source-root <checkout of b24dce1b…>          # verifies the pinned checkout and every enumerated WebP by SHA-256
 pnpm db:test:upload-catalogue --source-root <checkout of b24dce1b…> --apply  # uploads the missing objects to the public bucket catalogue-public (330 on an empty bucket); an existing object is kept — reported if its size differs — and replaced only with --overwrite
-pnpm db:test:upload-site-images --source-root <checkout of b24dce1b…>        # S1.3 (D-48): verifies the 21 site images of scripts/testing/site-images.json by SHA-256 and encodes the seven PNG sources to WebP (Chromium); nothing uploaded
-pnpm db:test:upload-site-images --source-root <checkout of b24dce1b…> --apply # uploads the missing objects to catalogue-public under site/ (21 on an empty prefix); same keep / --overwrite rule as the catalogue upload
+pnpm db:test:upload-site-images --source-root <checkout of b24dce1b…>        # S1.3 (D-48): verifies the 20 site images of scripts/testing/site-images.json by SHA-256 and encodes the seven PNG sources to WebP (Chromium), then reads TEST — five identity probes and one listing per image (25 read requests: 23 with the secret key, 2 with the publishable key, both from .env.local); nothing uploaded
+pnpm db:test:upload-site-images --source-root <checkout of b24dce1b…> --apply # uploads the missing objects to catalogue-public under site/ (20 on an empty prefix — 45 requests); same keep / --overwrite rule as the catalogue upload
 pnpm db:test:reset --namespace=catalogue:                      # deletes only the seeded catalogue rows, refused while an order references a variant; --scope is refused with this form
 pnpm db:test:reset                                             # the S0.2 form: synthetic system_checks rows of one namespace (fixture: / integration:)
 ```

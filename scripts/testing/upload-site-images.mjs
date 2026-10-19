@@ -18,8 +18,10 @@
  * verified too: with a `.git` directory its HEAD must be the pinned commit. Nothing outside the manifest is
  * ever uploaded.
  *
- * Dry run by default (every file verified and every PNG encoded, nothing uploaded); `--apply` uploads with
- * the server's secret key to the public bucket `catalogue-public` under `site/`. Idempotent and never
+ * Dry run by default — every file verified and every PNG encoded, then `.env.local` loaded and TEST read: the
+ * five identity probes and one listing per manifest entry (25 read requests: 23 with the secret key, 2 with the
+ * publishable key), nothing uploaded; `--apply` adds one upload per missing object (45 requests on an empty prefix) with the server's
+ * secret key to the public bucket `catalogue-public` under `site/`. Idempotent and never
  * destructive without `--overwrite` (the catalogue tool's rule, reused: an existing object is kept; the
  * listing gives a length, not the content). PROD, an unknown target, missing credentials or mismatched refs
  * are refused before any request, with names only. The encoded copy's size is reported, never a value.

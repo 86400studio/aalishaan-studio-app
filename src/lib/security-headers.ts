@@ -5,6 +5,8 @@
  * by the sprint that first loads them (Razorpay at S1.6), never speculatively.
  */
 
+import { storageOriginFromUrl } from "./site-images";
+
 export type HttpHeader = { key: string; value: string };
 
 export type SecurityHeaderOptions = {
@@ -38,23 +40,12 @@ export function sentryIngestOrigin(dsn: string | undefined): string | null {
   return url.protocol === "https:" && url.hostname !== "" ? url.origin : null;
 }
 
-/** The https origin of the project's API URL, or null unless it is exactly `https://<ref>.supabase.co`. */
-export function storageOrigin(url: string | undefined): string | null {
-  if (!url) return null;
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return null;
-  }
-  if (parsed.protocol !== "https:" || parsed.username || parsed.password)
-    return null;
-  if (parsed.search !== "" || parsed.hash !== "") return null;
-  if (parsed.pathname !== "/" && parsed.pathname !== "") return null;
-  return /^[a-z]{20}\.supabase\.co$/.test(parsed.hostname)
-    ? parsed.origin
-    : null;
-}
+/**
+ * The https origin of the project's API URL, or null unless it is exactly `https://<ref>.supabase.co` — the
+ * same validator the image registry renders its URLs with (src/lib/site-images.ts), so the pages and the
+ * policy can never name different origins.
+ */
+export const storageOrigin = storageOriginFromUrl;
 
 export function contentSecurityPolicy({
   sentryDsn,

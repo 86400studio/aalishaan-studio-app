@@ -10,15 +10,18 @@
  *    to each other).
  *
  * The URL origin is the project's API origin, `NEXT_PUBLIC_SUPABASE_URL` — TEST on Preview and locally,
- * PROD in Production — read once at module load from the build-inlined public value. There is no fallback:
- * without the value the build fails here, and a missing object fails visibly in the browser (an alt text,
- * never invented content — TECH-ARCHITECTURE §7). Pure and browser-safe: no server module, no secret.
+ * PROD in Production — read once at module load from the build-inlined public value. Without a valid value
+ * (the Code Check's build, a local build with no environment) nothing is thrown and no other origin is
+ * guessed: the pages render the object paths against the app's own origin, where they answer 404, so every
+ * image fails visibly with its alt text — never invented content (TECH-ARCHITECTURE §7). The response
+ * header's `img-src` uses the same validator (src/lib/security-headers.ts). Pure and browser-safe: no server
+ * module, no secret.
  */
 
 export const PUBLIC_BUCKET = "catalogue-public";
 export const SITE_PREFIX = "site/";
 
-/** `https://<ref>.supabase.co` exactly (an optional trailing slash), or null. */
+/** `https://<ref>.supabase.co` exactly — no port, path, query or credentials; a trailing slash allowed — or null. */
 export function storageOriginFromUrl(value: string | undefined): string | null {
   if (typeof value !== "string" || value.trim() === "") return null;
   let url: URL;
@@ -29,7 +32,7 @@ export function storageOriginFromUrl(value: string | undefined): string | null {
   }
   if (url.protocol !== "https:" || url.username !== "" || url.password !== "")
     return null;
-  if (url.search !== "" || url.hash !== "") return null;
+  if (url.port !== "" || url.search !== "" || url.hash !== "") return null;
   if (url.pathname !== "/" && url.pathname !== "") return null;
   if (!/^[a-z]{20}\.supabase\.co$/.test(url.hostname)) return null;
   return url.origin;
@@ -47,18 +50,11 @@ const originFromEnv = storageOriginFromUrl(
 );
 
 /**
- * The origin the pages render. Every deployment holds the public value (P12), so the deployed pages carry
- * the project's Storage origin. A build without it — the Code Check's, a local build with no environment —
- * renders the object paths against the app's own origin, where they answer 404 and the images fail
- * visibly with their alt text; nothing is invented and no other origin is guessed.
+ * The origin the pages render: the project's Storage origin when the build holds the public value (every
+ * deployment does — P12), otherwise "" — the app's own origin, where the objects answer 404 (see above).
  */
-function requireOrigin(): string {
+function renderOrigin(): string {
   return originFromEnv ?? "";
-}
-
-/** True when the build holds the project's API origin (the deployed case). */
-export function hasStorageOrigin(): boolean {
-  return originFromEnv !== null;
 }
 
 export type SiteImageKey =
@@ -83,7 +79,7 @@ export type SiteImageKey =
 export const SITE_IMAGE_SIZES: Readonly<
   Record<SiteImageKey, readonly string[]>
 > = {
-  "page-hero": ["600", "1200", "1600"],
+  "page-hero": ["1200", "1600"],
   "hero-artwork": ["600", "1200"],
   "card-1-shop-all": ["600", "1200"],
   "card-2-collection": ["600", "1200", "1600"],
@@ -106,7 +102,7 @@ export function siteImagePath(key: SiteImageKey, size: string): string {
 
 /** The public URL of one site image copy. */
 export function siteImage(key: SiteImageKey, size: string): string {
-  return publicObjectUrl(requireOrigin(), siteImagePath(key, size));
+  return publicObjectUrl(renderOrigin(), siteImagePath(key, size));
 }
 
 /** A `srcset` over the given copies, each with its width descriptor as the prototype writes it. */
@@ -129,21 +125,28 @@ export type CatalogueSlot =
   | "paper"
   | "artwork";
 
-export function catalogueImagePath(
+/** The sizes of the S1.1 object-path contract: the artwork itself at full size, every other slot at 480 / 1200. */
+export type CatalogueSize<S extends CatalogueSlot> = S extends "artwork"
+  ? "full"
+  : "480" | "1200";
+
+export function catalogueImagePath<S extends CatalogueSlot>(
   slug: string,
-  slot: CatalogueSlot,
-  size: "480" | "1200",
+  slot: S,
+  size: CatalogueSize<S>,
 ): string {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug))
     throw new Error(`not an artwork slug: ${slug}`);
+  if ((slot === "artwork") !== (size === "full"))
+    throw new Error(`catalogue slot ${slot} has no ${size} copy`);
   return `artworks/${slug}/${slot}-${size}.webp`;
 }
 
 /** The public URL of one catalogue image (the S1.1 object-path contract). */
-export function catalogueImage(
+export function catalogueImage<S extends CatalogueSlot>(
   slug: string,
-  slot: CatalogueSlot,
-  size: "480" | "1200",
+  slot: S,
+  size: CatalogueSize<S>,
 ): string {
-  return publicObjectUrl(requireOrigin(), catalogueImagePath(slug, slot, size));
+  return publicObjectUrl(renderOrigin(), catalogueImagePath(slug, slot, size));
 }
