@@ -18,14 +18,19 @@ export const viewport: Viewport = {
 
 /**
  * The root layout holds `html` and `body` only. The public shell (fonts, the `.site` wrapper, the drawers)
- * lives in the `(public)` route group's layout and the root 404 page; the Admin (S1.2, plain pages; the
- * Admin shell is S1.9) inherits nothing from the storefront.
+ * lives in the `(public)` route group's layout and in the global 404 (`global-not-found.tsx`, which brings its
+ * own document); the Admin (S1.2, plain pages; the Admin shell is S1.9) inherits from the storefront only
+ * globals.css's universal reduced-motion override (no Admin rule animates), this document's viewport and
+ * `data-scroll-behavior` (the smooth scrolling itself is public-only), and — the global 404's styles being counted
+ * among every route's assets — a same-origin `preconnect` and a `next-size-adjust` meta (no font, preload or sheet).
  */
 export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    // `data-scroll-behavior`: the storefront's smooth scrolling (globals.css) is for in-page anchors; the
+    // framework turns it off while it scrolls a client navigation to the top.
+    <html lang="en" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

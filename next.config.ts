@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
   // Stop `next dev` writing its agent block into the governing AGENTS.md / CLAUDE.md.
   agentRules: false,
   poweredByHeader: false,
+  experimental: {
+    // S1.3: one designed 404 for every unmatched URL, served by src/app/global-not-found.tsx with its own document;
+    // there is no root not-found.tsx, which would sit in every route's tree and take its fonts and sheets there.
+    globalNotFound: true,
+  },
   env: {
     // Inlined into the browser bundle so client events carry the same environment as the server's.
     NEXT_PUBLIC_SENTRY_ENVIRONMENT: sentryEnvironment(process.env.VERCEL_ENV),
