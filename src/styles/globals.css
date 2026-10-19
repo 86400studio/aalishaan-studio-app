@@ -1,15 +1,13 @@
 @import "tailwindcss";
-@import "./storefront.css";
-@import "./home.css";
-@import "./utility.css";
 
 /*
  * The one global stylesheet (docs/DESIGN.md §2) — S1.3. Tokens are transcribed from the frozen prototype
  * (prototype/shared/browse-home.css:10–44, the inline sheet of prototype/index.html) with the EFFECTIVE values
  * after the R-series overrides (gallery-r8.css:3 re-points ivory and white to #fff and darkens taupe and
  * muted); names carry over from the prototype so a diff stays literal. The Admin reuses --ink, --muted and
- * --line with different values and declares them on its own shell root (S1.9); nothing of the storefront's base
- * applies outside the `.site` wrapper (storefront.css). The imported sheets are the component styles.
+ * --line with different values and declares them on its own shell root (S1.9). The storefront's component
+ * sheets (storefront.css, home.css, utility.css) are not imported here: the public route group's layout loads
+ * them, so no Admin page downloads them, and every rule in them is scoped to the `.site` wrapper.
  */
 :root {
   color-scheme: light;
@@ -95,7 +93,7 @@
 html {
   -webkit-text-size-adjust: 100%;
 }
-html:not(.no-smooth) {
+html:has(.site):not(.no-smooth) {
   scroll-behavior: smooth;
 }
 
@@ -105,6 +103,28 @@ body {
   background: #fff;
   color: var(--ink);
 }
+/*
+ * The base the S1.2 Admin pages render with — the S0.1 values (the DESIGN §2 fallback stacks; the Body and
+ * Display sizes), kept for every page outside the public shell until the Admin shell (S1.9) brings its own.
+ * `.site` sets its own font, size and line height, and its headings are the storefront's.
+ */
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+@media (max-width: 47.9375rem) {
+  body {
+    font-size: 1rem;
+  }
+}
+h1:not(.site *) {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.85rem, 5.4vw, 4.75rem);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  line-height: 1.02;
+}
 /* browse-home.css:53 — the drawers slide from ±102 %; nothing may widen the page. */
 body:has(.site) {
   overflow-x: hidden;
@@ -112,7 +132,7 @@ body:has(.site) {
 
 /* browse-home.css:399–402 (DESIGN §5: every animation respects reduced motion) */
 @media (prefers-reduced-motion: reduce) {
-  html {
+  html:has(.site):not(.no-smooth) {
     scroll-behavior: auto;
   }
   *,

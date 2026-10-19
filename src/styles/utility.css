@@ -8,17 +8,17 @@
  */
 
 /* ---------- page scopes (browse.css:1; pending.css; about-hub.css:1; storefront-r7.css:9; gallery-r8.css:54) ---------- */
-.browse-page {
+:where(.site) .browse-page {
   background: #fff;
 }
-.help-page {
+:where(.site) .help-page {
   background: #fff;
   color: var(--ink);
 }
-.help-brand,
-.studio-page,
-.commerce-page,
-.recovery-page {
+:where(.site) .help-brand,
+:where(.site) .studio-page,
+:where(.site) .commerce-page,
+:where(.site) .recovery-page {
   --gallery-ink: #191813;
   --gallery-white: #fff;
   --ivory: #fff;
@@ -28,68 +28,72 @@
 }
 
 /* ---------- the utility layout (pending.css:1) ---------- */
-.utility-main {
+:where(.site) .utility-main {
   padding-bottom: 90px;
 }
-.utility-hero {
+:where(.site) .utility-hero {
   padding: 64px 0 44px;
   max-width: 900px;
 }
-.utility-hero h1 {
+:where(.site) .utility-hero h1 {
   font-family: var(--font-display);
   font-size: clamp(44px, 5vw, 76px);
   line-height: 1.08;
   margin: 15px 0 20px;
 }
-.utility-hero > p {
+:where(.site) .utility-hero > p {
   font-size: 19px;
   max-width: 680px;
   color: #55584f;
   line-height: 1.7;
 }
-.utility-main h2 {
+:where(.site) .utility-main h2 {
   font-size: 30px;
   line-height: 1.2;
   margin: 0 0 20px;
 }
-.utility-main p {
+:where(.site) .utility-main p {
   line-height: 1.75;
 }
-.utility-split {
+:where(.site) .utility-split {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 40px;
   align-items: start;
   margin: 28px 0;
 }
-.utility-card {
+:where(.site) .utility-card {
   border: 1px solid #e5e1da;
   background: #fff;
   border-radius: 4px;
   padding: 30px;
   margin-bottom: 24px;
 }
-.preview-note {
+/* about-hub.css:32 — on the help family the card keeps 24px at every width (it outweighs the 800px rule) */
+:where(.site) .help-page .utility-card {
+  padding: 24px;
+}
+:where(.site) .preview-note {
   border-left: 3px solid #9e8150;
   padding: 12px 20px;
   background: #f5f3ec;
   font-size: 14px;
   color: #4e5148;
 }
-.utility-form {
+:where(.site) .utility-form {
   display: grid;
   gap: 20px;
 }
-.utility-form label,
-.utility-filters label {
+:where(.site) .utility-form label,
+:where(.site) .utility-filters label {
   display: grid;
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
 }
-.utility-page input,
-.utility-page select,
-.utility-page textarea {
+:where(.site) .utility-page input,
+:where(.site) .utility-page select,
+:where(.site) .utility-page textarea {
   width: 100%;
   border: 1px solid #a8aca1;
   border-radius: 4px;
@@ -100,63 +104,63 @@
   font: inherit;
   font-size: 16px;
 }
-.utility-page textarea {
+:where(.site) .utility-page textarea {
   resize: vertical;
 }
-.utility-page input:disabled,
-.utility-page select:disabled,
-.utility-page textarea:disabled {
+:where(.site) .utility-page input:disabled,
+:where(.site) .utility-page select:disabled,
+:where(.site) .utility-page textarea:disabled {
   cursor: not-allowed;
   background: #f7f6f2;
   color: #605b55;
 }
-.utility-page input[aria-invalid="true"] {
+:where(.site) .utility-page input[aria-invalid="true"] {
   border-color: #8f2a24;
 }
-.utility-filters {
+:where(.site) .utility-filters {
   display: flex;
   gap: 16px;
   align-items: end;
   flex-wrap: wrap;
 }
-.utility-filters label:first-child {
+:where(.site) .utility-filters label:first-child {
   flex: 1;
 }
-.utility-actions {
+:where(.site) .utility-actions {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
   margin: 30px 0;
 }
-.contact-points {
+:where(.site) .contact-points {
   padding-left: 20px;
   list-style: disc;
 }
-.contact-points li {
+:where(.site) .contact-points li {
   margin-bottom: 12px;
 }
 
 /* ---------- help pages (about-hub.css; storefront-r7.css:11–19; gallery-r8.css:54–70; revision-r9.css:21–23, 39–47; revision-r11.css:31, 107) ---------- */
-.help-page .utility-main {
+:where(.site) .help-page .utility-main {
   max-width: 960px;
   padding-top: 0;
 }
-.help-banner {
+:where(.site) .help-banner {
   background: #191813;
   color: #fff;
   padding: 44px max(var(--gutter), calc((100vw - 880px) / 2));
   margin: 0 calc((min(960px, 100vw) - 100vw) / 2 - var(--gutter)) 38px;
 }
-.help-banner h1 {
+:where(.site) .help-banner h1 {
   font: 600 clamp(26px, 3vw, 36px) / 1.2 var(--font-ui);
   margin: 0 0 14px;
 }
-.help-banner p {
+:where(.site) .help-banner p {
   color: #ece8e1;
   max-width: 660px;
   margin-bottom: 24px;
 }
-.help-search {
+:where(.site) .help-search {
   position: relative;
   display: flex;
   align-items: center;
@@ -166,35 +170,35 @@
   border-radius: 4px;
   padding: 4px 16px;
 }
-.help-search svg {
+:where(.site) .help-search svg {
   width: 23px;
   flex: none;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
 }
-.help-page .help-search input {
+/* about-hub.css:8 and gallery-r8.css:64; the radius and the 48px height of the field rule above stay
+   (`.utility-page input`, pending.css:1 / gallery-r8.css:72) */
+:where(.site) .help-page .help-search input {
   background: transparent;
   border: 0;
-  border-radius: 0;
   color: #fff;
   padding: 15px 0;
   min-width: 0;
-  min-height: 0;
   outline-offset: 0;
   font-size: 16px;
 }
-.help-search input::placeholder {
+:where(.site) .help-search input::placeholder {
   color: #f1f1f1;
 }
-.help-search button {
+:where(.site) .help-search button {
   color: #fff;
   padding: 12px 6px;
   font-size: 14px;
   min-height: 48px;
 }
 /* the editorial banner of the About hub (storefront-r7.css:12–16; revision-r9.css:21–23; revision-r11.css:107) */
-.help-brand .help-banner--editorial {
+:where(.site) .help-brand .help-banner--editorial {
   position: relative;
   isolation: isolate;
   padding-block: 56px;
@@ -204,32 +208,32 @@
     no-repeat;
   color: #191813;
 }
-.help-brand .help-banner--editorial h1 {
+:where(.site) .help-brand .help-banner--editorial h1 {
   font: 400 clamp(2.4rem, 4.2vw, 3.9rem) / 1.08 var(--font-display);
   margin: 10px 0 16px;
   color: #191813;
 }
-.help-brand .help-banner--editorial p {
+:where(.site) .help-brand .help-banner--editorial p {
   font-size: 1.05rem;
   max-width: 640px;
   color: #191813;
 }
-.help-brand .help-banner--editorial .help-search {
+:where(.site) .help-brand .help-banner--editorial .help-search {
   max-width: 640px;
   background: #fff;
   color: #191813;
 }
-.help-brand .help-banner--editorial input {
+:where(.site) .help-brand .help-banner--editorial input {
   color: #191813;
 }
-.help-brand .help-banner--editorial input::placeholder {
+:where(.site) .help-brand .help-banner--editorial input::placeholder {
   color: #68645f;
 }
-.help-brand .help-banner--editorial button {
+:where(.site) .help-brand .help-banner--editorial button {
   color: var(--crimson);
   font-weight: 600;
 }
-.help-breadcrumb {
+:where(.site) .help-breadcrumb {
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
@@ -238,7 +242,7 @@
   color: #625e58;
   margin: 0 0 30px;
 }
-.help-breadcrumb a {
+:where(.site) .help-breadcrumb a {
   color: #41474a;
   display: inline-flex;
   align-items: center;
@@ -246,38 +250,38 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.help-page .utility-hero {
+:where(.site) .help-page .utility-hero {
   padding: 0 0 25px;
 }
-.help-page .utility-hero h1 {
+:where(.site) .help-page .utility-hero h1 {
   font: 400 clamp(2.2rem, 4vw, 3.4rem) / 1.15 var(--font-display);
   margin: 0 0 8px;
   text-wrap: balance;
 }
-.help-page .utility-hero .eyebrow {
+:where(.site) .help-page .utility-hero .eyebrow {
   display: none;
 }
-.help-page .utility-hero > p {
+:where(.site) .help-page .utility-hero > p {
   font-size: 16px;
   color: #625e58;
   line-height: 1.6;
 }
-.help-page .utility-main h2 {
+:where(.site) .help-page .utility-main h2 {
   font: 400 1.8rem/1.2 var(--font-display);
   margin: 0 0 16px;
 }
-.help-page .utility-main p {
+:where(.site) .help-page .utility-main p {
   font-size: 16px;
   line-height: 1.8;
 }
-.help-list {
+:where(.site) .help-list {
   border: 1px solid #e5e1da;
   border-radius: 4px;
   padding: 24px;
   margin: 0 0 26px;
   scroll-margin-top: 110px;
 }
-.help-row {
+:where(.site) .help-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -287,31 +291,31 @@
   font-size: 14px;
   border-radius: 4px;
 }
-.help-row strong {
+:where(.site) .help-row strong {
   font-weight: 500;
 }
-.help-row small {
+:where(.site) .help-row small {
   display: block;
   font-size: 14px;
   color: #625e58;
   margin-top: 5px;
   line-height: 1.55;
 }
-.help-row:hover strong {
+:where(.site) .help-row:hover strong {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.help-row > span:last-child {
+:where(.site) .help-row > span:last-child {
   font-size: 22px;
   color: #666;
 }
-.help-categories {
+:where(.site) .help-categories {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 22px;
   margin: 36px 0 48px;
 }
-.help-category {
+:where(.site) .help-category {
   border: 1px solid #e5e1da;
   border-radius: 4px;
   padding: 24px;
@@ -322,14 +326,14 @@
     border-color 0.2s,
     box-shadow 0.2s;
 }
-.help-category:hover {
+:where(.site) .help-category:hover {
   border-color: #8a9691;
   box-shadow: 0 3px 14px #00000008;
 }
-.help-brand .help-category:hover {
+:where(.site) .help-brand .help-category:hover {
   border-color: var(--crimson);
 }
-.help-icon {
+:where(.site) .help-icon {
   display: grid;
   place-items: center;
   background: #dbe9e3;
@@ -340,7 +344,7 @@
   font-size: 13px;
   margin-bottom: 18px;
 }
-.help-brand .help-icon {
+:where(.site) .help-brand .help-icon {
   color: var(--crimson);
   background: #b9192d08;
   width: 46px;
@@ -348,18 +352,18 @@
   border: 1px solid #b9192d20;
   border-radius: 10px;
 }
-.help-icon svg {
+:where(.site) .help-icon svg {
   width: 26px;
   height: 26px;
 }
-.help-page .help-category h2 {
+:where(.site) .help-page .help-category h2 {
   font-size: 1.8rem;
   margin-bottom: 8px;
 }
-.help-category p {
+:where(.site) .help-category p {
   margin: 0 0 24px;
 }
-.help-category small {
+:where(.site) .help-category small {
   margin-top: auto;
   color: #625e58;
   font-size: 13px;
@@ -367,98 +371,92 @@
   display: flex;
   justify-content: space-between;
 }
-.help-brand .help-category small > span {
+:where(.site) .help-brand .help-category small > span {
   color: var(--crimson);
 }
-.help-page .help-topic {
+/* revision-r11.css:31 (body.help-page …): outweighs .help-page .utility-main h2 */
+body :where(.site) .help-page .help-topic {
   margin: 32px 0 18px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e1e3e4;
 }
-.help-page .utility-filters {
+:where(.site) .help-page .utility-filters {
   margin-bottom: 24px;
 }
-.help-page #faq-status {
+:where(.site) .help-page #faq-status {
   color: #625e58;
   font-size: 13px;
 }
-.help-article-page .utility-main {
+:where(.site) .help-article-page .utility-main {
   max-width: 720px;
 }
-.help-article-page .help-banner {
+:where(.site) .help-article-page .help-banner {
   margin-inline: calc((min(720px, 100vw) - 100vw) / 2 - var(--gutter));
   padding-inline: max(var(--gutter), calc((100vw - 880px) / 2));
 }
-.site .help-article-page .utility-hero {
-  padding-block: 20px;
-  margin-bottom: 12px;
-}
-.site .help-article-page .utility-hero h1 {
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  max-width: 24ch;
-}
-.help-meta {
+/* revision-r9.css's `body .help-article-page .utility-hero` (and its h1) is not ported: the prototype puts
+   `help-article-page` on <body> itself, so that descendant selector matches nothing in the frozen pages and the
+   policy hero renders with the .help-page values. Here the class sits on the page wrapper inside <body>, where a
+   port would match and set every policy heading lower and smaller. */
+:where(.site) .help-meta {
   color: #625e58;
   font-size: 13px !important;
   margin: 0 0 30px;
 }
-.help-page .preview-note {
+:where(.site) .help-page .preview-note {
   background: #faf9f6;
   color: #625e58;
   border-color: #ad9775;
   font-size: 13px !important;
 }
-.help-article section {
+:where(.site) .help-article section {
   margin: 34px 0;
 }
-.help-page .help-article h2 {
+:where(.site) .help-page .help-article h2 {
   font-size: 1.7rem;
   margin-bottom: 12px;
 }
-.help-related {
+:where(.site) .help-related {
   margin-top: 40px;
 }
-.help-related h2 {
+:where(.site) .help-related h2 {
   padding-bottom: 16px;
   border-bottom: 1px solid #e1e3e4;
 }
-.site .help-assistance {
+body :where(.site) .help-assistance {
   text-align: center;
   background: #faf9f6;
   border-radius: 4px;
   padding: 28px;
   margin-top: 30px;
 }
-.help-page .help-assistance h2 {
-  font-size: 16px;
-}
-.help-assistance p {
+:where(.site) .help-assistance p {
   margin-top: 16px;
   line-height: 2;
   overflow-wrap: anywhere;
 }
-.policy-tabs {
+:where(.site) .policy-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 16px 0 26px;
 }
-.policy-tabs a {
+:where(.site) .policy-tabs a {
   padding: 12px 18px;
   border-radius: 24px;
   background: #f5f2ed;
   font-size: 14px;
 }
-.policy-tabs a[aria-current] {
+:where(.site) .policy-tabs a[aria-current] {
   background: #b51f2a;
   color: #fffdfc;
 }
 
 /* ---------- About the Studio (storefront-r7.css:21–24; revision-r11.css:19–22, 107; gallery-r8.css:75) ---------- */
-.studio-page .utility-main {
+:where(.site) .studio-page .utility-main {
   padding-bottom: 0;
 }
-.editorial-hero {
+:where(.site) .editorial-hero {
   background:
     linear-gradient(90deg, #191813e8, #19181350),
     var(--site-image-card-2-collection-1600) center / cover;
@@ -469,51 +467,51 @@
   display: flex;
   align-items: center;
 }
-.editorial-hero > div {
+:where(.site) .editorial-hero > div {
   max-width: 700px;
 }
-.editorial-hero h1 {
+:where(.site) .editorial-hero h1 {
   font-size: clamp(2.8rem, 4.5vw, 4.3rem);
   line-height: 1.08;
   margin: 12px 0 22px;
 }
-.editorial-hero p {
+:where(.site) .editorial-hero p {
   max-width: 570px;
   font-size: 17px !important;
   margin-bottom: 24px;
 }
-.editorial-hero .eyebrow {
+:where(.site) .editorial-hero .eyebrow {
   color: #fff;
 }
-.site .studio-hero--r11 {
+body :where(.site) .studio-hero--r11 {
   background: #fffaf4 var(--site-image-about-page-hero-1600) center / cover
     no-repeat;
   color: #191813;
 }
-.site .studio-hero--r11 h1,
-.site .studio-hero--r11 p {
+body :where(.site) .studio-hero--r11 h1,
+body :where(.site) .studio-hero--r11 p {
   color: #191813;
 }
-.site .studio-hero--r11 .eyebrow {
+body :where(.site) .studio-hero--r11 .eyebrow {
   color: #b51f2a;
 }
-.studio-nav {
+:where(.site) .studio-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 22px;
+  gap: 8px 28px;
   padding-block: 24px;
   border-bottom: 1px solid #e3e1dc;
 }
-.studio-nav a {
+:where(.site) .studio-nav a {
   font-size: 14px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
 }
-.studio-nav a:hover {
+:where(.site) .studio-nav a:hover {
   color: var(--crimson);
 }
-.studio-section {
+:where(.site) .studio-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(32px, 7vw, 100px);
@@ -522,52 +520,52 @@
   border-bottom: 1px solid #e5e3e0;
   scroll-margin-top: 110px;
 }
-.studio-section--reverse .studio-image {
+:where(.site) .studio-section--reverse .studio-image {
   order: 2;
 }
-.studio-image img {
+:where(.site) .studio-image img {
   width: 100%;
   aspect-ratio: 1.15;
   object-fit: contain;
   border-radius: 12px;
   background: #fff;
 }
-.studio-copy {
+:where(.site) .studio-copy {
   max-width: 500px;
 }
-.studio-page .studio-copy h2,
-.studio-page .studio-purpose h2 {
+:where(.site) .studio-page .studio-copy h2,
+:where(.site) .studio-page .studio-purpose h2 {
   font: 400 clamp(2.2rem, 3.3vw, 3.2rem) / 1.15 var(--font-display);
   margin: 14px 0 24px;
 }
-.studio-copy p {
+:where(.site) .studio-copy p {
   color: #56524d;
   font-size: 16px;
   line-height: 1.8;
   margin-bottom: 18px;
 }
-.studio-copy .eyebrow,
-.studio-purpose .eyebrow {
+:where(.site) .studio-copy .eyebrow,
+:where(.site) .studio-purpose .eyebrow {
   color: var(--crimson);
 }
-.studio-facts {
+:where(.site) .studio-facts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 24px;
 }
-.studio-facts span {
+:where(.site) .studio-facts span {
   font-size: 12px;
   border: 1px solid #dedbd7;
   border-radius: 4px;
   padding: 8px 12px;
 }
-.studio-purpose {
+:where(.site) .studio-purpose {
   text-align: center;
   padding: 76px 20px 90px;
   scroll-margin-top: 110px;
 }
-.studio-purpose > div {
+:where(.site) .studio-purpose > div {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 50px;
@@ -575,53 +573,61 @@
   max-width: 880px;
   margin: 32px auto;
 }
-.studio-purpose h3 {
+:where(.site) .studio-purpose h3 {
   font: 600 16px var(--font-ui);
   margin-bottom: 12px;
 }
-.studio-purpose p {
+:where(.site) .studio-purpose p {
   color: #56524d;
 }
 
 /* ---------- Track (storefront-r7.css:25–29; revision-r9.css:53–56; revision-r11.css:103; gallery-r8.css:71–78) ---------- */
-.commerce-page .utility-main {
+:where(.site) .commerce-page .utility-main {
   max-width: 1200px;
   padding-bottom: 80px;
 }
-.flow-layout {
+:where(.site) .flow-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr);
   gap: 40px;
   align-items: start;
 }
-.tracking-layout {
+:where(.site) .tracking-layout {
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.2fr);
 }
-.flow-panel {
+:where(.site) .flow-panel {
   padding: 28px;
   border: 1px solid #e5e1da;
   background: #fff;
   border-radius: 4px;
 }
-.commerce-page .flow-panel h2 {
+:where(.site) .commerce-page .flow-panel h2 {
   font: 400 30px/1.15 var(--font-display);
   margin: 8px 0 22px;
 }
-.commerce-page #track-form h1 {
+:where(.site) .commerce-page #track-form h1 {
   font: 400 30px/1.15 var(--font-display);
   margin: 8px 0 22px;
 }
-.flow-fine {
+:where(.site) .flow-fine {
   font-size: 14px !important;
   line-height: 1.7 !important;
   color: var(--fine-print);
+}
+/* storefront-r7.css:26 — a sheet every S1.3 utility page loads except Contact */
+:where(.site)
+  :where(.help-brand, .studio-page, .commerce-page, .recovery-page)
+  .flow-fine {
   margin: 12px 0;
 }
-.flow-fine a {
+:where(.site)
+  :where(.help-brand, .studio-page, .commerce-page, .recovery-page)
+  .flow-fine
+  a {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.flow-help {
+:where(.site) .flow-help {
   font-size: 14px !important;
   line-height: 1.7 !important;
   color: var(--fine-print);
@@ -629,15 +635,11 @@
   padding-top: 20px;
   border-top: 1px solid #e5e3e0;
 }
-.flow-help a {
+:where(.site) .flow-help a {
   color: var(--crimson);
   display: inline-block;
 }
-.commerce-page .flow-panel label {
-  font-size: 14px;
-  color: var(--fine-print);
-}
-.flow-symbol {
+:where(.site) .flow-symbol {
   display: grid;
   place-items: center;
   width: 54px;
@@ -647,59 +649,59 @@
   border-radius: 50%;
   margin-bottom: 18px;
 }
-.flow-symbol svg {
+:where(.site) .flow-symbol svg {
   width: 25px;
   height: 25px;
 }
-.field-error {
+:where(.site) .field-error {
   font-size: 12px !important;
   color: var(--crimson);
   line-height: 1.6;
   display: block;
 }
-.field-error:empty {
+:where(.site) .field-error:empty {
   display: none;
 }
-.site .track-tabs {
+body :where(.site) .track-tabs {
   display: flex;
   gap: 8px;
   border-bottom: 1px solid #ddd;
   padding-bottom: 12px;
 }
-.track-tabs button {
+:where(.site) .track-tabs button {
   padding: 12px 8px;
   color: #68645e;
   min-height: 44px;
 }
-.track-tabs button[aria-selected="true"] {
+:where(.site) .track-tabs button[aria-selected="true"] {
   color: #b51f2a;
   border-bottom: 2px solid #b51f2a;
 }
-.tracking-result {
+:where(.site) .tracking-result {
   min-height: 390px;
 }
-.tracking-placeholder {
+:where(.site) .tracking-placeholder {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 45px 0;
 }
-.tracking-placeholder svg {
+:where(.site) .tracking-placeholder svg {
   width: 30px;
   height: 30px;
   color: var(--crimson);
   flex-shrink: 0;
 }
-.tracking-placeholder span {
+:where(.site) .tracking-placeholder span {
   font-size: 12px;
 }
-.tracking-placeholder i {
+:where(.site) .tracking-placeholder i {
   flex: 1;
   border-top: 1px solid #dedbd5;
 }
 
 /* ---------- recovery (storefront-r7.css:30) ---------- */
-.recovery {
+:where(.site) .recovery {
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   gap: 70px;
@@ -707,186 +709,175 @@
   padding: 65px 0;
   min-height: 65vh;
 }
-.recovery-art img {
+:where(.site) .recovery-art img {
   width: 100%;
   height: 400px;
   object-fit: contain;
 }
-.recovery h1 {
+:where(.site) .recovery h1 {
   font-size: clamp(2.7rem, 4vw, 4rem);
   line-height: 1.1;
   margin: 20px 0;
 }
-.recovery > div > p {
+:where(.site) .recovery > div > p {
   max-width: 480px;
   color: #767069;
 }
-.recovery .eyebrow {
+:where(.site) .recovery .eyebrow {
   color: var(--crimson);
 }
 
 /* ---------- responsive (pending.css ≤800; about-hub.css ≤700; storefront-r7.css ≤900 / ≤700; gallery-r8.css ≤599; revision-r9.css ≤700) ---------- */
 @media (max-width: 900px) {
-  .flow-layout {
+  :where(.site) .flow-layout {
     gap: 24px;
     grid-template-columns: minmax(0, 1fr) minmax(270px, 0.8fr);
   }
-  .flow-panel {
-    padding: 22px;
+  /* gallery-r8.css:91 */
+  :where(.site) .studio-nav {
+    gap: 4px 22px;
   }
-  .studio-section {
+  :where(.site) .studio-section {
     gap: 35px;
     padding-block: 40px;
   }
 }
 @media (max-width: 800px) {
-  .utility-split {
+  :where(.site) .utility-split {
     grid-template-columns: 1fr;
     gap: 22px;
   }
-  .utility-hero {
+  :where(.site) .utility-hero {
     padding-top: 40px;
   }
-  .utility-card {
+  :where(.site) .utility-card {
     padding: 22px;
   }
-  .utility-hero > p {
+  :where(.site) .utility-hero > p {
     font-size: 17px;
   }
-  .utility-actions .button {
+  :where(.site) .utility-actions .button {
     white-space: normal;
   }
-  .utility-filters {
+  :where(.site) .utility-filters {
     align-items: stretch;
   }
-  .utility-filters label {
+  :where(.site) .utility-filters label {
     min-width: 160px;
   }
-  .utility-main {
+  :where(.site) .utility-main {
     padding-bottom: 50px;
   }
 }
 @media (max-width: 700px) {
-  .help-categories {
+  :where(.site) .help-categories {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  .help-banner {
+  :where(.site) .help-banner {
     padding-top: 30px;
     padding-bottom: 30px;
   }
-  .help-page .utility-main {
+  :where(.site) .help-page .utility-main {
     padding-bottom: 50px;
   }
-  .help-category,
-  .help-list {
+  :where(.site) .help-category,
+  :where(.site) .help-list {
     padding: 20px;
   }
-  .help-search {
+  :where(.site) .help-search {
     gap: 8px;
     padding-inline: 12px;
   }
-  .help-brand .help-banner--editorial {
+  :where(.site) .help-brand .help-banner--editorial {
     min-height: 250px;
     padding-block: 36px;
     background-image: var(--site-image-about-page-hero-600);
   }
-  .help-brand .help-banner--editorial h1 {
+  :where(.site) .help-brand .help-banner--editorial h1 {
     font-size: 2.3rem;
   }
-  .help-brand .help-banner--editorial p {
-    font-size: 0.95rem;
-  }
-  .site .studio-hero--r11 {
+  body :where(.site) .studio-hero--r11 {
     background-image: var(--site-image-about-page-hero-600);
   }
-  .studio-section,
-  .studio-purpose > div,
-  .flow-layout,
-  .recovery {
+  :where(.site) .studio-section,
+  :where(.site) .studio-purpose > div,
+  :where(.site) .flow-layout,
+  :where(.site) .recovery {
     grid-template-columns: 1fr;
   }
-  .studio-section--reverse .studio-image {
+  :where(.site) .studio-section--reverse .studio-image {
     order: 0;
   }
-  .studio-image img {
+  :where(.site) .studio-image img {
     max-height: 360px;
   }
-  .studio-nav {
-    gap: 6px 20px;
-  }
-  .studio-nav a {
-    font-size: 12px;
-  }
-  .studio-purpose {
+  :where(.site) .studio-purpose {
     padding-inline: 0;
   }
-  .studio-purpose > div {
+  :where(.site) .studio-purpose > div {
     gap: 22px;
   }
-  .editorial-hero {
+  :where(.site) .editorial-hero {
     padding-block: 40px;
     min-height: 320px;
   }
-  .editorial-hero h1 {
+  :where(.site) .editorial-hero h1 {
     font-size: 2.6rem;
   }
-  .flow-panel {
-    padding: 22px;
-  }
-  .recovery {
+  :where(.site) .recovery {
     gap: 25px;
     padding: 30px 0;
   }
-  .recovery-art img {
+  :where(.site) .recovery-art img {
     height: 260px;
   }
-  .recovery h1 {
+  :where(.site) .recovery h1 {
     font-size: 2.7rem;
   }
-  .recovery .utility-actions {
+  :where(.site) .recovery .utility-actions {
     gap: 10px;
   }
-  .tracking-placeholder {
+  :where(.site) .tracking-placeholder {
     gap: 10px;
   }
-  .tracking-placeholder svg {
+  :where(.site) .tracking-placeholder svg {
     width: 24px;
   }
-  .tracking-placeholder span {
+  :where(.site) .tracking-placeholder span {
     font-size: 11px;
   }
   /* M1 (revision-r11.css:108): no iOS zoom on focus */
-  .site input:not([type="checkbox"]):not([type="radio"]),
-  .site select,
-  .site textarea {
+  body :where(.site) input:not([type="checkbox"]):not([type="radio"]),
+  body :where(.site) select,
+  body :where(.site) textarea {
     font-size: 16px;
   }
 }
 @media (max-width: 599px) {
-  .help-page .utility-hero h1 {
+  :where(.site) .help-page .utility-hero h1 {
     font-size: 2.3rem;
   }
-  .help-page .help-category {
+  :where(.site) .help-page .help-category {
     padding: 24px;
   }
-  .help-page .utility-filters {
+  :where(.site) .help-page .utility-filters {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
-  .help-page .utility-filters label {
+  :where(.site) .help-page .utility-filters label {
     min-width: 0;
   }
-  .help-page .utility-filters .button {
+  :where(.site) .help-page .utility-filters .button {
     justify-self: start;
   }
-  .flow-panel {
+  :where(.site) .flow-panel {
     padding: 20px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .help-brand .help-category {
+  :where(.site) .help-brand .help-category {
     transition: none;
   }
 }

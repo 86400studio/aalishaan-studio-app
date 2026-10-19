@@ -7,11 +7,11 @@
  */
 
 /* ---------- hero (browse-home.css:138–165; home-r2.css:2–6; home-r6.css:2–42) ---------- */
-.opening-sequence,
-.opening-stage {
+:where(.site) .opening-sequence,
+:where(.site) .opening-stage {
   position: relative;
 }
-.opening {
+:where(.site) .opening {
   position: relative;
   min-height: 42rem;
   height: 100svh;
@@ -19,7 +19,7 @@
   background: #f2f1ee;
   isolation: isolate;
 }
-.hero-scene {
+:where(.site) .hero-scene {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -28,18 +28,18 @@
   transform: translate(-50%, -50%);
   z-index: -2;
 }
-.hero-scene picture,
-.hero-scene__room {
+:where(.site) .hero-scene picture,
+:where(.site) .hero-scene__room {
   display: block;
   width: 100%;
   height: 100%;
 }
-.hero-scene picture {
+:where(.site) .hero-scene picture {
   aspect-ratio: 1672/941;
   mask-image: none;
 }
 /* the wall cover: an empty portion of the room photograph under the lifted frame (home-r2.css:5; home-r6.css:6) */
-.hero-scene::before {
+:where(.site) .hero-scene::before {
   content: "";
   position: absolute;
   z-index: 1;
@@ -47,12 +47,11 @@
   height: 76%;
   background: var(--site-image-page-hero-1600) 0 30% / 600% 180%;
   mask-image: linear-gradient(to bottom, #000 92%, transparent);
+  /* home-r2.css:5 sets opacity 1 for the handoff state as well, after the inline sheet's --wall-cover fade
+     (index.html:458): the cover is fully opaque in every state */
   opacity: 1;
 }
-[data-handoff="on"] .hero-scene::before {
-  opacity: var(--wall-cover, 0);
-}
-.hero-scene::after {
+:where(.site) .hero-scene::after {
   content: "";
   position: absolute;
   left: 0;
@@ -62,7 +61,7 @@
   background: linear-gradient(transparent, #f2f1ee 4rem);
   pointer-events: none;
 }
-.hero-scene__frame {
+:where(.site) .hero-scene__frame {
   position: absolute;
   left: 52.885%;
   top: 12.5%;
@@ -71,8 +70,8 @@
   aspect-ratio: 880/1160;
   z-index: 2;
 }
-.framed-art,
-.hero-scene__frame .framed-art {
+:where(.site) .framed-art,
+:where(.site) .hero-scene__frame .framed-art {
   position: relative;
   width: 100%;
   aspect-ratio: 880/1160;
@@ -82,7 +81,7 @@
   clip-path: none;
   isolation: auto;
 }
-.framed-art__cutout {
+:where(.site) .framed-art__cutout {
   position: absolute;
   width: 136.364%;
   max-width: none;
@@ -90,46 +89,46 @@
   left: -18.18%;
   top: -3.45%;
 }
-.hero-panel {
+:where(.site) .hero-panel {
   height: 100%;
   display: flex;
   align-items: center;
   padding-block: 7rem 11rem;
 }
-.hero-copy {
+:where(.site) .hero-copy {
   max-width: 38%;
   color: var(--ink);
 }
-.hero-copy h1 {
+:where(.site) .hero-copy h1 {
   font-size: clamp(2.25rem, 3.3vw, 3.4rem);
   line-height: 1.14;
   max-width: 10em;
   text-wrap: balance;
 }
-.hero-copy__lead {
+:where(.site) .hero-copy__lead {
   margin-top: 1.1rem;
   font-size: clamp(0.9375rem, 1.05vw, 1rem);
   line-height: 1.65;
   color: var(--ink-soft);
   max-width: 23rem;
 }
-.hero-copy__actions {
+:where(.site) .hero-copy__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
   margin-top: 1.5rem;
 }
-.hero-copy__actions .button {
+:where(.site) .hero-copy__actions .button {
   font-size: 0.8125rem;
   border-radius: 0.5rem;
   padding-inline: 1.25rem;
   min-height: 2.9rem;
 }
-.hero-copy__actions .button--secondary {
+:where(.site) .hero-copy__actions .button--secondary {
   background: rgba(255, 255, 255, 0.65);
   border-color: rgba(25, 24, 19, 0.25);
 }
-.opening::after {
+:where(.site) .opening::after {
   content: "";
   position: absolute;
   inset: 76% 0 0;
@@ -137,7 +136,7 @@
   pointer-events: none;
   background: linear-gradient(transparent, rgba(35, 35, 32, 0.65));
 }
-.hero-truth {
+:where(.site) .hero-truth {
   position: absolute;
   bottom: 2.25rem;
   left: 50%;
@@ -148,28 +147,28 @@
   gap: 2rem;
   color: #fff;
 }
-.hero-truth li {
+:where(.site) .hero-truth li {
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
   font-size: 0.8125rem;
   line-height: 1.5;
 }
-.hero-truth li + li {
+:where(.site) .hero-truth li + li {
   border-left: 1px solid rgba(255, 255, 255, 0.35);
   padding-left: 2rem;
 }
-.hero-truth strong {
+:where(.site) .hero-truth strong {
   display: block;
   font-size: 0.9375rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
-.hero-truth li > span > span {
+:where(.site) .hero-truth li > span > span {
   display: block;
   color: rgba(255, 255, 255, 0.86);
 }
-.hero-truth svg {
+:where(.site) .hero-truth svg {
   width: 1.6rem;
   height: 1.6rem;
   margin-top: 0.1rem;
@@ -180,12 +179,12 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.travelling-art {
+:where(.site) .travelling-art {
   display: none;
   pointer-events: none;
 }
 @media (min-width: 901px) {
-  .hero-scene {
+  :where(.site) .hero-scene {
     width: min(92vw, calc((100svh - 112px) * 1.777));
     top: calc(50% + 48px);
     mask-image:
@@ -193,51 +192,51 @@
       linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
     mask-composite: intersect;
   }
-  .hero-copy {
+  :where(.site) .hero-copy {
     margin-left: clamp(20px, 3vw, 52px);
     max-width: 36%;
   }
-  .hero-panel {
+  :where(.site) .hero-panel {
     padding-block: 7rem 10rem;
   }
 }
 
 /* ---------- materials (browse-home.css:168–192, 442–454; home-r2.css:7–12; home-r6.css:11) ---------- */
-.anatomy {
+:where(.site) .anatomy {
   background: var(--ivory);
 }
-.anatomy__head {
+:where(.site) .anatomy__head {
   text-align: center;
   margin: 0 auto 2.5rem;
 }
-.anatomy__head h2 {
+:where(.site) .anatomy__head h2 {
   margin-top: 0.6rem;
 }
-.anatomy__figure {
+:where(.site) .anatomy__figure {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 2.5rem;
   align-items: center;
 }
-.anatomy__art {
+:where(.site) .anatomy__art {
   margin: 0;
   width: 100%;
   max-width: 19rem;
   margin-inline: auto;
   filter: drop-shadow(0 12px 16px rgba(25, 24, 19, 0.12));
 }
-.anatomy__col {
+:where(.site) .anatomy__col {
   display: grid;
   gap: 1.8rem;
 }
-.spec {
+:where(.site) .spec {
   display: flex;
   align-items: center;
   gap: 1rem;
   min-width: 0;
 }
-.spec__swatch {
+:where(.site) .spec__swatch {
   width: 5.25rem;
   height: 5.25rem;
   flex: none;
@@ -245,25 +244,25 @@
   overflow: hidden;
   background: #fff;
 }
-.spec__swatch img {
+:where(.site) .spec__swatch img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.spec__swatch--size img {
+:where(.site) .spec__swatch--size img {
   object-fit: contain;
 }
-.spec__swatch--size:hover {
+:where(.site) .spec__swatch--size:hover {
   outline: 1px solid var(--gold);
   outline-offset: 2px;
 }
-.spec__title {
+:where(.site) .spec__title {
   display: block;
   font-family: var(--font-display);
   font-size: 1.2rem;
   line-height: 1.3;
 }
-.spec__title[data-number]::before {
+:where(.site) .spec__title[data-number]::before {
   content: attr(data-number);
   display: inline-grid;
   place-items: center;
@@ -276,14 +275,14 @@
   margin-right: 0.45rem;
   vertical-align: middle;
 }
-.spec__line {
+:where(.site) .spec__line {
   display: block;
   margin-top: 0.35rem;
   font-size: 0.85rem;
   line-height: 1.5;
   color: var(--taupe);
 }
-.anatomy__connectors {
+:where(.site) .anatomy__connectors {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -292,29 +291,29 @@
   pointer-events: none;
   z-index: 5;
 }
-.anatomy__connectors path {
+:where(.site) .anatomy__connectors path {
   fill: none;
   stroke: var(--gold-dark);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   opacity: 0.65;
 }
-.anatomy__connectors circle {
+:where(.site) .anatomy__connectors circle {
   fill: #fffdf8;
   stroke: var(--gold-dark);
   stroke-width: 1;
 }
-.anatomy__connectors text {
+:where(.site) .anatomy__connectors text {
   font: 10px var(--font-ui);
   fill: var(--gold-dark);
   text-anchor: middle;
   dominant-baseline: central;
 }
 /* the desktop handoff — enabled only by the component (browse-home.css:184–192, 444–447) */
-[data-handoff="on"] .opening-sequence {
+:where(.site) [data-handoff="on"] .opening-sequence {
   height: 280svh;
 }
-[data-handoff="on"] .opening-stage {
+:where(.site) [data-handoff="on"] .opening-stage {
   position: sticky;
   top: 0;
   height: 100svh;
@@ -322,22 +321,22 @@
   overflow: clip;
   background: var(--ivory);
 }
-[data-handoff="on"] .opening {
+:where(.site) [data-handoff="on"] .opening {
   position: absolute;
   inset: 0;
   opacity: var(--room-opacity, 1);
   transform: translateY(var(--room-shift, 0px));
   will-change: transform, opacity;
 }
-[data-handoff="on"] .hero-panel,
-[data-handoff="on"] .hero-truth {
+:where(.site) [data-handoff="on"] .hero-panel,
+:where(.site) [data-handoff="on"] .hero-truth {
   opacity: var(--copy-opacity, 1);
   pointer-events: var(--hero-events, auto);
 }
-[data-handoff="on"] .hero-scene__frame {
+:where(.site) [data-handoff="on"] .hero-scene__frame {
   visibility: hidden;
 }
-[data-handoff="on"] .anatomy {
+:where(.site) [data-handoff="on"] .anatomy {
   position: absolute;
   inset: 0;
   display: flex;
@@ -347,10 +346,10 @@
   pointer-events: var(--detail-events, none);
   background: transparent;
 }
-[data-handoff="on"] .anatomy__art .framed-art {
+:where(.site) [data-handoff="on"] .anatomy__art .framed-art {
   visibility: hidden;
 }
-[data-handoff="on"] .travelling-art {
+:where(.site) [data-handoff="on"] .travelling-art {
   display: block;
   position: absolute;
   left: 0;
@@ -362,49 +361,49 @@
     0 var(--lift-y, 0px) var(--lift-blur, 0px) rgba(25, 24, 19, 0.18)
   );
 }
-[data-handoff="on"] .anatomy__col {
+:where(.site) [data-handoff="on"] .anatomy__col {
   opacity: var(--labels-opacity, 0);
   transform: none;
 }
-[data-handoff="on"] .anatomy__connectors {
+:where(.site) [data-handoff="on"] .anatomy__connectors {
   opacity: var(--labels-opacity, 0);
 }
 @media (min-width: 56.251rem) and (max-width: 74.9375rem) {
-  [data-handoff="on"] .anatomy__figure {
+  :where(.site) [data-handoff="on"] .anatomy__figure {
     grid-template-columns: 1fr 1.4fr 1fr;
     gap: 1.3rem;
   }
-  [data-handoff="on"] .anatomy__art {
+  :where(.site) [data-handoff="on"] .anatomy__art {
     grid-column: auto;
     grid-row: auto;
     max-width: none;
     margin: 0;
   }
-  [data-handoff="on"] .spec {
+  :where(.site) [data-handoff="on"] .spec {
     gap: 0.6rem;
   }
-  [data-handoff="on"] .spec__swatch {
+  :where(.site) [data-handoff="on"] .spec__swatch {
     width: 3.8rem;
     height: 3.8rem;
   }
-  [data-handoff="on"] .spec__title {
+  :where(.site) [data-handoff="on"] .spec__title {
     font-size: 1rem;
   }
 }
 
 /* ---------- routes (browse-home.css:196–208, 455–461; revision-r9.css:3; revision-r11.css:2–4; gallery-r8.css:11) ---------- */
-.routes {
+:where(.site) .routes {
   background: var(--ivory);
   padding-top: 1rem;
 }
-.routes__track {
+:where(.site) .routes__track {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
   max-width: 72rem;
   margin-inline: auto;
 }
-.route-card {
+:where(.site) .route-card {
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -417,11 +416,11 @@
     transform var(--dur) var(--ease);
 }
 /* the one surviving card lift (DESIGN §2 "Shadows") */
-.route-card:hover {
+:where(.site) .route-card:hover {
   box-shadow: var(--shadow-card-hover);
   transform: translateY(-5px);
 }
-.route-card__media {
+:where(.site) .route-card__media {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -431,7 +430,8 @@
   border-bottom: 1px solid #e5e1da;
   overflow: hidden;
 }
-.site .route-card .route-card__media .route-card__image {
+body :where(.site) .route-card .route-card__media .route-card__image {
+  background: #fff; /* index.html inline `.route-card__image` — no later rule removes it */
   width: 92%;
   height: 92%;
   min-height: 0;
@@ -442,14 +442,18 @@
   border-radius: 0;
   flex: none;
 }
-.site .route-card:nth-child(3) .route-card__media .route-card__image {
+body
+  :where(.site)
+  .route-card:nth-child(3)
+  .route-card__media
+  .route-card__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 57%;
   padding: 0;
 }
-.route-card__body {
+:where(.site) .route-card__body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -458,55 +462,55 @@
   padding: 1.1rem 1.25rem 1.25rem;
   min-height: 0;
 }
-.route-card h3 {
+:where(.site) .route-card h3 {
   font-size: clamp(1.25rem, 1.65vw, 1.6rem);
 }
-.route-card p {
+:where(.site) .route-card p {
   color: var(--taupe);
   font-size: 0.875rem;
   line-height: 1.5;
   flex: 1;
 }
-.route-card .button {
+:where(.site) .route-card .button {
   font-size: 0.75rem;
   min-height: 2.75rem;
   padding-inline: 1rem;
   margin-top: 0.35rem;
 }
-.routes__dots {
+:where(.site) .routes__dots {
   display: none;
   justify-content: center;
   gap: 0.25rem;
   margin-top: 1.25rem;
 }
-.routes__dots button {
+:where(.site) .routes__dots button {
   display: grid;
   place-items: center;
   width: 2rem;
   height: 2rem;
 }
-.routes__dots button::before {
+:where(.site) .routes__dots button::before {
   content: "";
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
   background: var(--line-strong);
 }
-.routes__dots button[aria-selected="true"]::before {
+:where(.site) .routes__dots button[aria-selected="true"]::before {
   background: var(--ink);
   transform: scale(1.35);
 }
 
 /* ---------- featured art cards (browse-home.css:211–234, 462–464; gallery-r8.css:11–23) ---------- */
-.featured {
+:where(.site) .featured {
   background: #fff;
 }
-.featured__grid {
+:where(.site) .featured__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.75rem;
 }
-.art-card {
+:where(.site) .art-card {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -520,13 +524,13 @@
     box-shadow 250ms var(--ease),
     transform 250ms var(--ease);
 }
-.art-card:hover,
-.art-card:focus-within {
+:where(.site) .art-card:hover,
+:where(.site) .art-card:focus-within {
   transform: none;
   box-shadow: none;
   border-color: #b8afa2;
 }
-.art-card__media {
+:where(.site) .art-card__media {
   position: relative;
   aspect-ratio: 1;
   overflow: hidden;
@@ -534,17 +538,17 @@
   border-radius: 0;
   border-bottom: 1px solid #eeeae4;
 }
-.art-card__main {
+:where(.site) .art-card__main {
   display: block;
   width: 100%;
   height: 100%;
 }
-.art-card__main img {
+:where(.site) .art-card__main img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-.wishlist {
+:where(.site) .wishlist {
   position: absolute;
   right: 0.5rem;
   top: 0.5rem;
@@ -557,10 +561,10 @@
   background: rgba(255, 255, 255, 0.94);
   transition: background var(--dur);
 }
-.wishlist:hover {
+:where(.site) .wishlist:hover {
   background: var(--ivory);
 }
-.wishlist svg {
+:where(.site) .wishlist svg {
   width: 1.4rem;
   height: 1.4rem;
   fill: none;
@@ -569,17 +573,17 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.wishlist[aria-pressed="true"] svg {
+:where(.site) .wishlist[aria-pressed="true"] svg {
   fill: currentColor;
 }
-.art-card__body {
+:where(.site) .art-card__body {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 24px;
   flex: 1;
 }
-.art-card__label {
+:where(.site) .art-card__label {
   font-size: 11px;
   line-height: 1.6;
   letter-spacing: 0.08em;
@@ -587,24 +591,24 @@
   font-weight: 500;
   color: #716044;
 }
-.art-card__body h3 {
+:where(.site) .art-card__body h3 {
   font-size: clamp(1.6rem, 2.2vw, 2rem);
   line-height: 1.18;
   text-wrap: balance;
 }
-.art-card__body h3 a:hover {
+:where(.site) .art-card__body h3 a:hover {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
-.art-card__hook {
+:where(.site) .art-card__hook {
   font-size: 14px;
   line-height: 1.65;
   color: var(--taupe);
   white-space: normal;
   overflow: visible;
 }
-.art-card__price {
+:where(.site) .art-card__price {
   font-family: var(--font-display);
   font-size: 1.8rem;
   line-height: 1.35;
@@ -612,19 +616,19 @@
   margin-bottom: 0.45rem;
   padding-top: 8px;
 }
-.art-card__price span {
+:where(.site) .art-card__price span {
   display: block;
   font-family: var(--font-ui);
   font-size: 13px;
   margin: 0 0 4px;
   color: var(--taupe);
 }
-.art-card__actions {
+:where(.site) .art-card__actions {
   margin-top: auto;
   padding-top: 8px;
   border-top: 0;
 }
-.art-card__view {
+:where(.site) .art-card__view {
   min-height: 48px;
   display: flex;
   justify-content: space-between;
@@ -640,39 +644,39 @@
   font-weight: 500;
   transition: background var(--dur);
 }
-.art-card__view:hover {
+:where(.site) .art-card__view:hover {
   background: var(--ink);
   color: #fff;
 }
-.art-card__view span {
+:where(.site) .art-card__view span {
   font-size: 1.1rem;
   transition: transform var(--dur);
 }
-.art-card__view:hover span {
+:where(.site) .art-card__view:hover span {
   transform: translateX(3px);
 }
-.featured__action {
+:where(.site) .featured__action {
   display: flex;
   justify-content: center;
   margin-top: var(--space-8);
 }
 
 /* ---------- journey (browse-home.css:238–249) ---------- */
-.journey__head {
+:where(.site) .journey__head {
   max-width: 46rem;
   margin-bottom: clamp(2.5rem, 5vw, 4rem);
 }
-.journey__head h2 {
+:where(.site) .journey__head h2 {
   margin-top: 0.6rem;
   color: #fff;
 }
-.journey__rail {
+:where(.site) .journey__rail {
   position: relative;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1.25rem;
 }
-.journey__rail::before {
+:where(.site) .journey__rail::before {
   content: "";
   position: absolute;
   left: 1.6rem;
@@ -686,13 +690,13 @@
     rgba(210, 184, 119, 0.15)
   );
 }
-.step {
+:where(.site) .step {
   position: relative;
   display: grid;
   gap: 0.6rem;
   align-content: start;
 }
-.step__node {
+:where(.site) .step__node {
   position: relative;
   z-index: 1;
   width: 3.2rem;
@@ -704,7 +708,7 @@
   border: 1px solid rgba(210, 184, 119, 0.45);
   color: var(--gold-light);
 }
-.step__node svg {
+:where(.site) .step__node svg {
   width: 1.35rem;
   height: 1.35rem;
   fill: none;
@@ -713,25 +717,25 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.step__index {
+:where(.site) .step__index {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   color: rgba(210, 184, 119, 0.75);
 }
-.step h3 {
+:where(.site) .step h3 {
   font-size: 1.0625rem;
   font-family: var(--font-ui);
   font-weight: 600;
   letter-spacing: 0;
   color: #fff;
 }
-.step p {
+:where(.site) .step p {
   font-size: 0.8125rem;
   line-height: 1.5;
   color: rgba(243, 239, 230, 0.66);
 }
-.journey__note {
+:where(.site) .journey__note {
   margin-top: clamp(2rem, 4vw, 3rem);
   padding-top: 1.25rem;
   border-top: 1px solid rgba(243, 239, 230, 0.14);
@@ -740,66 +744,68 @@
 }
 
 /* ---------- FAQ (browse-home.css:252–255; revision-r9.css:24, 69–70; revision-r11.css:23) ---------- */
-.faq__grid {
+:where(.site) .faq__grid {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
   gap: clamp(2rem, 5vw, 5rem);
   align-items: start;
 }
-.faq__aside h2 {
+:where(.site) .faq__aside h2 {
   margin-top: 0.6rem;
 }
-.faq__aside p {
+:where(.site) .faq__aside p {
   margin-top: 0.9rem;
   color: var(--taupe);
 }
-.faq__aside .button {
-  margin-top: 1.25rem;
-}
-.site .faq__list {
+body :where(.site) .faq__list {
   border: 0;
 }
-.site .faq-illustration {
+body :where(.site) .faq-illustration {
   width: 100%;
   height: auto;
   aspect-ratio: 1.92;
   max-width: none;
   margin-bottom: 20px;
+  object-fit: contain; /* revision-r9.css:24 */
   background: var(--site-image-before-you-buy) left top / 260% auto no-repeat;
 }
 
 /* ---------- responsive (browse-home.css:325–431, 466–477; home-r2.css:43–110; home-r6.css:18–70; gallery-r8.css:111–117) ---------- */
 @media (max-width: 74.9375rem) {
-  .journey__rail {
+  :where(.site) .journey__rail {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 2.5rem;
   }
-  .journey__rail::before {
+  :where(.site) .journey__rail::before {
     display: none;
   }
-  .faq__grid {
+  :where(.site) .faq__grid {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  .anatomy__figure {
+  :where(.site) .anatomy__figure {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
   }
-  .anatomy__art {
+  /* the 34rem of the inline sheet (index.html:353) is overridden by home-r6.css:11 (19rem, unconditional) */
+  :where(.site) .anatomy__art {
     grid-column: 1/-1;
     grid-row: 1;
-    max-width: 34rem;
     margin: auto;
   }
 }
+/* home-r6.css:45 hides the copies above 900px by default (the prototype toggles `hidden` at innerWidth <= 900) */
+:where(.site) .mobile-materials {
+  display: none;
+}
 @media (max-width: 900px) {
-  .opening {
+  :where(.site) .opening {
     min-height: 0;
     height: auto;
     padding-bottom: 2rem;
     --mobile-room-height: min(104vw, max(180px, calc(100svh - 340px)));
   }
-  .hero-scene {
+  :where(.site) .hero-scene {
     top: 76px;
     left: calc(50% - var(--mobile-room-height) * 1.177);
     width: calc(var(--mobile-room-height) * 1.777);
@@ -807,52 +813,54 @@
     aspect-ratio: 1672/941;
     transform: none;
   }
-  .hero-scene picture {
+  :where(.site) .hero-scene picture {
     mask-image: none;
   }
-  .hero-scene__frame {
+  :where(.site) .hero-scene__frame {
     left: 52.885%;
     top: 12.5%;
     width: 26.73%;
     height: auto;
     aspect-ratio: 880/1160;
   }
-  .hero-scene::before {
+  :where(.site) .hero-scene::before {
     height: 76%;
     background-image: var(--site-image-page-hero-1200);
     background-position: 0 30%;
     background-size: 600% 180%;
+    mask-image: linear-gradient(
+      to bottom,
+      #000 91%,
+      transparent
+    ); /* home-r2.css:44 */
   }
-  .hero-scene::after {
+  :where(.site) .hero-scene::after {
     height: 4rem;
   }
-  .hero-panel {
+  :where(.site) .hero-panel {
     height: auto;
     padding: calc(76px + var(--mobile-room-height)) 0 1.5rem;
     align-items: flex-start;
   }
-  .hero-copy {
+  :where(.site) .hero-copy {
     max-width: 36rem;
     margin-inline: auto;
   }
-  .hero-copy h1 {
+  :where(.site) .hero-copy h1 {
     font-size: clamp(2.1rem, 5.2vw, 3rem);
     max-width: 14em;
   }
-  .hero-copy__lead {
+  :where(.site) .hero-copy__lead {
     margin-top: 0.75rem;
     max-width: 28rem;
   }
-  .hero-copy__actions {
+  :where(.site) .hero-copy__actions {
     margin-top: 1rem;
   }
-  .hero-copy__actions .button {
-    padding-inline: 1.2rem;
-  }
-  .opening::after {
+  :where(.site) .opening::after {
     display: none;
   }
-  .hero-truth {
+  :where(.site) .hero-truth {
     position: relative;
     left: auto;
     bottom: auto;
@@ -864,65 +872,62 @@
     width: calc(100% - 2 * var(--gutter));
     max-width: 36rem;
   }
-  .hero-truth li {
+  :where(.site) .hero-truth li {
     gap: 0.8rem;
     font-size: 0.75rem;
   }
-  .hero-truth li + li {
+  :where(.site) .hero-truth li + li {
     border: 0;
     padding: 0;
   }
-  .hero-truth strong {
+  :where(.site) .hero-truth strong {
     font-size: 0.8125rem;
     margin: 0;
   }
-  .hero-truth svg {
+  :where(.site) .hero-truth svg {
     width: 1.35rem;
     height: 1.35rem;
   }
-  .hero-truth li > span {
+  :where(.site) .hero-truth li > span {
     display: flex;
     flex-wrap: wrap;
     column-gap: 0.65rem;
   }
-  .hero-truth li > span > span {
+  :where(.site) .hero-truth li > span > span {
     color: var(--ink-soft);
   }
-  .anatomy__art {
+  :where(.site) .anatomy__art {
     width: min(100%, 19rem, calc((100svh - 210px) * 0.7586));
     max-width: 19rem;
     grid-column: 1/-1;
     grid-row: 1;
   }
-  .anatomy__figure {
+  :where(.site) .anatomy__figure {
     grid-template-columns: 1fr 1fr;
     gap: 2rem 1.5rem;
   }
-  .spec {
+  :where(.site) .spec {
     align-items: flex-start;
   }
-  .spec__swatch {
+  :where(.site) .spec__swatch {
     width: 3.5rem;
     height: 3.5rem;
   }
-  .spec__title {
+  :where(.site) .spec__title {
     font-size: 1.2rem;
   }
-  .anatomy__col {
+  :where(.site) .anatomy__col {
     gap: 1.5rem;
   }
-  .featured__grid {
+  :where(.site) .featured__grid {
     gap: 1rem;
-  }
-  .art-card__body {
-    padding: 1.15rem;
   }
 
   /* M4 (home-r6.css:44–70): the mobile lift, then natural scrolling to the material cards */
-  [data-handoff="mobile"] .opening-sequence {
+  :where(.site) [data-handoff="mobile"] .opening-sequence {
     height: 200svh;
   }
-  [data-handoff="mobile"] .opening-stage {
+  :where(.site) [data-handoff="mobile"] .opening-stage {
     position: sticky;
     top: 0;
     height: 100svh;
@@ -930,38 +935,38 @@
     overflow: clip;
     background: #fff;
   }
-  [data-handoff="mobile"] .opening {
+  :where(.site) [data-handoff="mobile"] .opening {
     position: absolute;
     inset: 0;
     height: 100%;
     padding-bottom: 0;
     opacity: var(--room-opacity, 1);
   }
-  [data-handoff="mobile"] .hero-panel {
+  :where(.site) [data-handoff="mobile"] .hero-panel {
     opacity: var(--copy-opacity, 1);
   }
-  [data-handoff="mobile"] .hero-scene__frame {
+  :where(.site) [data-handoff="mobile"] .hero-scene__frame {
     visibility: hidden;
   }
-  [data-handoff="mobile"] .anatomy {
+  :where(.site) [data-handoff="mobile"] .anatomy {
     position: absolute;
     inset: 0;
     padding: 100px 0 24px;
     opacity: var(--details-opacity, 0);
     background: transparent;
   }
-  [data-handoff="mobile"] .anatomy__head {
+  :where(.site) [data-handoff="mobile"] .anatomy__head {
     margin-bottom: 24px;
     opacity: 1;
   }
-  [data-handoff="mobile"] .anatomy__figure {
+  :where(.site) [data-handoff="mobile"] .anatomy__figure {
     display: block;
   }
-  [data-handoff="mobile"] .anatomy__art {
+  :where(.site) [data-handoff="mobile"] .anatomy__art {
     width: min(100%, 19rem, calc((100svh - 260px) * 0.7586));
     margin: 0 auto;
   }
-  [data-handoff="mobile"] .travelling-art {
+  :where(.site) [data-handoff="mobile"] .travelling-art {
     display: block;
     position: absolute;
     left: 0;
@@ -973,31 +978,31 @@
     filter: drop-shadow(0 10px 16px #19181326);
     will-change: transform;
   }
-  [data-handoff="mobile"] .anatomy__art .framed-art {
+  :where(.site) [data-handoff="mobile"] .anatomy__art .framed-art {
     visibility: var(--landed, visible);
   }
-  .anatomy__connectors {
+  :where(.site) .anatomy__connectors {
     display: none;
   }
-  .spec__title[data-number]::before {
+  :where(.site) .spec__title[data-number]::before {
     content: none;
   }
   /* M4/M5 (home-r6.css:57–60): the six specs become cards below the landing and the three promises are
      removed on mobile; the desktop columns are hidden here and the cards rendered in .mobile-materials */
-  .anatomy__figure > .anatomy__col,
-  .hero-truth {
+  :where(.site) .anatomy__figure > .anatomy__col,
+  :where(.site) .hero-truth {
     display: none;
   }
-  .mobile-materials {
+  :where(.site) .mobile-materials {
     display: block;
     padding: 16px 0 56px;
     background: #fff;
   }
-  .mobile-material-details {
+  :where(.site) .mobile-material-details {
     display: grid;
     gap: 16px;
   }
-  .mobile-material-details .spec {
+  :where(.site) .mobile-material-details .spec {
     display: grid;
     grid-template-columns: 96px minmax(0, 1fr);
     gap: 0;
@@ -1007,69 +1012,60 @@
     background: var(--ivory);
     align-items: stretch;
   }
-  .mobile-material-details .spec__swatch {
+  :where(.site) .mobile-material-details .spec__swatch {
     width: 100%;
     height: 100%;
     min-height: 112px;
     border-radius: 0;
     background: #fff;
   }
-  .mobile-material-details .spec__swatch img {
+  :where(.site) .mobile-material-details .spec__swatch img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .mobile-material-details .spec__swatch--size img {
+  :where(.site) .mobile-material-details .spec__swatch--size img {
     object-fit: contain;
   }
-  .mobile-material-details .spec > span:last-child {
+  :where(.site) .mobile-material-details .spec > span:last-child {
     padding: 14px;
     align-self: center;
   }
-  .mobile-material-details .spec__title {
+  :where(.site) .mobile-material-details .spec__title {
     font-size: 1.1rem;
     line-height: 1.2;
   }
-  .mobile-material-details .spec__line {
+  :where(.site) .mobile-material-details .spec__line {
     font-size: 14px;
     line-height: 1.65;
   }
 }
-@media (min-width: 901px) {
-  .mobile-materials {
-    display: none;
-  }
-}
 @media (max-width: 47.9375rem) {
-  .hero-copy h1 {
+  :where(.site) .hero-copy h1 {
     font-size: clamp(2rem, 7.4vw, 2.75rem);
     max-width: 12em;
   }
-  .hero-copy__lead {
+  /* index.html:452–454 (unconditional, later) keep the lead's 1.65 line height, the .65rem gap and the 1.25rem
+     button padding; the <= 900 rules set the 28rem measure */
+  :where(.site) .hero-copy__lead {
     font-size: 0.9375rem;
-    max-width: 25rem;
-    line-height: 1.6;
   }
-  .hero-copy__actions {
-    gap: 0.6rem;
-  }
-  .hero-copy__actions .button {
-    padding-inline: 1.2rem;
+  :where(.site) .hero-copy__actions .button {
     font-size: 0.8125rem;
   }
-  .hero-truth li > span {
+  :where(.site) .hero-truth li > span {
     display: block;
   }
-  .anatomy__figure {
+  :where(.site) .anatomy__figure {
     grid-template-columns: 1fr;
   }
-  .anatomy__art {
+  :where(.site) .anatomy__art {
     grid-column: 1;
   }
-  .anatomy__col {
+  :where(.site) .anatomy__col {
     gap: 1.4rem;
   }
-  .routes__track {
+  :where(.site) .routes__track {
     position: relative;
     grid-auto-flow: column;
     grid-auto-columns: 88%;
@@ -1080,98 +1076,95 @@
     padding: 0 0.2rem 1rem;
     scrollbar-width: none;
   }
-  .routes__track::-webkit-scrollbar {
+  :where(.site) .routes__track::-webkit-scrollbar {
     display: none;
   }
-  .route-card {
+  :where(.site) .route-card {
     scroll-snap-align: start;
   }
-  .route-card__image {
+  :where(.site) .route-card__image {
     aspect-ratio: 1;
     padding: 0.85rem;
   }
-  .route-card__body {
+  :where(.site) .route-card__body {
     min-height: 0;
     padding: 1.15rem;
     gap: 0.65rem;
   }
-  .route-card h3 {
+  :where(.site) .route-card h3 {
     font-size: 1.5rem;
   }
-  .routes__dots {
+  :where(.site) .routes__dots {
     display: flex;
   }
-  .featured__grid {
+  :where(.site) .featured__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
     max-width: 30rem;
     margin-inline: auto;
   }
-  .art-card__label {
-    font-size: 0.65rem;
-  }
-  .art-card__body h3 {
+  :where(.site) .art-card__body h3 {
     font-size: 1.75rem;
   }
-  .journey__rail {
+  :where(.site) .journey__rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 2rem;
   }
 }
 @media (max-width: 700px) {
-  .route-card__media {
+  :where(.site) .route-card__media {
     aspect-ratio: 4/3;
   }
 }
 @media (max-width: 600px) {
-  .hero-copy h1 {
+  :where(.site) .hero-copy h1 {
     max-width: 11em;
     font-size: clamp(2.2rem, 8vw, 2.8rem);
     line-height: 1.12;
   }
-  .hero-copy__lead {
+  /* home-r6.css:35 (.75rem, <= 900) outweighs home-r2.css:69 by order */
+  :where(.site) .hero-copy__lead {
     font-size: 0.9375rem;
-    margin-top: 0.9rem;
   }
-  .hero-copy__actions .button {
+  :where(.site) .hero-copy__actions .button {
     min-height: 44px;
   }
-  .hero-truth li > span {
+  :where(.site) .hero-truth li > span {
     display: block;
   }
-  .anatomy__figure {
+  :where(.site) .anatomy__figure {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  .anatomy__col {
+  :where(.site) .anatomy__col {
     gap: 1.2rem;
   }
-  .anatomy__art {
+  /* home-r2.css:78's 23rem is overridden by home-r6.css's 19rem (<= 900, later) */
+  :where(.site) .anatomy__art {
     margin: 0 auto 1.25rem;
-    max-width: 23rem;
   }
-  .spec__swatch {
+  :where(.site) .spec__swatch {
     width: 4.25rem;
     height: 4.25rem;
   }
-  .spec {
+  :where(.site) .spec {
     align-items: center;
     gap: 1rem;
   }
-  .spec__line {
+  :where(.site) .spec__line {
     font-size: 0.875rem;
     line-height: 1.5;
   }
-  .spec__title {
+  :where(.site) .spec__title {
     font-size: 1.3rem;
   }
-  .anatomy__head {
+  :where(.site) .anatomy__head {
     margin-bottom: 2rem;
   }
-  .anatomy__head h2 {
+  :where(.site) .anatomy__head h2 {
     font-size: 2.25rem;
   }
-  .routes__track {
+  :where(.site) .routes__track {
     display: grid;
     grid-auto-flow: row;
     grid-template-columns: 1fr;
@@ -1181,85 +1174,74 @@
     max-width: 26rem;
     padding: 0;
   }
-  .routes__dots {
+  :where(.site) .routes__dots {
     display: none;
   }
-  .route-card {
+  :where(.site) .route-card {
     display: grid;
     grid-template-columns: 0.85fr 1.15fr;
   }
-  .route-card__body {
+  :where(.site) .route-card__body {
     padding: 1rem;
     gap: 0.55rem;
   }
-  .route-card h3 {
+  :where(.site) .route-card h3 {
     font-size: 1.5rem;
   }
-  .route-card p {
+  :where(.site) .route-card p {
     font-size: 0.8125rem;
     line-height: 1.5;
   }
-  .route-card .button {
+  :where(.site) .route-card .button {
     font-size: 0.75rem;
     min-height: 44px;
     padding-inline: 0.75rem;
     align-self: stretch;
   }
-  .featured__grid {
+  :where(.site) .featured__grid {
     gap: 1.5rem;
   }
-  .art-card__body h3 {
+  :where(.site) .art-card__body h3 {
     font-size: 1.9rem;
-  }
-  .art-card__hook {
-    font-size: 0.9375rem;
   }
 }
 @media (max-width: 599px) {
-  .route-card {
+  :where(.site) .route-card {
     grid-template-columns: 1fr;
   }
-  .route-card__image {
+  :where(.site) .route-card__image {
     aspect-ratio: 4/3;
     border-right: 0;
     border-bottom: 1px solid var(--line-soft);
     padding: 1rem;
   }
-  .route-card__body {
+  :where(.site) .route-card__body {
     padding: 24px;
     gap: 12px;
   }
-  .route-card h3 {
+  :where(.site) .route-card h3 {
     font-size: 2rem;
   }
-  .route-card p {
+  :where(.site) .route-card p {
     font-size: 15px;
     line-height: 1.65;
   }
-  .route-card .button {
+  :where(.site) .route-card .button {
     font-size: 14px;
     min-height: 48px;
   }
-  .art-card__body {
+  :where(.site) .art-card__body {
     padding: 22px;
     gap: 10px;
   }
-  .art-card__body h3 {
+  :where(.site) .art-card__body h3 {
     font-size: 1.9rem;
     line-height: 1.18;
   }
 }
-@media (max-width: 360px) {
-  .route-card__body {
-    padding: 0.85rem;
-  }
-  .route-card h3 {
-    font-size: 1.4rem;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .art-card,
-  .route-card {
+  :where(.site) .art-card,
+  :where(.site) .route-card {
     transition: none;
     transform: none;
   }
