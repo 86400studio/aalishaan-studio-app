@@ -2,8 +2,9 @@
  * The seven policy pages — verbatim from prototype/scripts/build-pending.cjs (`policies`) as rendered in
  * prototype/pages/policies/<slug>/index.html, carrying the prototype's "terms pending" copy until S3.1
  * (D-PRE-13; docs/PROJECT-STATUS.md §10 #6). The E10 waiting-list sentences of the privacy and cookies pages
- * are NS-15 and are omitted; the cookies "Clear your preview" sentence is rendered as E8 (the S1.3 record →
- * "Contracts settled in step 1" — checked against the pinned checkout by the VS Code leg).
+ * are NS-15 and are omitted; the cookies "Clear your preview" sentence is rendered as E8 — the S1.1 seed's
+ * carve-out (scripts/testing/lib/catalogue.mjs `POLICY_CARVE_OUTS`), checked against the pinned E8 commit at
+ * S1.1 and again at the S1.3 pick-up; the unit suite holds these pages equal to the seeded policy text.
  */
 
 export type PolicySlug =

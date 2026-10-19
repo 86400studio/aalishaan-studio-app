@@ -11,17 +11,22 @@ import { TRACK_FORM } from "@/content/public/strings";
  * behaviour ported — never imported): three tabs with a roving tabindex and arrow-key movement that swap
  * the field's label, placeholder, input mode and hint. At S1.3 nothing is looked up: the input and the
  * submit are disabled and the NS-03 notice stands where the prototype's sample button stood (the lookup
- * is S1.9; per-parcel milestones S2.10). The prototype's sample reference never appears (D-09).
+ * is S1.9; per-parcel milestones S2.10). The prototype's sample reference never appears (D-09). The page
+ * loads with the static first hint; any tab choice — the selected one included — writes that tab's hint,
+ * as commerce-r9.js does. The form's one handler only stops a submission (every control is disabled anyway):
+ * the deliberate guard of the "never submit" rule.
  */
 const ORDER: readonly TrackMode[] = ["order", "awb", "mobile"];
 
 export function TrackForm() {
   const [mode, setMode] = useState<TrackMode>("order");
+  const [chosen, setChosen] = useState(false);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const current = TRACK.modes[mode];
 
   const select = (next: TrackMode, focus = false) => {
     setMode(next);
+    setChosen(true);
     if (focus) tabs.current[ORDER.indexOf(next)]?.focus();
   };
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, i: number) => {
@@ -74,12 +79,12 @@ export function TrackForm() {
             placeholder={current.placeholder}
             autoComplete="off"
             inputMode={mode === "mobile" ? "tel" : "text"}
-            aria-describedby="track-hint track-notice"
+            aria-describedby="track-hint track-error track-notice"
             disabled
           />
         </label>
         <p id="track-hint" className="flow-fine">
-          {current.hint}
+          {chosen ? current.hint : TRACK.initialHint}
         </p>
         <p id="track-error" className="field-error" role="status"></p>
         <button className="button button--primary" type="submit" disabled>

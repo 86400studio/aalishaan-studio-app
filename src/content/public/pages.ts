@@ -311,12 +311,18 @@ export const TRACK = {
     { mode: "awb", label: "AWB" },
     { mode: "mobile", label: "Mobile number" },
   ] as ReadonlyArray<{ mode: TrackMode; label: string }>,
-  /** prototype/shared/commerce-r9.js `modes`: the field label, the placeholder and the hint per tab. */
+  /** The hint the page loads with (prototype/scripts/build-shop-flow.cjs:14, `#track-hint`), until a tab is chosen. */
+  initialHint:
+    "Find your order ID in your confirmation email. Your AWB is available once a courier is assigned.",
+  /**
+   * prototype/shared/commerce-r9.js `modes`: the field label, the placeholder and the hint per tab, written on
+   * every tab choice (the placeholders and the mobile hint per NS-03: the sample values are dropped — D-09).
+   */
   modes: {
     order: {
       label: "Order reference",
       placeholder: "Order reference",
-      hint: "Find your order ID in your confirmation email. Your AWB is available once a courier is assigned.",
+      hint: "Find your order ID in your confirmation email.",
     },
     awb: {
       label: "Airway Bill number (AWB)",

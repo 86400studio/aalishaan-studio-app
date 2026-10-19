@@ -44,7 +44,7 @@ export function PublicPage({
   const home = variant === "home";
   return (
     <div className={VARIANT_CLASSES[variant]} style={style}>
-      <SiteHeader />
+      <SiteHeader home={home} />
       {home ? (
         <main id="main">{children}</main>
       ) : (

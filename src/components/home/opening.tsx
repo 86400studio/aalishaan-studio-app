@@ -84,6 +84,7 @@ type Geometry = DesktopGeometry | MobileGeometry;
 function FramedArt({ fetchPriority }: { fetchPriority?: "high" }) {
   return (
     <div className="framed-art">
+      {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
       <img
         className="framed-art__cutout"
         src={HERO_ART.src}
@@ -473,7 +474,7 @@ export function HomeOpening() {
                   ))}
                 </div>
                 <figure className="anatomy__art" ref={destination}>
-                  <FramedArt />
+                  <FramedArt fetchPriority="high" />
                   <figcaption className="visually-hidden">
                     {HERO.artworkCaption}
                   </figcaption>
@@ -493,7 +494,7 @@ export function HomeOpening() {
           </section>
 
           <div className="travelling-art" aria-hidden="true" ref={flyer}>
-            <FramedArt />
+            <FramedArt fetchPriority="high" />
           </div>
         </div>
       </div>

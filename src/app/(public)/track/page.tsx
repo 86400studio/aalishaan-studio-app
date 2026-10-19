@@ -15,9 +15,16 @@ export const metadata: Metadata = {
   description: TRACK_HEAD.description,
 };
 
+// prototype/pages/track/index.html (DESIGN §6 "No-JS fallbacks"): without JavaScript the tabs cannot switch, so
+// the form is hidden and the result panel's notice is what the page says.
+const NO_SCRIPT_CSS = "#track-form{display:none}";
+
 export default function TrackPage() {
   return (
     <PublicPage variant="commerce">
+      <noscript>
+        <style>{NO_SCRIPT_CSS}</style>
+      </noscript>
       <div className="flow-layout tracking-layout">
         <TrackForm />
         <section

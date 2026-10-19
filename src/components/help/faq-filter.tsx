@@ -13,16 +13,22 @@ import {
 /**
  * The Help page's in-page FAQ filter (prototype/pages/help/index.html with prototype/shared/pending.js,
  * ported — never imported): a word filter over each question's text and a topic select, the live count,
- * the empty line and a reset that refocuses the search. Every question renders without JavaScript.
+ * the empty line and a reset that refocuses the search. Every question renders without JavaScript. The word
+ * filter reads what each block shows, as pending.js reads its `textContent`: the topic heading is part of the
+ * first question of its topic only.
  */
+const firstOfTopic = (i: number) =>
+  HELP_QUESTIONS.findIndex((q) => q.topic === HELP_QUESTIONS[i].topic) === i;
+
 export function FaqFilter() {
   const [query, setQuery] = useState("");
   const [topic, setTopic] = useState<"" | HelpTopic>("");
   const search = useRef<HTMLInputElement>(null);
 
   const needle = query.trim().toLowerCase();
-  const visible = HELP_QUESTIONS.map((item) => {
-    const text = `${item.topic}${item.q}${item.a}`.toLowerCase();
+  const visible = HELP_QUESTIONS.map((item, i) => {
+    const text =
+      `${firstOfTopic(i) ? item.topic : ""}${item.q}${item.a}`.toLowerCase();
     return text.includes(needle) && (topic === "" || item.topic === topic);
   });
   const count = visible.filter(Boolean).length;
@@ -74,11 +80,11 @@ export function FaqFilter() {
       </p>
       <div id="questions">
         {HELP_QUESTIONS.map((item, i) => {
-          const first =
-            HELP_QUESTIONS.findIndex((q) => q.topic === item.topic) === i;
           return (
             <div data-topic={item.topic} key={item.q} hidden={!visible[i]}>
-              {first ? <h2 className="help-topic">{item.topic}</h2> : null}
+              {firstOfTopic(i) ? (
+                <h2 className="help-topic">{item.topic}</h2>
+              ) : null}
               <FaqItem
                 question={item.q}
                 answer={item.a}

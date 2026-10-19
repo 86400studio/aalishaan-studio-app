@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -21,7 +22,9 @@ import { CART_DRAWER, MENU_DRAWER } from "@/content/public/shell";
  * `.site` wrapper inert, locks body scroll, syncs `aria-expanded` on its triggers, focuses the first control
  * and traps Tab; Escape and the backdrop close it; focus returns to the opener. A drawer is `role=dialog
  * aria-modal` with `tabindex=-1` and stays `inert` while closed. The cart drawer renders the approved empty
- * state until S1.5 brings the bag rows.
+ * state until S1.5 brings the bag rows. In the prototype every navigation is a full page load, which closes a
+ * drawer; here the shell outlives client navigations (the route group's layout), so a change of path —
+ * a link, or the browser's Back — closes it too.
  */
 
 type DrawerId = "mobile-nav" | "cart-drawer";
@@ -39,6 +42,14 @@ const TOAST_MS = 2600;
 
 export function OverlayProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<DrawerId | null>(null);
+  // A new path closes the drawer during the render that shows it (React's "adjust state when a value
+  // changes" pattern), so a drawer opened on one page is never left open over the next.
+  const pathname = usePathname();
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
+    setActive(null);
+  }
   const [toastState, setToastState] = useState<{
     message: string;
     open: boolean;
@@ -115,7 +126,8 @@ export function OverlayProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("keydown", onKeyDown);
       for (const el of background) el.inert = false;
       document.body.style.overflow = previousOverflow;
-      opener.current?.focus();
+      // after a navigation the opener belongs to the page that left; focus stays where the new page puts it
+      if (opener.current?.isConnected) opener.current.focus();
       opener.current = null;
     };
   }, [active]);
@@ -282,6 +294,7 @@ function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
             className="text-link"
             href={CART_DRAWER.empty.secondary.href}
             prefetch={false}
+            onClick={onClose}
           >
             {CART_DRAWER.empty.secondary.label}
           </Link>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
 
 import { HelpSearchForm } from "@/components/ui/help-search-form";
 import { HelpRow } from "@/components/ui/help-row";
@@ -12,29 +13,32 @@ import { ABOUT_HUB, HELP_INDEX } from "@/content/public/pages";
  * imported): the editorial banner with the search form, the six category cards, and the search results
  * that replace them while a query is typed. The query comes from `?q=` (the ten help-variant pages submit
  * their `help-search` form here — D-11), is matched word by word against each entry's index text, and is
- * written back to the URL on submit without a navigation. The static hub renders without JavaScript.
+ * written back to the URL on submit without a navigation. The static hub renders without JavaScript: it is
+ * the Suspense fallback below, the hub with an empty query, as the prototype's first paint shows it.
  */
-const subscribe = (notify: () => void) => {
-  window.addEventListener("popstate", notify);
-  return () => window.removeEventListener("popstate", notify);
-};
-const readQuery = () =>
-  new URLSearchParams(window.location.search).get("q") ?? "";
-const serverQuery = () => "";
+const noop = () => {};
 
 export function AboutHub() {
-  // The URL's `?q=` (empty in the static HTML), overridden by what the visitor types.
-  const urlQuery = useSyncExternalStore(subscribe, readQuery, serverQuery);
-  const [typed, setTyped] = useState<string | null>(null);
-  const query = typed ?? urlQuery;
-  const setQuery = setTyped;
+  return (
+    <Suspense fallback={<HubView query="" onQuery={noop} onSubmit={noop} />}>
+      <LiveHub />
+    </Suspense>
+  );
+}
 
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const searching = words.length > 0;
-  const matches = HELP_INDEX.filter((entry) => {
-    const text = entry.search.toLowerCase();
-    return words.every((word) => text.includes(word));
-  });
+function LiveHub() {
+  // `?q=` follows every navigation and a submit's replaceState (the framework keeps useSearchParams in step
+  // with the history API). What the visitor types overrides it until the URL's query changes: a link from a
+  // search (`/about?q=…`) to /about starts the hub afresh, as the prototype's full page load does, but text typed
+  // and not submitted survives a link to the same URL (the S1.3 record → "VS Code leg" → deviation 9).
+  const urlQuery = useSearchParams().get("q") ?? "";
+  const [typed, setTyped] = useState<string | null>(null);
+  const [seenQuery, setSeenQuery] = useState(urlQuery);
+  if (urlQuery !== seenQuery) {
+    setSeenQuery(urlQuery);
+    setTyped(null);
+  }
+  const query = typed ?? urlQuery;
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,12 +48,31 @@ export function AboutHub() {
     window.history.replaceState(null, "", url);
   };
 
+  return <HubView query={query} onQuery={setTyped} onSubmit={onSubmit} />;
+}
+
+function HubView({
+  query,
+  onQuery,
+  onSubmit,
+}: {
+  query: string;
+  onQuery: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const searching = words.length > 0;
+  const matches = HELP_INDEX.filter((entry) => {
+    const text = entry.search.toLowerCase();
+    return words.every((word) => text.includes(word));
+  });
+
   return (
     <>
       <section className="help-banner help-banner--editorial">
         <h1>{ABOUT_HUB.heading}</h1>
         <p>{ABOUT_HUB.intro}</p>
-        <HelpSearchForm value={query} onChange={setQuery} onSubmit={onSubmit} />
+        <HelpSearchForm value={query} onChange={onQuery} onSubmit={onSubmit} />
       </section>
       <div id="help-results" hidden={!searching}>
         <h2>{ABOUT_HUB.results.heading}</h2>

@@ -9,30 +9,44 @@ import { siteImage, siteImageSrcSet } from "@/lib/site-images";
  * 43–82). Five columns with the mobile-only Legal column and the centred mobile brand (M5); the five social
  * marks have no destination (D-PRE-12); the newsletter form is rendered disabled with NS-02 until S2.12; the
  * decorative watercolour strip of earlier revisions is not reintroduced (M3). The photo-led CTA band is
- * Home-only (`home`).
+ * Home-only (`home`), and on Home the brand mark is the in-page link to the top (prototype/index.html:761).
  */
 export function SiteFooter({ home = false }: { home?: boolean }) {
+  const mark = (
+    // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
+    <img
+      src={BRAND.logo.src}
+      width={BRAND.logo.width}
+      height={BRAND.logo.height}
+      alt={BRAND.logoAlt}
+      loading="lazy"
+      decoding="async"
+    />
+  );
   return (
     <footer className="site-footer" id="practical">
       {home ? <FooterCta /> : null}
       <div className="footer-watercolour">
         <div className="container footer-main">
           <div className="footer-brand">
-            <Link
-              className="footer-brand__mark"
-              href="/"
-              prefetch={false}
-              aria-label={BRAND.backToTopLabel}
-            >
-              <img
-                src={BRAND.logo.src}
-                width={BRAND.logo.width}
-                height={BRAND.logo.height}
-                alt={BRAND.logoAlt}
-                loading="lazy"
-                decoding="async"
-              />
-            </Link>
+            {home ? (
+              <a
+                className="footer-brand__mark"
+                href="#top"
+                aria-label={BRAND.backToTopLabel}
+              >
+                {mark}
+              </a>
+            ) : (
+              <Link
+                className="footer-brand__mark"
+                href="/"
+                prefetch={false}
+                aria-label={BRAND.backToTopLabel}
+              >
+                {mark}
+              </Link>
+            )}
             <p>
               {FOOTER.tagline[0]}
               <br />
@@ -125,6 +139,7 @@ export function SiteFooter({ home = false }: { home?: boolean }) {
 function FooterCta() {
   return (
     <div className="footer-cta">
+      {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
       <img
         className="footer-photo"
         src={siteImage("card-3-artstyle", "1200")}

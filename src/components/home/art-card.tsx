@@ -40,6 +40,7 @@ export function ArtCard({
           prefetch={false}
           aria-label={`View ${title}`}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
           <img
             src={catalogueImage(slug, slot, "1200")}
             srcSet={`${catalogueImage(slug, slot, "480")} 480w, ${catalogueImage(slug, slot, "1200")} 1200w`}

@@ -8,9 +8,10 @@ import { CLEAR_PREVIEW, WISHLIST_KEY_PREFIX } from "@/content/public/strings";
 /**
  * The Cookies page's clear control (prototype/pages/policies/cookies/index.html with
  * prototype/shared/pending.js, ported — never imported). At S1.3 the storefront writes only the wishlist
- * keys; the bag, delivery-check and order-preview keys the prototype also clears are the names the later
- * sprints will reuse (S1.5, S1.6), cleared here already so the control stays complete as they arrive. The
- * E10 waiting-list key is not among them (D-32j). Raises `wishlistchange` so open hearts refresh.
+ * keys; the prototype's other keys (its bag, delivery check, order preview and frame keys) are cleared as well, as
+ * pending.js clears them — defensively, nothing writes them. S1.5 and S1.6 choose their own storage and update
+ * this control (and the Cookies copy at S3.1). The E10 waiting-list key is not among them (D-32j). Raises
+ * `wishlistchange` so open hearts refresh.
  */
 const LOCAL_KEYS = ["aalishaanProductBag", "aalishaanDeliveryCheck"];
 const SESSION_KEYS = ["aalishaanOrderPreview"];

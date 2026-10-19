@@ -26,9 +26,17 @@ const FAQ_STYLE = {
   "--site-image-before-you-buy": `url("${siteImage("before-you-buy", "native")}")`,
 } as CSSProperties;
 
+// prototype/index.html:499 (DESIGN §6 "No-JS fallbacks"): without JavaScript the hearts cannot save, so they are
+// hidden; and the specification numbers, which the prototype's script writes, stay off with their markers.
+const NO_SCRIPT_CSS =
+  ".wishlist{display:none}.spec__title[data-number]::before{content:none}";
+
 export default function HomePage() {
   return (
     <PublicPage variant="home">
+      <noscript>
+        <style>{NO_SCRIPT_CSS}</style>
+      </noscript>
       <HomeOpening />
       <HomeRoutes />
 

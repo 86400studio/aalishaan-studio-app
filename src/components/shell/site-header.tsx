@@ -12,8 +12,9 @@ import { DrawerTrigger } from "./overlays";
  * transparent over Home, solidifying at `scrollY > 24` (`data-stuck`); sticky and white on every other page
  * (`.browse-page`, by CSS). Desktop: logo left, the four plain links centred, cart and the outlined "Track
  * order" right. ≤ 900 px (signed off, D-PRE-04): menu left, logo centred, cart right, Track inside the menu.
+ * On Home the logo is the in-page link to the top (prototype/index.html:512), elsewhere the way home.
  */
-export function SiteHeader() {
+export function SiteHeader({ home = false }: { home?: boolean }) {
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
     const update = () => setStuck(window.scrollY > 24);
@@ -39,20 +40,20 @@ export function SiteHeader() {
           </svg>
         </DrawerTrigger>
 
-        <Link
-          className="brand-logo"
-          href="/"
-          prefetch={false}
-          aria-label={BRAND.homeLabel}
-        >
-          <img
-            src={BRAND.logo.src}
-            width={BRAND.logo.width}
-            height={BRAND.logo.height}
-            alt={BRAND.logoAlt}
-            decoding="async"
-          />
-        </Link>
+        {home ? (
+          <a className="brand-logo" href="#top" aria-label={BRAND.homeLabel}>
+            <BrandLogo />
+          </a>
+        ) : (
+          <Link
+            className="brand-logo"
+            href="/"
+            prefetch={false}
+            aria-label={BRAND.homeLabel}
+          >
+            <BrandLogo />
+          </Link>
+        )}
 
         <nav className="primary-nav" aria-label="Primary">
           <ul className="primary-nav__list">
@@ -87,5 +88,18 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+function BrandLogo() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
+    <img
+      src={BRAND.logo.src}
+      width={BRAND.logo.width}
+      height={BRAND.logo.height}
+      alt={BRAND.logoAlt}
+      decoding="async"
+    />
   );
 }

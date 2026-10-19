@@ -57,6 +57,7 @@ export default function StudioPage() {
           key={section.id}
         >
           <div className="studio-image">
+            {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
             <img
               src={siteImage(
                 section.image.key as SiteImageKey,

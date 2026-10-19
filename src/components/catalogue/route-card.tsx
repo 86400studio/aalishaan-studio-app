@@ -32,6 +32,7 @@ export function RouteCard({
   return (
     <article className="route-card">
       <div className="route-card__media">
+        {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
         <img
           className="route-card__image"
           src={siteImage(image, "1200")}

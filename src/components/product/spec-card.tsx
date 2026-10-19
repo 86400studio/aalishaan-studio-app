@@ -26,6 +26,7 @@ export function SpecCard({ spec, number }: { spec: Spec; number: number }) {
   const copy = NATIVE[spec.image] ?? CRAFT;
   const src = siteImage(spec.image, copy.size);
   const image = (
+    // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
     <img
       src={src}
       alt={spec.alt}
@@ -42,7 +43,7 @@ export function SpecCard({ spec, number }: { spec: Spec; number: number }) {
           className="spec__swatch spec__swatch--size"
           href={src}
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
           aria-label={spec.sizeLink}
         >
           {image}
