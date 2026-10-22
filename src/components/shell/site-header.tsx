@@ -91,11 +91,21 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
   );
 }
 
+/**
+ * The header logo is drawn 2.05rem tall (82–120 CSS px wide at the logo's 3 : 1): 1.7rem up to 47.9375rem,
+ * 2.5rem from 75rem (storefront.css). `sizes` names those widths so a phone takes the 240 px copy, not the
+ * 417 KB PNG (S1.3b, D-19); React's preload of this eager image follows the same srcset.
+ */
+const HEADER_LOGO_SIZES =
+  "(min-width: 75rem) 120px, (max-width: 47.9375rem) 82px, 99px";
+
 function BrandLogo() {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
     <img
       src={BRAND.logo.src}
+      srcSet={BRAND.logo.srcSet}
+      sizes={HEADER_LOGO_SIZES}
       width={BRAND.logo.width}
       height={BRAND.logo.height}
       alt={BRAND.logoAlt}

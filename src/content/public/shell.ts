@@ -9,8 +9,17 @@ export const BRAND = {
   logoAlt: "Aalishaan Studio",
   homeLabel: "Aalishaan Studio — home",
   backToTopLabel: "Aalishaan Studio, back to top",
-  /** prototype/assets/brand/aalishaan-studio.png — 2172 × 724 (D-PRE-07) */
-  logo: { src: "/brand/aalishaan-studio.png", width: 2172, height: 724 },
+  /**
+   * prototype/assets/brand/aalishaan-studio.png — 2172 × 724 (D-PRE-07). `srcSet`: its lossless WebP delivery
+   * copies at 240 / 440 / 660 px (S1.3b, D-19 — `scripts/assets/encode-brand-logo.mjs`); the PNG stays `src`.
+   */
+  logo: {
+    src: "/brand/aalishaan-studio.png",
+    width: 2172,
+    height: 724,
+    srcSet:
+      "/brand/aalishaan-studio-240.webp 240w, /brand/aalishaan-studio-440.webp 440w, /brand/aalishaan-studio-660.webp 660w",
+  },
 } as const;
 
 export const SKIP_LINK = "Skip to main content";
