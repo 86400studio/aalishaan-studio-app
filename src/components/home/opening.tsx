@@ -161,6 +161,10 @@ export function HomeOpening() {
     const svgNS = "http://www.w3.org/2000/svg";
 
     function measureConnectors() {
+      // Hidden at ≤ 900 px (home.css), where the drawing — six forced layouts between DOM writes, on every
+      // measure — would show nothing; the resize or the media change that shows it calls this again through
+      // measureJourney (S1.3b, D-19).
+      if (getComputedStyle(connectorsEl!).display === "none") return;
       const box = figureEl!.getBoundingClientRect();
       const art = destinationEl!.getBoundingClientRect();
       connectorsEl!.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
