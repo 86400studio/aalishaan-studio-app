@@ -19,8 +19,8 @@ No routine closeout PR (WORKFLOW §8); fixes after review still require re-revie
 
 Active sprint: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
 2026-10-21 (`PROJECT-STATUS.md` §5 #30) and **In Progress the same day** in the fourth Claude Code cloud session (`CLOUD.md`, D-41) on the
-session branch `claude/hopeful-gates-rq8oiv` from `main` = `8a106fb` (the PR #24 merge): one branch, one PR — the draft PR opened from the
-cloud session; step 0 reconciled S1.3 to Done, the prompt was planned and saved on the branch (Mode A) and executed in the same session as
+session branch `claude/hopeful-gates-rq8oiv` from `main` = `8a106fb` (the PR #24 merge): one branch, one PR — draft PR #26, opened from the
+cloud session (the cloud leg done and handed off 2026-10-22); step 0 reconciled S1.3 to Done, the prompt was planned and saved on the branch (Mode A) and executed in the same session as
 far as the cloud goes — the open Dependabot updates adopted first (the owner's one-time exception to D-42, §5 #31), then the speed work
 toward Lighthouse mobile ≥ 90 on Home with the approved design unchanged; the TEST integration run, any image upload to TEST, the Preview
 e2e and the Lighthouse measurement on the Preview are the VS Code leg, after the owner's written OK of its TEST plan (§5 #32). Its paired
