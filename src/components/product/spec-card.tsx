@@ -33,8 +33,12 @@ const NATIVE: Partial<
 };
 const CRAFT = { size: "1254", width: 1254, height: 1254 };
 
-/** The drawn picture: up to 145.1 CSS px at ≤ 900 px (the phone cards, square pictures filling a 96 × 112–145 box), 84 px above. */
-const SWATCH_SIZES = "(max-width: 900px) 146px, 84px";
+/**
+ * The drawn picture (measured at S1.3b): up to 145.1 CSS px from 310 to 900 px (the phone cards, square pictures filling
+ * a 96 × 112–145 box), up to 189.3 px below 310 px where wrapped text makes a card taller, 84 px above 900 px. The full
+ * 1254 px picture stays the last candidate, so a need beyond 480 device pixels gets it, as S1.3 sent.
+ */
+const SWATCH_SIZES = "(max-width: 309px) 190px, (max-width: 900px) 146px, 84px";
 
 export function SpecCard({ spec, number }: { spec: Spec; number: number }) {
   const native = NATIVE[spec.image];
@@ -51,6 +55,7 @@ export function SpecCard({ spec, number }: { spec: Spec; number: number }) {
               ["160", "160w"],
               ["320", "320w"],
               ["480", "480w"],
+              [CRAFT.size, `${CRAFT.width}w`],
             ])
       }
       sizes={native ? undefined : SWATCH_SIZES}

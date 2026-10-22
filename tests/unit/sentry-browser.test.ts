@@ -56,7 +56,10 @@ beforeEach(() => {
   vi.stubGlobal("document", { readyState: "loading" });
 });
 
+const STACK_LIMIT = Error.stackTraceLimit;
+
 afterEach(() => {
+  Error.stackTraceLimit = STACK_LIMIT;
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -127,6 +130,20 @@ describe("src/instrumentation-client.ts — the SDK loads after the page", () =>
     browser.runIdle();
     await settle();
     expect(sdk.init).toHaveBeenCalledTimes(1);
+  });
+
+  it("with a DSN, raises the stack depth to 50 from the first script, as the SDK's init did there before", async () => {
+    Error.stackTraceLimit = 10;
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://public@example.invalid/1");
+    await import("@/instrumentation-client");
+    expect(Error.stackTraceLimit).toBe(50);
+  });
+
+  it("without a DSN, leaves the stack depth alone (the SDK never set it)", async () => {
+    Error.stackTraceLimit = 10;
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "");
+    await import("@/instrumentation-client");
+    expect(Error.stackTraceLimit).toBe(10);
   });
 
   it("schedules the load at once when the page has already loaded", async () => {

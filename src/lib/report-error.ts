@@ -42,7 +42,8 @@ export function reportToSentry(error: unknown, mechanism?: Mechanism): void {
     .catch(() => {});
 }
 
-// The mechanism the SDK's own global handlers give these events, so a queued event reads as one they caught.
+// The mechanism type the SDK's own global handlers give these events (only the mechanism: a queued non-Error rejection
+// is shaped by captureException, so it may group apart from the same rejection caught by the SDK's handler).
 const ON_ERROR: Mechanism = {
   type: "auto.browser.global_handlers.onerror",
   handled: false,
@@ -67,9 +68,9 @@ let queueing = false;
 export function queueEarlyErrors(): void {
   if (queueing || sdk) return;
   queueing = true;
-  // The SDK's global handlers raise V8's stack depth to 50 at init; it ran in this first script before S1.3b, so the
-  // errors queued until the deferred load keep the same depth.
-  Error.stackTraceLimit = 50;
+  // With a DSN the SDK's global handlers raise V8's stack depth to 50 at init; that ran in this first script before
+  // S1.3b, so the errors queued until the deferred load keep the same depth. Without a DSN the SDK never set it.
+  if (process.env.NEXT_PUBLIC_SENTRY_DSN) Error.stackTraceLimit = 50;
   window.addEventListener("error", onError);
   window.addEventListener("unhandledrejection", onUnhandledRejection);
 }

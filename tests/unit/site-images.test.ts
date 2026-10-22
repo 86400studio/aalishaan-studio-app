@@ -229,54 +229,93 @@ describe("the S1.3b delivery copies — no box moves", () => {
 });
 
 /**
- * The widest picture each changed image draws on Home, CSS px, at the widths S1.3b audited (each the maximum over
- * 4–7 viewport heights and both motion modes; every instance — the wall, the travelling and the landed hero frame;
- * object-fit applied): [viewport width, hero artwork, route cards 1–2, route card 3, craft swatch, header logo].
- * Measured on a local build by the S1.3b record's audit ("Cloud execution"); the footer logo is 220 px everywhere.
+ * The widest picture each changed image draws on Home, CSS px, at the widths S1.3b audited: [viewport width, hero
+ * artwork, route cards 1–2, route card 3, craft swatch, header logo]. Each value is the maximum over 4–7 viewport
+ * heights and both motion modes, every instance included (the wall, travelling and landed hero frames; the desktop
+ * and phone-card swatches), with every image loaded and object-fit applied from the loaded copy's own proportions
+ * (cards 1–2 are square copies in a 1122 × 1402 box). Measured on a local build of the head with Playwright's
+ * Chromium 1248 (the sprint record → "Cloud execution", the audit; commit 5031782); the footer logo is 220 px at
+ * every width. Rows sit on each `sizes` breakpoint and one pixel past it, and every 5–50 px where a slot runs close
+ * to the picture (601–900, 901–1199 and 1412–2560 px).
  */
 const DRAWN: ReadonlyArray<
   readonly [number, number, number, number, number, number]
 > = [
-  [320, 386.2, 154.6, 281.3, 145.1, 81.6],
-  [360, 414.6, 176.7, 321.3, 112, 81.6],
-  [375, 414.6, 185, 336.3, 112, 81.6],
-  [390, 414.6, 193.2, 351.3, 112, 81.6],
-  [412, 414.6, 205.4, 373.3, 112, 81.6],
-  [414, 414.6, 206.5, 375.3, 112, 81.6],
-  [430, 414.6, 215.3, 391.3, 112, 81.6],
-  [480, 414.6, 227.9, 414, 112, 81.6],
-  [540, 414.6, 227.9, 414, 112, 81.6],
-  [600, 414.6, 96.5, 176, 112, 81.6],
-  [601, 414.6, 269.3, 488.9, 112, 81.6],
-  [640, 431.1, 288.2, 523.3, 112, 81.6],
-  [700, 471.6, 317.4, 576.1, 112, 81.6],
-  [740, 498.5, 449.3, 611.3, 112, 81.6],
-  [767, 516.7, 466.8, 635, 112, 81.6],
-  [768, 517.4, 160.8, 219.4, 112, 98.4],
-  [800, 538.9, 168.6, 230, 112, 98.4],
-  [820, 552.4, 173.6, 236.7, 112, 98.4],
-  [834, 561.8, 177, 241.4, 112, 98.4],
-  [900, 606.3, 193.2, 263.4, 112, 98.4],
-  [901, 451.2, 193.4, 263.7, 84, 98.4],
-  [960, 484.3, 207.9, 283.4, 84, 98.4],
-  [1024, 520.2, 223.6, 304.7, 84, 98.4],
-  [1070, 546, 234.9, 320, 84, 98.4],
-  [1100, 562.9, 242.3, 330, 84, 98.4],
-  [1150, 591, 254.5, 346.7, 84, 98.4],
-  [1199, 618.5, 266.6, 363, 84, 98.4],
-  [1200, 414.6, 260.9, 355.4, 84, 120],
-  [1280, 429.3, 268.8, 366, 84, 120],
-  [1366, 458.1, 268.8, 366, 84, 120],
-  [1411, 473.2, 268.8, 366, 84, 120],
-  [1440, 482.9, 268.8, 366, 84, 120],
-  [1536, 515.1, 268.8, 366, 84, 120],
-  [1600, 536.6, 268.8, 366, 84, 120],
-  [1707, 572.5, 268.8, 366, 84, 120],
-  [1920, 643.9, 268.8, 366, 84, 120],
-  [2048, 686.8, 268.8, 366, 84, 120],
-  [2560, 858.5, 268.8, 366, 84, 120],
+  [280, 331.7, 165.5, 241.3, 168.2, 81.6],
+  [290, 345.3, 172.5, 251.3, 168.2, 81.6],
+  [300, 359, 179.4, 261.3, 145.1, 81.6],
+  [310, 372.6, 186.2, 271.3, 145.1, 81.6],
+  [320, 386.2, 193.2, 281.3, 145.1, 81.6],
+  [360, 414.6, 220.7, 321.3, 112, 81.6],
+  [375, 414.6, 231.1, 336.3, 112, 81.6],
+  [390, 414.6, 241.5, 351.3, 112, 81.6],
+  [412, 414.6, 256.6, 373.3, 112, 81.6],
+  [414, 414.6, 258, 375.3, 112, 81.6],
+  [430, 414.6, 269, 391.3, 112, 81.6],
+  [480, 414.6, 284.8, 414, 112, 81.6],
+  [540, 414.6, 284.8, 414, 112, 81.6],
+  [600, 414.6, 120.5, 176, 112, 81.6],
+  [601, 414.6, 336.4, 488.9, 112, 81.6],
+  [617, 415.7, 346.2, 503, 112, 81.6],
+  [618, 416.3, 346.8, 503.9, 112, 81.6],
+  [620, 417.7, 348, 505.7, 112, 81.6],
+  [625, 421, 351, 510.1, 112, 81.6],
+  [630, 424.4, 354.1, 514.5, 112, 81.6],
+  [635, 427.8, 357.1, 518.9, 112, 81.6],
+  [640, 431.1, 360.1, 523.3, 112, 81.6],
+  [660, 444.6, 372.3, 540.9, 112, 81.6],
+  [680, 458.1, 384.4, 558.5, 112, 81.6],
+  [700, 471.6, 396.6, 576.1, 112, 81.6],
+  [720, 485, 545.2, 593.7, 112, 81.6],
+  [740, 498.5, 561.4, 611.3, 112, 81.6],
+  [750, 505.2, 569.5, 620.1, 112, 81.6],
+  [760, 512, 577.6, 628.9, 112, 81.6],
+  [767, 516.7, 583.3, 635, 112, 81.6],
+  [768, 517.4, 200.9, 219.4, 112, 98.4],
+  [800, 538.9, 210.7, 230, 112, 98.4],
+  [820, 552.4, 216.9, 236.7, 112, 98.4],
+  [834, 561.8, 221.1, 241.4, 112, 98.4],
+  [850, 572.6, 226.1, 246.7, 112, 98.4],
+  [880, 592.8, 235.2, 256.7, 112, 98.4],
+  [900, 606.3, 241.4, 263.4, 112, 98.4],
+  [901, 451.2, 241.7, 263.7, 84, 98.4],
+  [920, 461.8, 247.5, 270, 84, 98.4],
+  [960, 484.3, 259.8, 283.4, 84, 98.4],
+  [980, 495.5, 265.9, 290, 84, 98.4],
+  [1000, 506.7, 272.1, 296.7, 84, 98.4],
+  [1024, 520.2, 279.4, 304.7, 84, 98.4],
+  [1050, 534.8, 287.4, 313.4, 84, 98.4],
+  [1070, 546, 293.5, 320, 84, 98.4],
+  [1100, 562.9, 302.7, 330, 84, 98.4],
+  [1120, 574.1, 308.9, 336.7, 84, 98.4],
+  [1150, 591, 318.1, 346.7, 84, 98.4],
+  [1170, 602.2, 324.2, 353.4, 84, 98.4],
+  [1180, 607.8, 327.2, 356.7, 84, 98.4],
+  [1190, 613.4, 330.3, 360, 84, 98.4],
+  [1199, 618.5, 333.1, 363, 84, 98.4],
+  [1200, 414.6, 326, 355.4, 84, 120],
+  [1280, 429.3, 335.8, 366, 84, 120],
+  [1300, 436, 335.8, 366, 84, 120],
+  [1366, 458.1, 335.8, 366, 84, 120],
+  [1400, 469.5, 335.8, 366, 84, 120],
+  [1411, 473.2, 335.8, 366, 84, 120],
+  [1412, 473.5, 335.8, 366, 84, 120],
+  [1420, 476.2, 335.8, 366, 84, 120],
+  [1440, 482.9, 335.8, 366, 84, 120],
+  [1500, 503, 335.8, 366, 84, 120],
+  [1536, 515.1, 335.8, 366, 84, 120],
+  [1600, 536.6, 335.8, 366, 84, 120],
+  [1707, 572.5, 335.8, 366, 84, 120],
+  [1800, 603.6, 335.8, 366, 84, 120],
+  [1920, 643.9, 335.8, 366, 84, 120],
+  [2048, 686.8, 335.8, 366, 84, 120],
+  [2200, 737.8, 335.8, 366, 84, 120],
+  [2560, 858.5, 335.8, 366, 84, 120],
+  [3000, 860.2, 335.8, 366, 84, 120],
+  [3840, 860.2, 335.8, 366, 84, 120],
 ];
-const DPRS = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.625, 2.75, 3];
+/** Every pixel ratio from 1 to 3 in steps of 0.01 — an undercount shows only in narrow bands of ratios. */
+const DPRS = Array.from({ length: 201 }, (_, i) => 1 + i / 100);
 
 /** The `sizes` slot at a viewport width: the media conditions and lengths these components use. */
 function sizesSlot(sizes: string, vw: number): number {
@@ -346,24 +385,27 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
   const card3 = ["600", "800", "1200"].map((s) =>
     widthOf(`site/card-3-artstyle-${s}.webp`),
   );
-  const swatch = [160, 320, 480];
+  const swatch = [160, 320, 480, 1254];
   const logo = [240, 450, 660];
 
   const cases: Array<{
     name: string;
     column: number;
+    sizes: string;
     now: (vw: number, dpr: number) => number;
     before: (vw: number, dpr: number) => number;
   }> = [
     {
       name: "hero artwork",
       column: 1,
+      sizes: heroSizes,
       now: (vw, dpr) => pick(hero, heroSizes, vw, dpr),
       before: (vw, dpr) => pick([hero[0]!, hero[2]!], S13_HERO_SIZES, vw, dpr),
     },
     {
       name: "route cards 1–2",
       column: 2,
+      sizes: cardSizes,
       now: (vw, dpr) => pick(card12, cardSizes, vw, dpr),
       before: (vw, dpr) =>
         pick([card12[0]!, card12[2]!], S13_CARD_SIZES, vw, dpr),
@@ -371,6 +413,7 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
     {
       name: "route card 3",
       column: 3,
+      sizes: cardSizes,
       now: (vw, dpr) => pick(card3, cardSizes, vw, dpr),
       before: (vw, dpr) =>
         pick([card3[0]!, card3[2]!], S13_CARD_SIZES, vw, dpr),
@@ -379,19 +422,34 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
     {
       name: "craft swatch",
       column: 4,
+      sizes: swatchSizes,
       now: (vw, dpr) => pick(swatch, swatchSizes, vw, dpr),
       before: () => 1254,
     },
     {
       name: "header logo",
       column: 5,
+      sizes: headerSizes,
       now: (vw, dpr) => pick(logo, headerSizes, vw, dpr),
       before: () => 2172,
     },
   ];
 
   it.each(cases.map((c) => [c.name, c]))(
-    "%s: at every audited width and DPR 1–3",
+    "%s: its sizes slot is never narrower than the picture it draws, at every audited width",
+    (_name, c) => {
+      const short = DRAWN.filter(
+        (row) => sizesSlot(c.sizes, row[0]) < row[c.column]!,
+      ).map(
+        (row) =>
+          `${row[0]}px: slot ${sizesSlot(c.sizes, row[0])}, drawn ${row[c.column]}`,
+      );
+      expect(short).toEqual([]);
+    },
+  );
+
+  it.each(cases.map((c) => [c.name, c]))(
+    "%s: no copy narrower than the picture where S1.3 sent a wider one, at every audited width and DPR 1–3 (0.01 steps)",
     (_name, c) => {
       const regressions: string[] = [];
       for (const row of DRAWN)
