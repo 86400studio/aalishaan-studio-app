@@ -36,6 +36,16 @@
     },
     {
       "name": "hero-artwork",
+      "size": "800",
+      "width": 800,
+      "height": 875,
+      "object_path": "site/hero-artwork-800.webp",
+      "source_path": "assets/site/Hero Artwork.png",
+      "sha256": "044aa0b45a0ced820df6c44ca4a7f759eaadffe3ddbb1cc25d8ef86191e31d4c",
+      "encode": true
+    },
+    {
+      "name": "hero-artwork",
       "size": "1200",
       "width": 1199,
       "height": 1312,
@@ -56,6 +66,16 @@
     },
     {
       "name": "card-1-shop-all",
+      "size": "800",
+      "width": 800,
+      "height": 800,
+      "object_path": "site/card-1-shop-all-800.webp",
+      "source_path": "assets/site/Card 1 - Shop All Image.png",
+      "sha256": "674bab311ed4ab4039547fa1837a83f060cf680b87222d8cf8aafe562374fa5a",
+      "encode": true
+    },
+    {
+      "name": "card-1-shop-all",
       "size": "1200",
       "width": 1200,
       "height": 1200,
@@ -73,6 +93,16 @@
       "source_path": "assets/site/responsive/card-2---collection-image-600.webp",
       "sha256": "d3bedc6d13a3cf091d196a4277a3c8c846c35ee02704cefd3ed43b47c4fba8e7",
       "encode": false
+    },
+    {
+      "name": "card-2-collection",
+      "size": "800",
+      "width": 800,
+      "height": 800,
+      "object_path": "site/card-2-collection-800.webp",
+      "source_path": "assets/site/Card 2 - Collection Image.png",
+      "sha256": "8e427c3f73f460bf2ed227fbad57b80cc7f4395a415e29860e9c7fffdca21792",
+      "encode": true
     },
     {
       "name": "card-2-collection",
@@ -106,6 +136,16 @@
     },
     {
       "name": "card-3-artstyle",
+      "size": "800",
+      "width": 800,
+      "height": 1000,
+      "object_path": "site/card-3-artstyle-800.webp",
+      "source_path": "assets/site/Card 3 - Artstyle Image.png",
+      "sha256": "e9c439f77c5f08f76188ad6c50ee17e8cc0acf100acdcf853a7aa202141a1ada",
+      "encode": true
+    },
+    {
+      "name": "card-3-artstyle",
       "size": "1200",
       "width": 1122,
       "height": 1402,
@@ -136,12 +176,72 @@
     },
     {
       "name": "gen-01-craft-detail-gold-frame",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-01-craft-detail-gold-frame-160.webp",
+      "source_path": "assets/site/GEN 01 - Craft Detail - Gold Frame.png",
+      "sha256": "1e373629c08b22c20730c1cbae0e3086d46f1c5df944dc8071e0be9d870c82b3",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-gold-frame",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-01-craft-detail-gold-frame-320.webp",
+      "source_path": "assets/site/GEN 01 - Craft Detail - Gold Frame.png",
+      "sha256": "1e373629c08b22c20730c1cbae0e3086d46f1c5df944dc8071e0be9d870c82b3",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-gold-frame",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-01-craft-detail-gold-frame-480.webp",
+      "source_path": "assets/site/GEN 01 - Craft Detail - Gold Frame.png",
+      "sha256": "1e373629c08b22c20730c1cbae0e3086d46f1c5df944dc8071e0be9d870c82b3",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-gold-frame",
       "size": "1254",
       "width": 1254,
       "height": 1254,
       "object_path": "site/gen-01-craft-detail-gold-frame-1254.webp",
       "source_path": "assets/site/GEN 01 - Craft Detail - Gold Frame.png",
       "sha256": "1e373629c08b22c20730c1cbae0e3086d46f1c5df944dc8071e0be9d870c82b3",
+      "encode": true
+    },
+    {
+      "name": "gen-02-paper-closeup",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-02-paper-closeup-160.webp",
+      "source_path": "assets/site/GEN-02 - Paper Closeup.png",
+      "sha256": "cb7c1cd0e03fcfa1c4724bf35f2b8f560d3d0b457f2a5c66fcc243c7c8cd2c28",
+      "encode": true
+    },
+    {
+      "name": "gen-02-paper-closeup",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-02-paper-closeup-320.webp",
+      "source_path": "assets/site/GEN-02 - Paper Closeup.png",
+      "sha256": "cb7c1cd0e03fcfa1c4724bf35f2b8f560d3d0b457f2a5c66fcc243c7c8cd2c28",
+      "encode": true
+    },
+    {
+      "name": "gen-02-paper-closeup",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-02-paper-closeup-480.webp",
+      "source_path": "assets/site/GEN-02 - Paper Closeup.png",
+      "sha256": "cb7c1cd0e03fcfa1c4724bf35f2b8f560d3d0b457f2a5c66fcc243c7c8cd2c28",
       "encode": true
     },
     {
@@ -156,12 +256,72 @@
     },
     {
       "name": "gen-03-acrylic-glazing",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-03-acrylic-glazing-160.webp",
+      "source_path": "assets/site/GEN-03 - Acrylic Glazing.png",
+      "sha256": "712a85cfe4d4a8d63ddfc87bd2ef25e73ed8fc4a99b076cf94573b148d8179b8",
+      "encode": true
+    },
+    {
+      "name": "gen-03-acrylic-glazing",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-03-acrylic-glazing-320.webp",
+      "source_path": "assets/site/GEN-03 - Acrylic Glazing.png",
+      "sha256": "712a85cfe4d4a8d63ddfc87bd2ef25e73ed8fc4a99b076cf94573b148d8179b8",
+      "encode": true
+    },
+    {
+      "name": "gen-03-acrylic-glazing",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-03-acrylic-glazing-480.webp",
+      "source_path": "assets/site/GEN-03 - Acrylic Glazing.png",
+      "sha256": "712a85cfe4d4a8d63ddfc87bd2ef25e73ed8fc4a99b076cf94573b148d8179b8",
+      "encode": true
+    },
+    {
+      "name": "gen-03-acrylic-glazing",
       "size": "1254",
       "width": 1254,
       "height": 1254,
       "object_path": "site/gen-03-acrylic-glazing-1254.webp",
       "source_path": "assets/site/GEN-03 - Acrylic Glazing.png",
       "sha256": "712a85cfe4d4a8d63ddfc87bd2ef25e73ed8fc4a99b076cf94573b148d8179b8",
+      "encode": true
+    },
+    {
+      "name": "gen-03-back-of-frame-and-hanging-system",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-03-back-of-frame-and-hanging-system-160.webp",
+      "source_path": "assets/site/GEN-03 - Back of Frame and Hanging System.png",
+      "sha256": "e79297e9e5f986378e53e1056691bd686a2d7fa725c9746f125bc62f164616c2",
+      "encode": true
+    },
+    {
+      "name": "gen-03-back-of-frame-and-hanging-system",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-03-back-of-frame-and-hanging-system-320.webp",
+      "source_path": "assets/site/GEN-03 - Back of Frame and Hanging System.png",
+      "sha256": "e79297e9e5f986378e53e1056691bd686a2d7fa725c9746f125bc62f164616c2",
+      "encode": true
+    },
+    {
+      "name": "gen-03-back-of-frame-and-hanging-system",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-03-back-of-frame-and-hanging-system-480.webp",
+      "source_path": "assets/site/GEN-03 - Back of Frame and Hanging System.png",
+      "sha256": "e79297e9e5f986378e53e1056691bd686a2d7fa725c9746f125bc62f164616c2",
       "encode": true
     },
     {
@@ -176,12 +336,62 @@
     },
     {
       "name": "gen-04-print-closeup",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-04-print-closeup-160.webp",
+      "source_path": "assets/site/GEN-04-Print Closeup.png",
+      "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
+      "encode": true
+    },
+    {
+      "name": "gen-04-print-closeup",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-04-print-closeup-320.webp",
+      "source_path": "assets/site/GEN-04-Print Closeup.png",
+      "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
+      "encode": true
+    },
+    {
+      "name": "gen-04-print-closeup",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-04-print-closeup-480.webp",
+      "source_path": "assets/site/GEN-04-Print Closeup.png",
+      "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
+      "encode": true
+    },
+    {
+      "name": "gen-04-print-closeup",
       "size": "1254",
       "width": 1254,
       "height": 1254,
       "object_path": "site/gen-04-print-closeup-1254.webp",
       "source_path": "assets/site/GEN-04-Print Closeup.png",
       "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
+      "encode": true
+    },
+    {
+      "name": "size-comparison-a2",
+      "size": "200",
+      "width": 200,
+      "height": 101,
+      "object_path": "site/size-comparison-a2-200.webp",
+      "source_path": "assets/site/size-comparison-A2.png",
+      "sha256": "b3a561d3b13726eeb2770676a2dee422bc2fcd0af160cb5f8a993e15bf5850f6",
+      "encode": true
+    },
+    {
+      "name": "size-comparison-a2",
+      "size": "400",
+      "width": 400,
+      "height": 202,
+      "object_path": "site/size-comparison-a2-400.webp",
+      "source_path": "assets/site/size-comparison-A2.png",
+      "sha256": "b3a561d3b13726eeb2770676a2dee422bc2fcd0af160cb5f8a993e15bf5850f6",
       "encode": true
     },
     {

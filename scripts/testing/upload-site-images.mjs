@@ -7,20 +7,24 @@
  * command line).
  *
  * Bounded and enumerated like the catalogue upload: only the files listed in scripts/testing/site-images.json
- * are considered — the prototype's responsive WebP copies (uploaded as they are) and the PNG-only sources
- * the storefront shows (the five craft details, the A2 size comparison, the FAQ illustration), which are
- * encoded to WebP at their native size by Playwright's Chromium, the prototype's own method
- * (prototype/scripts/prepare-mobile-site.cjs: "Encode responsive delivery copies of approved images. No
- * creative edits or source changes."). Each source file is resolved inside the source root — a path that
+ * are considered — the prototype's responsive WebP copies (uploaded as they are) and copies encoded from the
+ * PNG originals by Playwright's Chromium, the prototype's own method (prototype/scripts/prepare-mobile-site.cjs:
+ * "Encode responsive delivery copies of approved images. No creative edits or source changes."): the PNG-only
+ * sources the storefront shows (the five craft details, the A2 size comparison, the FAQ illustration) at their
+ * native size (S1.3), and, from S1.3b (D-19), narrower delivery copies of the images Home draws smaller than
+ * the prototype's copies — the hero artwork and the three route pictures at 800 px, the craft details at 160 /
+ * 320 / 480 px, the A2 comparison at 200 / 400 px — each scaled as that script scales (`min(1, width /
+ * naturalWidth)`, rounded) and checked against the manifest's width and height. Each source file is resolved inside the source root — a path that
  * escapes the root, an absolute path, a symbolic link or a path that resolves outside the root is refused —,
  * must be a regular file of at most 20 MiB whose bytes carry the signature its entry declares and whose
  * SHA-256 equals the manifest's (taken from the prototype's E10 development baseline). The checkout is
  * verified too: with a `.git` directory its HEAD must be the pinned commit. Nothing outside the manifest is
  * ever uploaded.
  *
- * Dry run by default — every file verified and every PNG encoded, then `.env.local` loaded and TEST read: the
- * five identity probes and one listing per manifest entry (25 read requests: 23 with the secret key, 2 with the
- * publishable key), nothing uploaded; `--apply` adds one upload per missing object (45 requests on an empty prefix) with the server's
+ * Dry run by default — every file verified and every PNG copy encoded, then `.env.local` loaded and TEST read:
+ * the five identity probes and one listing per manifest entry (46 read requests for the 41 entries: 44 with the
+ * secret key, 2 with the publishable key), nothing uploaded; `--apply` adds one upload per missing object (21
+ * uploads after S1.3's 20, so 67 requests; 87 on an empty prefix) with the server's
  * secret key to the public bucket `catalogue-public` under `site/`. Idempotent and never
  * destructive without `--overwrite` (the catalogue tool's rule, reused: an existing object is kept; the
  * listing gives a length, not the content). PROD, an unknown target, missing credentials or mismatched refs
@@ -111,8 +115,10 @@ export function entryProblem(entry) {
       /** @type {number} */ (entry.height) <= 0
     )
       return "dimensions";
+    // An encoded copy is named by the width it is encoded at — the PNG's native width, or a narrower delivery
+    // width (S1.3b); the encoder refuses a width above the native one and a height that is not the scaled one.
     if (entry.encode && String(entry.width) !== entry.size)
-      return "an encoded copy is stored at its native width";
+      return "an encoded copy is named by its width";
   }
   return null;
 }
@@ -170,9 +176,54 @@ export function verifySiteSource(root, entry) {
 }
 
 /**
- * Encodes the verified PNG sources to WebP at their native size through one headless Chromium page: the
- * image is decoded from a data URL, drawn 1:1 on a canvas and exported as WebP (the prototype's own
- * method and quality). Returns the copies keyed by source file, with the decoded dimensions.
+ * The dimensions a PNG's IHDR chunk declares (bytes 16–23, big-endian), read without decoding the image.
+ * @param {Buffer} bytes
+ * @returns {{ width: number, height: number }}
+ */
+export function pngSize(bytes) {
+  if (
+    !isPng(bytes) ||
+    bytes.length < 24 ||
+    bytes.toString("latin1", 12, 16) !== "IHDR"
+  )
+    throw new Error("not a PNG with an IHDR chunk");
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+/**
+ * The size an encoded copy is drawn at, scaled exactly as prototype/scripts/prepare-mobile-site.cjs scales
+ * (`min(1, width / naturalWidth)`, each side rounded): the native size for the one native CSS background
+ * (`size: "native"`), otherwise the manifest's width — never above the source's native width (a copy is never
+ * enlarged) — and the manifest's height must be the scaled one.
+ * @param {{ width: number, height: number }} natural the PNG's own dimensions
+ * @param {SiteEntry} entry
+ * @returns {{ width: number, height: number }}
+ */
+export function deliverySize(natural, entry) {
+  if (entry.size === "native") return { ...natural };
+  const width = /** @type {number} */ (entry.width);
+  if (width > natural.width)
+    throw new Error(
+      `${entry.name}: ${width} px is wider than the source's ${natural.width} px — a copy is never enlarged`,
+    );
+  const scale = Math.min(1, width / natural.width);
+  const size = {
+    width: Math.round(natural.width * scale),
+    height: Math.round(natural.height * scale),
+  };
+  if (size.width !== entry.width || size.height !== entry.height)
+    throw new Error(
+      `${entry.name}: scaled ${size.width}×${size.height}, the manifest says ${entry.width}×${entry.height}`,
+    );
+  return size;
+}
+
+/**
+ * Encodes the verified PNG sources to WebP through one headless Chromium page, exactly as
+ * prototype/scripts/prepare-mobile-site.cjs does: the image is decoded from a data URL, drawn on a canvas at
+ * `deliverySize` (1:1 for a native copy, scaled down for a delivery copy) and exported as WebP at the
+ * prototype's quality. The decoded image must have the dimensions its PNG header declares. Returns the copies
+ * keyed by object path — one source may give several copies — with their dimensions.
  * @param {Array<{ entry: SiteEntry, file: string }>} sources
  * @returns {Promise<Map<string, { bytes: Buffer, width: number, height: number }>>}
  */
@@ -184,37 +235,46 @@ export async function encodeDeliveryCopies(sources) {
     const page = await browser.newPage();
     await page.setContent("<!doctype html><title>encode</title>");
     for (const { entry, file } of sources) {
-      const dataUrl = `data:image/png;base64,${readFileSync(file).toString("base64")}`;
+      const source = readFileSync(file);
+      const natural = pngSize(source);
+      const target = deliverySize(natural, entry);
       const encoded = await page.evaluate(
-        async ({ src, quality }) => {
+        async ({ src, quality, natural, target }) => {
           const image = new Image();
           image.src = src;
           await image.decode();
+          if (
+            image.naturalWidth !== natural.width ||
+            image.naturalHeight !== natural.height
+          )
+            throw new Error("the decoded size differs from the PNG header");
           const canvas = document.createElement("canvas");
-          canvas.width = image.naturalWidth;
-          canvas.height = image.naturalHeight;
+          canvas.width = target.width;
+          canvas.height = target.height;
           const context = canvas.getContext("2d");
           if (!context) throw new Error("no 2d context");
-          context.drawImage(image, 0, 0);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
           return {
             width: canvas.width,
             height: canvas.height,
             data: canvas.toDataURL("image/webp", quality).split(",")[1],
           };
         },
-        { src: dataUrl, quality: WEBP_QUALITY },
+        {
+          src: `data:image/png;base64,${source.toString("base64")}`,
+          quality: WEBP_QUALITY,
+          natural,
+          target,
+        },
       );
       const bytes = Buffer.from(encoded.data, "base64");
       if (!isWebp(bytes))
         throw new Error(`${entry.name}: the browser did not produce WebP`);
-      if (
-        entry.size !== "native" &&
-        (encoded.width !== entry.width || encoded.height !== entry.height)
-      )
-        throw new Error(
-          `${entry.name}: decoded ${encoded.width}×${encoded.height}, the manifest says ${entry.width}×${entry.height}`,
-        );
-      copies.set(file, { bytes, width: encoded.width, height: encoded.height });
+      copies.set(entry.object_path, {
+        bytes,
+        width: encoded.width,
+        height: encoded.height,
+      });
     }
   } finally {
     await browser.close();
@@ -298,7 +358,7 @@ async function main() {
   );
   /** @type {Array<{ entry: SiteEntry, file: string, bytes: number }>} */
   const objects = verified.map(({ entry, file, bytes }) => {
-    const copy = copies.get(file);
+    const copy = copies.get(entry.object_path);
     const size = copy ? copy.bytes.length : bytes;
     if (size > MAX_OBJECT_BYTES)
       throw new Error(
@@ -306,8 +366,8 @@ async function main() {
       );
     return { entry, file, bytes: size };
   });
-  for (const { entry, file } of verified) {
-    const copy = copies.get(file);
+  for (const { entry } of verified) {
+    const copy = copies.get(entry.object_path);
     if (copy)
       console.log(
         `Encoded ${entry.object_path}: ${copy.width}×${copy.height}, ${copy.bytes.length} bytes.`,
@@ -354,13 +414,15 @@ async function main() {
         source_path: entry.source_path,
         sha256: entry.sha256,
       },
-      file,
+      // An encoded copy is read from memory by its object path (one PNG gives several copies); a WebP copy
+      // from its verified source file.
+      file: copies.has(entry.object_path) ? entry.object_path : file,
       bytes,
     })),
     {
       apply,
       overwrite,
-      read: (file) => copies.get(file)?.bytes ?? readFileSync(file),
+      read: (key) => copies.get(key)?.bytes ?? readFileSync(key),
     },
   );
   const sameClause = overwrite

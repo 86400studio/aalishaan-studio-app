@@ -145,6 +145,7 @@ function FooterCta() {
         src={siteImage("card-3-artstyle", "1200")}
         srcSet={siteImageSrcSet("card-3-artstyle", [
           ["600", "600w"],
+          ["800", "800w"],
           ["1200", "1122w"],
         ])}
         sizes="(max-width: 600px) calc(100vw - 36px), (max-width: 900px) 70vw, 33vw"

@@ -25,9 +25,11 @@ import {
 import { PINNED_PROTOTYPE_COMMIT } from "../../scripts/testing/lib/catalogue.mjs";
 import {
   MANIFEST_PATH,
+  deliverySize,
   entryProblem,
   isPng,
   isWebp,
+  pngSize,
   verifySiteSource,
 } from "../../scripts/testing/upload-site-images.mjs";
 
@@ -37,7 +39,8 @@ import {
  * every object path is `site/<key>-<size>.webp`; the public URL builder accepts only the project's own
  * Storage origin, and without a valid public URL the pages render the app's own relative paths, never another
  * origin; and the upload tool refuses escaping paths, links, wrong signatures and wrong hashes on a scratch
- * directory. No network, no database.
+ * directory. From S1.3b (D-19) the manifest also lists narrower delivery copies encoded from the PNG originals,
+ * and the tool's scaling — the prototype's — is checked here as pure arithmetic. No network, no database.
  */
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -65,6 +68,30 @@ const baseline = JSON.parse(
   ),
 ) as { files: Record<string, string> };
 
+/**
+ * The PNG originals' own dimensions (their IHDR, read from the pinned checkout b24dce1b… on 2026-10-22 — the
+ * files are not in this repository, D-07); the upload tool reads the same header before it scales.
+ */
+const NATIVE: Record<string, { width: number; height: number }> = {
+  "assets/site/Hero Artwork.png": { width: 1199, height: 1312 },
+  "assets/site/Card 1 - Shop All Image.png": { width: 1254, height: 1254 },
+  "assets/site/Card 2 - Collection Image.png": { width: 2048, height: 2048 },
+  "assets/site/Card 3 - Artstyle Image.png": { width: 1122, height: 1402 },
+  "assets/site/GEN 01 - Craft Detail - Gold Frame.png": {
+    width: 1254,
+    height: 1254,
+  },
+  "assets/site/GEN-02 - Paper Closeup.png": { width: 1254, height: 1254 },
+  "assets/site/GEN-03 - Acrylic Glazing.png": { width: 1254, height: 1254 },
+  "assets/site/GEN-03 - Back of Frame and Hanging System.png": {
+    width: 1254,
+    height: 1254,
+  },
+  "assets/site/GEN-04-Print Closeup.png": { width: 1254, height: 1254 },
+  "assets/site/size-comparison-A2.png": { width: 2048, height: 1035 },
+  "assets/site/Before you buy.png": { width: 2084, height: 754 },
+};
+
 describe("scripts/testing/site-images.json — the pinned manifest", () => {
   it("names the pinned prototype commit, the public bucket, the site prefix and the E10 baseline", () => {
     expect(manifest.commit).toBe(PINNED_PROTOTYPE_COMMIT);
@@ -87,12 +114,15 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         `baseline hash for ${entry.source_path}`,
       ).toBe(entry.sha256);
     }
-    expect(manifest.entries).toHaveLength(20);
+    expect(manifest.entries).toHaveLength(41);
   });
 
-  it("the encoded copies are the PNG-only sources at native size; the rest are the prototype's responsive WebP copies", () => {
+  it("the encoded copies come from PNG originals — native for the PNG-only sources, narrower delivery copies from S1.3b; the rest are the prototype's responsive WebP copies", () => {
     const encoded = manifest.entries.filter((e) => e.encode);
-    expect(encoded.map((e) => e.name).sort()).toEqual([
+    const native = encoded.filter(
+      (e) => e.size === "native" || e.width === NATIVE[e.source_path]?.width,
+    );
+    expect(native.map((e) => e.name).sort()).toEqual([
       "before-you-buy",
       "gen-01-craft-detail-gold-frame",
       "gen-02-paper-closeup",
@@ -101,6 +131,29 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
       "gen-04-print-closeup",
       "size-comparison-a2",
     ]);
+    // The S1.3b delivery copies: the widths Home draws (the sprint record → "Image delivery copies").
+    expect(
+      encoded
+        .filter((e) => !native.includes(e))
+        .map((e) => e.object_path)
+        .sort(),
+    ).toEqual(
+      [
+        "site/card-1-shop-all-800.webp",
+        "site/card-2-collection-800.webp",
+        "site/card-3-artstyle-800.webp",
+        "site/hero-artwork-800.webp",
+        ...[
+          "gen-01-craft-detail-gold-frame",
+          "gen-02-paper-closeup",
+          "gen-03-acrylic-glazing",
+          "gen-03-back-of-frame-and-hanging-system",
+          "gen-04-print-closeup",
+        ].flatMap((k) => [160, 320, 480].map((w) => `site/${k}-${w}.webp`)),
+        "site/size-comparison-a2-200.webp",
+        "site/size-comparison-a2-400.webp",
+      ].sort(),
+    );
     for (const entry of encoded)
       expect(entry.source_path).toMatch(/^assets\/site\/[^/]+\.png$/);
     for (const entry of manifest.entries.filter((e) => !e.encode))
@@ -112,6 +165,43 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
       expect(entry.source_path).not.toMatch(
         /hero-desktop-landscape|hero-mobile-landscape|footer/i,
       );
+  });
+});
+
+describe("the S1.3b delivery copies — the prototype's scaling, never enlarged", () => {
+  it("every encoded copy is the scaled size of its PNG original (min(1, width / native), rounded) and no wider", () => {
+    for (const entry of manifest.entries.filter(
+      (e) => e.encode && e.size !== "native",
+    )) {
+      const natural = NATIVE[entry.source_path];
+      expect(natural, `native size of ${entry.source_path}`).toBeDefined();
+      expect(deliverySize(natural!, entry)).toEqual({
+        width: entry.width,
+        height: entry.height,
+      });
+      expect(entry.width!).toBeLessThanOrEqual(natural!.width);
+    }
+  });
+
+  it("each key a page draws smaller than the prototype's copies gains a copy at least as wide as its widest box at 1.75×", () => {
+    // The boxes measured at S1.3b (CSS px): the landed hero artwork 415, a route card 375 at a 412 px phone,
+    // a swatch 145 (the phone cards) — each × 1.75 (Lighthouse's phone) fits under the new copy.
+    const widths = (key: SiteImageKey) =>
+      SITE_IMAGE_SIZES[key].filter((s) => s !== "native").map(Number);
+    expect(
+      Math.min(...widths("hero-artwork").filter((w) => w >= 415 * 1.75)),
+    ).toBe(800);
+    for (const key of [
+      "card-1-shop-all",
+      "card-2-collection",
+      "card-3-artstyle",
+    ] as const)
+      expect(Math.min(...widths(key).filter((w) => w >= 375 * 1.75))).toBe(800);
+    expect(
+      Math.min(
+        ...widths("gen-04-print-closeup").filter((w) => w >= 145 * 1.75),
+      ),
+    ).toBe(320);
   });
 });
 
@@ -393,6 +483,48 @@ describe("scripts/testing/upload-site-images.mjs — bounded verification on a s
           encode: true,
         }),
       ),
-    ).toMatch(/native width/);
+    ).toMatch(/named by its width/);
+  });
+
+  it("pngSize reads the IHDR dimensions and refuses anything else", () => {
+    const ihdr = Buffer.alloc(24);
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(ihdr, 0);
+    ihdr.write("IHDR", 12, "latin1");
+    ihdr.writeUInt32BE(1254, 16);
+    ihdr.writeUInt32BE(627, 20);
+    expect(pngSize(ihdr)).toEqual({ width: 1254, height: 627 });
+    expect(() => pngSize(WEBP)).toThrow(/not a PNG/);
+    expect(() => pngSize(PNG)).toThrow(/IHDR/);
+  });
+
+  it("deliverySize scales as the prototype does, refuses an enlargement and a height that is not the scaled one", () => {
+    const natural = { width: 1122, height: 1402 };
+    const copy = (width: number, height: number) =>
+      entry({
+        name: "card",
+        size: String(width),
+        width,
+        height,
+        object_path: `site/card-${width}.webp`,
+        source_path: "assets/site/Card.png",
+        encode: true,
+      });
+    expect(deliverySize(natural, copy(800, 1000))).toEqual({
+      width: 800,
+      height: 1000,
+    });
+    expect(deliverySize(natural, copy(1122, 1402))).toEqual(natural);
+    expect(() => deliverySize(natural, copy(1200, 1499))).toThrow(
+      /never enlarged/,
+    );
+    expect(() => deliverySize(natural, copy(800, 999))).toThrow(
+      /manifest says 800×999/,
+    );
+    expect(
+      deliverySize(
+        { width: 2084, height: 754 },
+        entry({ size: "native", width: null, height: null, encode: true }),
+      ),
+    ).toEqual({ width: 2084, height: 754 });
   });
 });
