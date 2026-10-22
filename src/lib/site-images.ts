@@ -74,22 +74,26 @@ export type SiteImageKey =
 
 /**
  * The sizes each key is stored at (the prototype's size labels: the responsive copies at 600 / 1200 / 1600,
- * a PNG source at its native width, the FAQ illustration as one native copy). Mirrors the manifest.
+ * a PNG source at its native width, the FAQ illustration as one native copy; from S1.3b — D-19 — the
+ * narrower delivery copies encoded from the PNG originals by the same method, at the widths Home draws: 817
+ * for the hero artwork — the width that keeps its proportions (1199 : 1312) to 0.0002 %, since the cutout's
+ * height follows the loaded copy —, 800 for the route pictures, 160 / 320 / 480 for the craft swatches). Mirrors
+ * the manifest.
  */
 export const SITE_IMAGE_SIZES: Readonly<
   Record<SiteImageKey, readonly string[]>
 > = {
   "page-hero": ["1200", "1600"],
-  "hero-artwork": ["600", "1200"],
-  "card-1-shop-all": ["600", "1200"],
-  "card-2-collection": ["600", "1200", "1600"],
-  "card-3-artstyle": ["600", "1200"],
+  "hero-artwork": ["600", "817", "1200"],
+  "card-1-shop-all": ["600", "800", "1200"],
+  "card-2-collection": ["600", "800", "1200", "1600"],
+  "card-3-artstyle": ["600", "800", "1200"],
   "about-page-hero": ["600", "1600"],
-  "gen-01-craft-detail-gold-frame": ["1254"],
-  "gen-02-paper-closeup": ["1254"],
-  "gen-03-acrylic-glazing": ["1254"],
-  "gen-03-back-of-frame-and-hanging-system": ["1254"],
-  "gen-04-print-closeup": ["1254"],
+  "gen-01-craft-detail-gold-frame": ["160", "320", "480", "1254"],
+  "gen-02-paper-closeup": ["160", "320", "480", "1254"],
+  "gen-03-acrylic-glazing": ["160", "320", "480", "1254"],
+  "gen-03-back-of-frame-and-hanging-system": ["160", "320", "480", "1254"],
+  "gen-04-print-closeup": ["160", "320", "480", "1254"],
   "size-comparison-a2": ["2048"],
   "before-you-buy": ["native"],
 };

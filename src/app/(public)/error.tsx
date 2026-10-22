@@ -1,11 +1,11 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 import { PublicPage } from "@/components/shell/public-page";
 import { Recovery } from "@/components/shell/recovery";
 import { RECOVERY } from "@/content/public/pages";
+import { reportToSentry } from "@/lib/report-error";
 
 /**
  * The designed 500 (prototype/500.html) for a render error on a public route: the recovery layout with the
@@ -20,7 +20,7 @@ export default function PublicError({
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    reportToSentry(error);
   }, [error]);
 
   return (

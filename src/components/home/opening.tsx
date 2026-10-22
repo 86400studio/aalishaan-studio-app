@@ -28,13 +28,21 @@ const HERO_ROOM = {
   src: siteImage("page-hero", "1600"),
   mobile: siteImage("page-hero", "1200"),
 } as const;
+// The prototype's srcset gains an 817 px delivery copy (S1.3b, D-19); 817 × 894 keeps the original's proportions
+// (the cutout's height follows the loaded copy), so the frame's box is unchanged. The `sizes` are the widest picture
+// home.css draws, measured at S1.3b (the sprint record → "Cloud execution"): the landed frame ≤ 414.5 px and the
+// wall 67.4vw up to 900 px; the landed frame up to calc(56.2vw - 54px) from 901 to 1199 px; the wall about 33.5vw
+// from 1200 px. The prototype's "420px, 480px" undercounts the last three, which let the 817 copy be drawn enlarged; with
+// these no viewport at DPR 1–3 draws a copy narrower than the picture where S1.3 drew a wider one.
 const HERO_ART = {
   src: siteImage("hero-artwork", "1200"),
   srcSet: siteImageSrcSet("hero-artwork", [
     ["600", "600w"],
+    ["817", "817w"],
     ["1200", "1199w"],
   ]),
-  sizes: "(max-width: 900px) 420px, 480px",
+  sizes:
+    "(max-width: 617px) 420px, (max-width: 900px) 68vw, (max-width: 74.9375rem) calc(56.2vw - 54px), (max-width: 1411px) 480px, 34vw",
 } as const;
 
 const SEQUENCE_STYLE = {
@@ -158,6 +166,10 @@ export function HomeOpening() {
     const svgNS = "http://www.w3.org/2000/svg";
 
     function measureConnectors() {
+      // Hidden at ≤ 900 px (home.css), where the drawing — six forced layouts between DOM writes, on every
+      // measure — would show nothing; the resize or the media change that shows it calls this again through
+      // measureJourney (S1.3b, D-19).
+      if (getComputedStyle(connectorsEl!).display === "none") return;
       const box = figureEl!.getBoundingClientRect();
       const art = destinationEl!.getBoundingClientRect();
       connectorsEl!.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);

@@ -14,7 +14,8 @@ const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const read = (relative: string) =>
   readFileSync(path.join(ROOT, relative), "utf8");
 
-// The pinned CLI's file pattern and its one legacy exclusion (apps/cli-go/pkg/migration at 2.117.0).
+// The pinned CLI's file pattern and its one legacy exclusion (apps/cli-go/pkg/migration at 2.117.0; unchanged at 2.121.0, where the TypeScript CLI
+// applies the same pattern — apps/cli/src/command-internal/migration-list.ts:12).
 const CLI_MIGRATION_PATTERN = /^([0-9]+)_(.*)\.sql$/;
 const CLI_LEGACY_INIT = /([0-9]{14})_init\.sql/;
 
@@ -235,7 +236,7 @@ describe(".github/workflows/morning-check.yml — committed disabled", () => {
       "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413",
     );
     expect(yaml).toContain(
-      "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
     );
     expect(yaml).not.toMatch(/node-version: 20/);
   });
@@ -259,6 +260,18 @@ describe(".github/workflows/code-check.yml — the required gates are unchanged"
     expect(yaml).toContain("run: pnpm install --frozen-lockfile");
     expect(yaml).toContain("run: pnpm build");
     expect(yaml).toContain("run: pnpm audit --prod --audit-level=critical");
+  });
+
+  it("pins the actions by full SHA — actions/setup-node at 7.1.0 since S1.3b (Dependabot's PR #22)", () => {
+    expect(yaml).toContain(
+      "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    );
+    expect(yaml).toContain(
+      "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413",
+    );
+    expect(yaml).toContain(
+      "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+    );
   });
 });
 
@@ -291,10 +304,10 @@ describe("package.json — the S0.2 script contract", () => {
   });
 
   it("pins the three S0.2 additions, the S1.1 Zod and the S1.2 cookie session package exactly", () => {
-    expect(pkg.dependencies["@supabase/supabase-js"]).toBe("2.117.2");
-    expect(pkg.dependencies["zod"]).toBe("4.6.5");
+    expect(pkg.dependencies["@supabase/supabase-js"]).toBe("2.118.0");
+    expect(pkg.dependencies["zod"]).toBe("4.6.7");
     expect(pkg.dependencies["@supabase/ssr"]).toBe("0.12.7");
-    expect(pkg.devDependencies["@playwright/test"]).toBe("1.63.0");
-    expect(pkg.devDependencies["supabase"]).toBe("2.118.0");
+    expect(pkg.devDependencies["@playwright/test"]).toBe("1.64.1");
+    expect(pkg.devDependencies["supabase"]).toBe("2.121.0");
   });
 });

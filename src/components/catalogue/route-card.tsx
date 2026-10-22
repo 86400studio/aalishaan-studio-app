@@ -9,10 +9,14 @@ import {
 /**
  * One "Ways to shop" route card (docs/DESIGN.md §3 "Route card"; prototype/index.html:608–622): the picture,
  * the heading, the line and the one primary action. The `srcset` widths are the prototype's own (the third
- * picture's large copy is 1122 px wide). Reused by the collection and art-style landings at S1.4.
+ * picture's large copy is 1122 px wide) plus the 800 px delivery copy of S1.3b (D-19), which a phone at 1.75–2×
+ * takes for the card it draws about 343–375 CSS px wide. The `sizes` are the prototype's plus the 601–767 px
+ * carousel (home.css: cards 88 % of the track, up to 635 px drawn), which the prototype's 70vw undercounts — there
+ * the 800 copy would have been drawn enlarged where S1.3 sent the large one (measured at S1.3b, the sprint record →
+ * "Cloud execution"). Reused by the collection and art-style landings at S1.4, which measure their own boxes.
  */
 const SIZES =
-  "(max-width: 600px) calc(100vw - 36px), (max-width: 900px) 70vw, 33vw";
+  "(max-width: 600px) calc(100vw - 36px), (max-width: 47.9375rem) 88vw, (max-width: 900px) 70vw, 33vw";
 
 export function RouteCard({
   image,
@@ -38,6 +42,7 @@ export function RouteCard({
           src={siteImage(image, "1200")}
           srcSet={siteImageSrcSet(image, [
             ["600", "600w"],
+            ["800", "800w"],
             ["1200", largeWidth],
           ])}
           sizes={SIZES}
