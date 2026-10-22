@@ -28,9 +28,12 @@ const HERO_ROOM = {
   src: siteImage("page-hero", "1600"),
   mobile: siteImage("page-hero", "1200"),
 } as const;
-// The prototype's srcset gains an 817 px delivery copy (S1.3b, D-19): the travelling frame lands at about 415 CSS
-// px on a phone, which at 1.75× needs 726 device pixels — the 1199 px copy is chosen above 1.94×. 817 × 894 keeps
-// the original's proportions (the cutout's height follows the loaded copy), so the frame's box is unchanged.
+// The prototype's srcset gains an 817 px delivery copy (S1.3b, D-19); 817 × 894 keeps the original's proportions
+// (the cutout's height follows the loaded copy), so the frame's box is unchanged. The `sizes` are the widest picture
+// home.css draws, measured at S1.3b (the sprint record → "Cloud execution"): the landed frame ≤ 414.5 px and the
+// wall 0.674vw up to 900 px; the landed frame up to calc(56.2vw - 54px) from 901 to 1199 px; the wall 0.336vw from
+// 1200 px. The prototype's "420px, 480px" undercounts the last three, which let the 817 copy be drawn enlarged; with
+// these no viewport at DPR 1–3 draws a copy narrower than the picture where S1.3 drew a wider one.
 const HERO_ART = {
   src: siteImage("hero-artwork", "1200"),
   srcSet: siteImageSrcSet("hero-artwork", [
@@ -38,7 +41,8 @@ const HERO_ART = {
     ["817", "817w"],
     ["1200", "1199w"],
   ]),
-  sizes: "(max-width: 900px) 420px, 480px",
+  sizes:
+    "(max-width: 617px) 420px, (max-width: 900px) 68vw, (max-width: 74.9375rem) calc(56.2vw - 54px), (max-width: 1411px) 480px, 34vw",
 } as const;
 
 const SEQUENCE_STYLE = {

@@ -42,10 +42,13 @@ export function reportToSentry(error: unknown, mechanism?: Mechanism): void {
     .catch(() => {});
 }
 
-// Marked unhandled, as the SDK's own global handlers mark these events.
-const ON_ERROR: Mechanism = { type: "onerror", handled: false };
+// The mechanism the SDK's own global handlers give these events, so a queued event reads as one they caught.
+const ON_ERROR: Mechanism = {
+  type: "auto.browser.global_handlers.onerror",
+  handled: false,
+};
 const ON_UNHANDLED_REJECTION: Mechanism = {
-  type: "onunhandledrejection",
+  type: "auto.browser.global_handlers.onunhandledrejection",
   handled: false,
 };
 
@@ -64,6 +67,9 @@ let queueing = false;
 export function queueEarlyErrors(): void {
   if (queueing || sdk) return;
   queueing = true;
+  // The SDK's global handlers raise V8's stack depth to 50 at init; it ran in this first script before S1.3b, so the
+  // errors queued until the deferred load keep the same depth.
+  Error.stackTraceLimit = 50;
   window.addEventListener("error", onError);
   window.addEventListener("unhandledrejection", onUnhandledRejection);
 }

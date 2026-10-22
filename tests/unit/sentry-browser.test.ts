@@ -154,7 +154,10 @@ describe("src/instrumentation-client.ts — the SDK loads after the page", () =>
     await settle();
     expect(sdk.init).toHaveBeenCalledTimes(1);
     expect(sdk.captureException).toHaveBeenCalledWith(error, {
-      mechanism: { type: "onerror", handled: false },
+      mechanism: {
+        type: "auto.browser.global_handlers.onerror",
+        handled: false,
+      },
     });
     expect(sdk.init.mock.invocationCallOrder[0]).toBeLessThan(
       sdk.captureException.mock.invocationCallOrder[0],
@@ -166,7 +169,10 @@ describe("src/instrumentation-client.ts — the SDK loads after the page", () =>
     browser.win.dispatchEvent(errorEvent({ message: "Script error." }));
     await settle();
     expect(sdk.captureException).toHaveBeenCalledWith("Script error.", {
-      mechanism: { type: "onerror", handled: false },
+      mechanism: {
+        type: "auto.browser.global_handlers.onerror",
+        handled: false,
+      },
     });
   });
 
@@ -176,7 +182,10 @@ describe("src/instrumentation-client.ts — the SDK loads after the page", () =>
     browser.win.dispatchEvent(rejectionEvent(reason));
     await settle();
     expect(sdk.captureException).toHaveBeenCalledWith(reason, {
-      mechanism: { type: "onunhandledrejection", handled: false },
+      mechanism: {
+        type: "auto.browser.global_handlers.onunhandledrejection",
+        handled: false,
+      },
     });
   });
 
@@ -243,19 +252,35 @@ describe("src/lib/report-error.ts — the error boundaries' path", () => {
 });
 
 describe("no client module imports the SDK statically", () => {
-  it("only src/lib/sentry-browser.ts and the server hook import @sentry/nextjs", async () => {
+  async function sourcesMatching(pattern: RegExp) {
     const { readFileSync, readdirSync } = await import("node:fs");
     const path = await import("node:path");
     const root = path.join(__dirname, "../../src");
-    const files = (readdirSync(root, { recursive: true }) as string[])
-      .filter((file) => /\.(ts|tsx)$/.test(file))
+    return (readdirSync(root, { recursive: true }) as string[])
+      .filter((file) => /\.(ts|tsx|js|jsx|mjs)$/.test(file))
       .filter((file) =>
-        /from "@sentry\/nextjs"/.test(
-          readFileSync(path.join(root, file), "utf8"),
-        ),
+        pattern.test(readFileSync(path.join(root, file), "utf8")),
       )
       .map((file) => file.split(path.sep).join("/"))
       .sort();
-    expect(files).toEqual(["instrumentation.ts", "lib/sentry-browser.ts"]);
+  }
+
+  it("only src/lib/sentry-browser.ts and the server hook import any @sentry/ package (from, side effect or re-export)", async () => {
+    expect(await sourcesMatching(/(?:from|import)\s*["']@sentry\//)).toEqual([
+      "instrumentation.ts",
+      "lib/sentry-browser.ts",
+    ]);
+  });
+
+  it("nothing imports src/lib/sentry-browser.ts statically — only report-error.ts's import() reaches it", async () => {
+    // `import("./sentry-browser")` and `typeof import(...)` do not match: a parenthesis follows `import`.
+    expect(
+      await sourcesMatching(
+        /(?:from|^\s*import)\s*["'][^"']*sentry-browser["']/m,
+      ),
+    ).toEqual([]);
+    expect(await sourcesMatching(/import\("\.\/sentry-browser"\)/)).toEqual([
+      "lib/report-error.ts",
+    ]);
   });
 });

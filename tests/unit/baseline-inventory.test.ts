@@ -261,6 +261,18 @@ describe(".github/workflows/code-check.yml — the required gates are unchanged"
     expect(yaml).toContain("run: pnpm build");
     expect(yaml).toContain("run: pnpm audit --prod --audit-level=critical");
   });
+
+  it("pins the actions by full SHA — actions/setup-node at 7.1.0 since S1.3b (Dependabot's PR #22)", () => {
+    expect(yaml).toContain(
+      "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    );
+    expect(yaml).toContain(
+      "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413",
+    );
+    expect(yaml).toContain(
+      "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+    );
+  });
 });
 
 describe("package.json — the S0.2 script contract", () => {

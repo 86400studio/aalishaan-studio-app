@@ -33,8 +33,8 @@ const NATIVE: Partial<
 };
 const CRAFT = { size: "1254", width: 1254, height: 1254 };
 
-/** The drawn box: up to 145 CSS px at ≤ 900 px (the phone cards, square pictures filling a 96 × 112–145 box), 84 px above. */
-const SWATCH_SIZES = "(max-width: 900px) 145px, 84px";
+/** The drawn picture: up to 145.1 CSS px at ≤ 900 px (the phone cards, square pictures filling a 96 × 112–145 box), 84 px above. */
+const SWATCH_SIZES = "(max-width: 900px) 146px, 84px";
 
 export function SpecCard({ spec, number }: { spec: Spec; number: number }) {
   const native = NATIVE[spec.image];

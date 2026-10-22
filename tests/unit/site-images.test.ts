@@ -228,6 +228,205 @@ describe("the S1.3b delivery copies — no box moves", () => {
   });
 });
 
+/**
+ * The widest picture each changed image draws on Home, CSS px, at the widths S1.3b audited (each the maximum over
+ * 4–7 viewport heights and both motion modes; every instance — the wall, the travelling and the landed hero frame;
+ * object-fit applied): [viewport width, hero artwork, route cards 1–2, route card 3, craft swatch, header logo].
+ * Measured on a local build by the S1.3b record's audit ("Cloud execution"); the footer logo is 220 px everywhere.
+ */
+const DRAWN: ReadonlyArray<
+  readonly [number, number, number, number, number, number]
+> = [
+  [320, 386.2, 154.6, 281.3, 145.1, 81.6],
+  [360, 414.6, 176.7, 321.3, 112, 81.6],
+  [375, 414.6, 185, 336.3, 112, 81.6],
+  [390, 414.6, 193.2, 351.3, 112, 81.6],
+  [412, 414.6, 205.4, 373.3, 112, 81.6],
+  [414, 414.6, 206.5, 375.3, 112, 81.6],
+  [430, 414.6, 215.3, 391.3, 112, 81.6],
+  [480, 414.6, 227.9, 414, 112, 81.6],
+  [540, 414.6, 227.9, 414, 112, 81.6],
+  [600, 414.6, 96.5, 176, 112, 81.6],
+  [601, 414.6, 269.3, 488.9, 112, 81.6],
+  [640, 431.1, 288.2, 523.3, 112, 81.6],
+  [700, 471.6, 317.4, 576.1, 112, 81.6],
+  [740, 498.5, 449.3, 611.3, 112, 81.6],
+  [767, 516.7, 466.8, 635, 112, 81.6],
+  [768, 517.4, 160.8, 219.4, 112, 98.4],
+  [800, 538.9, 168.6, 230, 112, 98.4],
+  [820, 552.4, 173.6, 236.7, 112, 98.4],
+  [834, 561.8, 177, 241.4, 112, 98.4],
+  [900, 606.3, 193.2, 263.4, 112, 98.4],
+  [901, 451.2, 193.4, 263.7, 84, 98.4],
+  [960, 484.3, 207.9, 283.4, 84, 98.4],
+  [1024, 520.2, 223.6, 304.7, 84, 98.4],
+  [1070, 546, 234.9, 320, 84, 98.4],
+  [1100, 562.9, 242.3, 330, 84, 98.4],
+  [1150, 591, 254.5, 346.7, 84, 98.4],
+  [1199, 618.5, 266.6, 363, 84, 98.4],
+  [1200, 414.6, 260.9, 355.4, 84, 120],
+  [1280, 429.3, 268.8, 366, 84, 120],
+  [1366, 458.1, 268.8, 366, 84, 120],
+  [1411, 473.2, 268.8, 366, 84, 120],
+  [1440, 482.9, 268.8, 366, 84, 120],
+  [1536, 515.1, 268.8, 366, 84, 120],
+  [1600, 536.6, 268.8, 366, 84, 120],
+  [1707, 572.5, 268.8, 366, 84, 120],
+  [1920, 643.9, 268.8, 366, 84, 120],
+  [2048, 686.8, 268.8, 366, 84, 120],
+  [2560, 858.5, 268.8, 366, 84, 120],
+];
+const DPRS = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.625, 2.75, 3];
+
+/** The `sizes` slot at a viewport width: the media conditions and lengths these components use. */
+function sizesSlot(sizes: string, vw: number): number {
+  for (const part of sizes.split(/,(?![^(]*\))/).map((p) => p.trim())) {
+    const m = part.match(/^\((max|min)-width:\s*([\d.]+)(px|rem)\)\s+(.+)$/);
+    if (m) {
+      const bound = Number(m[2]) * (m[3] === "rem" ? 16 : 1);
+      if (m[1] === "max" ? vw > bound : vw < bound) continue;
+    }
+    const len = m ? m[4]! : part;
+    let n: RegExpMatchArray | null;
+    if ((n = len.match(/^([\d.]+)px$/))) return Number(n[1]);
+    if ((n = len.match(/^([\d.]+)vw$/))) return (Number(n[1]) * vw) / 100;
+    if ((n = len.match(/^calc\(([\d.]+)vw - ([\d.]+)px\)$/)))
+      return (Number(n[1]) * vw) / 100 - Number(n[2]);
+    throw new Error(`unsupported sizes length: ${len}`);
+  }
+  throw new Error(`no default slot in: ${sizes}`);
+}
+
+/** The candidate Chromium picks: the narrowest whose density reaches the DPR, else the widest (it matched
+ * Chromium 1248 on all 28,990 picks of the S1.3b audit). */
+function pick(widths: number[], sizes: string, vw: number, dpr: number) {
+  const slot = sizesSlot(sizes, vw);
+  const sorted = [...widths].sort((a, b) => a - b);
+  return sorted.find((w) => w / slot >= dpr) ?? sorted[sorted.length - 1]!;
+}
+
+describe("the S1.3b delivery copies — no picture is drawn from a narrower copy than S1.3 sent", () => {
+  const source = (relative: string) =>
+    readFileSync(
+      fileURLToPath(new URL(`../../${relative}`, import.meta.url)),
+      "utf8",
+    );
+  const sizesIn = (relative: string, pattern: RegExp) => {
+    const m = source(relative).match(pattern);
+    expect(m, `sizes in ${relative}`).not.toBeNull();
+    return m![1]!;
+  };
+  const widthOf = (objectPath: string) =>
+    manifest.entries.find((e) => e.object_path === objectPath)!.width!;
+  const S13_HERO_SIZES = "(max-width: 900px) 420px, 480px";
+  const S13_CARD_SIZES =
+    "(max-width: 600px) calc(100vw - 36px), (max-width: 900px) 70vw, 33vw";
+  const heroSizes = sizesIn(
+    "src/components/home/opening.tsx",
+    /sizes:\s*"([^"]+)"/,
+  );
+  const cardSizes = sizesIn(
+    "src/components/catalogue/route-card.tsx",
+    /const SIZES =\s*"([^"]+)"/,
+  );
+  const swatchSizes = sizesIn(
+    "src/components/product/spec-card.tsx",
+    /const SWATCH_SIZES = "([^"]+)"/,
+  );
+  const headerSizes = sizesIn(
+    "src/components/shell/site-header.tsx",
+    /const HEADER_LOGO_SIZES =\s*"([^"]+)"/,
+  );
+  const hero = ["600", "817", "1200"].map((s) =>
+    widthOf(`site/hero-artwork-${s}.webp`),
+  );
+  const card12 = ["600", "800", "1200"].map((s) =>
+    widthOf(`site/card-1-shop-all-${s}.webp`),
+  );
+  const card3 = ["600", "800", "1200"].map((s) =>
+    widthOf(`site/card-3-artstyle-${s}.webp`),
+  );
+  const swatch = [160, 320, 480];
+  const logo = [240, 450, 660];
+
+  const cases: Array<{
+    name: string;
+    column: number;
+    now: (vw: number, dpr: number) => number;
+    before: (vw: number, dpr: number) => number;
+  }> = [
+    {
+      name: "hero artwork",
+      column: 1,
+      now: (vw, dpr) => pick(hero, heroSizes, vw, dpr),
+      before: (vw, dpr) => pick([hero[0]!, hero[2]!], S13_HERO_SIZES, vw, dpr),
+    },
+    {
+      name: "route cards 1–2",
+      column: 2,
+      now: (vw, dpr) => pick(card12, cardSizes, vw, dpr),
+      before: (vw, dpr) =>
+        pick([card12[0]!, card12[2]!], S13_CARD_SIZES, vw, dpr),
+    },
+    {
+      name: "route card 3",
+      column: 3,
+      now: (vw, dpr) => pick(card3, cardSizes, vw, dpr),
+      before: (vw, dpr) =>
+        pick([card3[0]!, card3[2]!], S13_CARD_SIZES, vw, dpr),
+    },
+    // S1.3 sent the full pictures (1254 px swatches, the 2172 px logo), so these copies must cover the picture outright.
+    {
+      name: "craft swatch",
+      column: 4,
+      now: (vw, dpr) => pick(swatch, swatchSizes, vw, dpr),
+      before: () => 1254,
+    },
+    {
+      name: "header logo",
+      column: 5,
+      now: (vw, dpr) => pick(logo, headerSizes, vw, dpr),
+      before: () => 2172,
+    },
+  ];
+
+  it.each(cases.map((c) => [c.name, c]))(
+    "%s: at every audited width and DPR 1–3",
+    (_name, c) => {
+      const regressions: string[] = [];
+      for (const row of DRAWN)
+        for (const dpr of DPRS) {
+          const need = row[c.column]! * dpr;
+          const now = c.now(row[0], dpr);
+          if (now < need && now < c.before(row[0], dpr))
+            regressions.push(
+              `${row[0]}px @${dpr}: needs ${Math.round(need)}, gets ${now}`,
+            );
+        }
+      expect(regressions).toEqual([]);
+    },
+  );
+
+  it("the footer logo's 450 / 660 copies cover its 220 px at every DPR up to 3", () => {
+    for (const dpr of DPRS)
+      expect(pick(logo, "220px", 1440, dpr)).toBeGreaterThanOrEqual(220 * dpr);
+  });
+
+  it("Lighthouse's phone (412 px at 1.75×) still takes the small copies", () => {
+    expect(pick(hero, heroSizes, 412, 1.75)).toBe(817);
+    expect(pick(card12, cardSizes, 412, 1.75)).toBe(800);
+    expect(pick(card3, cardSizes, 412, 1.75)).toBe(800);
+    expect(pick(swatch, swatchSizes, 412, 1.75)).toBe(320);
+    expect(pick(logo, headerSizes, 412, 1.75)).toBe(240);
+  });
+
+  it("the prototype's sizes would have let the 817 hero copy be drawn enlarged (the audit's finding, kept as a guard)", () => {
+    // 2560 px at 1.5×: the wall frame draws 858.5 px, needing 1288 device px; S1.3's markup sent the 1199 px copy.
+    expect(pick(hero, S13_HERO_SIZES, 2560, 1.5)).toBe(817);
+    expect(pick(hero, heroSizes, 2560, 1.5)).toBe(1199);
+  });
+});
+
 describe("src/lib/site-images.ts — the registry mirrors the manifest", () => {
   it("every registry key and size is in the manifest, and every manifest entry is in the registry", () => {
     const fromRegistry = new Set<string>();
