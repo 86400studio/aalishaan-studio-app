@@ -114,7 +114,7 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         `baseline hash for ${entry.source_path}`,
       ).toBe(entry.sha256);
     }
-    expect(manifest.entries).toHaveLength(41);
+    expect(manifest.entries).toHaveLength(39);
   });
 
   it("the encoded copies come from PNG originals — native for the PNG-only sources, narrower delivery copies from S1.3b; the rest are the prototype's responsive WebP copies", () => {
@@ -142,7 +142,7 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         "site/card-1-shop-all-800.webp",
         "site/card-2-collection-800.webp",
         "site/card-3-artstyle-800.webp",
-        "site/hero-artwork-800.webp",
+        "site/hero-artwork-817.webp",
         ...[
           "gen-01-craft-detail-gold-frame",
           "gen-02-paper-closeup",
@@ -150,8 +150,6 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
           "gen-03-back-of-frame-and-hanging-system",
           "gen-04-print-closeup",
         ].flatMap((k) => [160, 320, 480].map((w) => `site/${k}-${w}.webp`)),
-        "site/size-comparison-a2-200.webp",
-        "site/size-comparison-a2-400.webp",
       ].sort(),
     );
     for (const entry of encoded)
@@ -190,7 +188,7 @@ describe("the S1.3b delivery copies — the prototype's scaling, never enlarged"
       SITE_IMAGE_SIZES[key].filter((s) => s !== "native").map(Number);
     expect(
       Math.min(...widths("hero-artwork").filter((w) => w >= 415 * 1.75)),
-    ).toBe(800);
+    ).toBe(817);
     for (const key of [
       "card-1-shop-all",
       "card-2-collection",
@@ -202,6 +200,31 @@ describe("the S1.3b delivery copies — the prototype's scaling, never enlarged"
         ...widths("gen-04-print-closeup").filter((w) => w >= 145 * 1.75),
       ),
     ).toBe(320);
+  });
+});
+
+describe("the S1.3b delivery copies — no box moves", () => {
+  it("the hero artwork's copy keeps the PNG's proportions to 0.001 % (the cutout's height follows the loaded copy)", () => {
+    const natural = NATIVE["assets/site/Hero Artwork.png"]!;
+    const copy = manifest.entries.find(
+      (e) => e.object_path === "site/hero-artwork-817.webp",
+    )!;
+    const error =
+      Math.abs(copy.height! / copy.width! - natural.height / natural.width) /
+      (natural.height / natural.width);
+    expect(error).toBeLessThan(0.00001);
+  });
+
+  it("the footer photo keeps the prototype's srcset: its height follows the copy, and no narrower copy keeps 1122 : 1402", () => {
+    const footer = readFileSync(
+      fileURLToPath(
+        new URL("../../src/components/shell/site-footer.tsx", import.meta.url),
+      ),
+      "utf8",
+    );
+    expect(footer).toMatch(
+      /siteImageSrcSet\("card-3-artstyle", \[\s*\["600", "600w"\],\s*\["1200", "1122w"\],\s*\]\)/,
+    );
   });
 });
 

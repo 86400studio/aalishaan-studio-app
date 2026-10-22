@@ -6,7 +6,7 @@
  * The approved E8 logo `public/brand/aalishaan-studio.png` (2172 × 724, D-PRE-07; its SHA-256 is the E10
  * development baseline's for `assets/brand/aalishaan-studio.png`) is drawn 82–120 CSS px wide in the header and
  * 220 px wide in the footer, yet every public page sent the full 417 KB file and React preloaded it. This tool
- * encodes the same picture at 240, 440 and 660 px wide — the header's and the footer's boxes at 2× and 3× — as
+ * encodes the same picture at 240, 450 and 660 px wide — the header's and the footer's boxes at 2× and 3× — as
  * **lossless** WebP through Playwright's Chromium, the prototype's own encoding method
  * (prototype/scripts/prepare-mobile-site.cjs: decode, draw scaled by `min(1, width / naturalWidth)`, rounded, on
  * a canvas, export) with quality 1, which Chromium encodes losslessly: the logo is blended with `multiply` over
@@ -26,7 +26,9 @@ import { chromium } from "@playwright/test";
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 export const LOGO_SOURCE = "public/brand/aalishaan-studio.png";
 export const LOGO_BASELINE_KEY = "assets/brand/aalishaan-studio.png";
-export const LOGO_WIDTHS = /** @type {const} */ ([240, 440, 660]);
+// Multiples of 3, so each copy is exactly 3 : 1 like the PNG (2172 : 724): a loaded copy's own proportions size an
+// image whose CSS sets only one side, and a rounded height (440 × 147) would move the footer by a fraction of a pixel.
+export const LOGO_WIDTHS = /** @type {const} */ ([240, 450, 660]);
 
 /** @param {number} width */
 export const logoCopyPath = (width) =>
@@ -110,6 +112,10 @@ async function main() {
         },
         { src: `data:image/png;base64,${source.toString("base64")}`, width },
       );
+      if (encoded.width * 724 !== encoded.height * 2172)
+        throw new Error(
+          `${width}: ${encoded.width}×${encoded.height} is not the logo's 3 : 1`,
+        );
       const bytes = Buffer.from(encoded.data, "base64");
       if (!webpInfo(bytes).chunks.includes("VP8L"))
         throw new Error(`${width}: the browser did not encode losslessly`);

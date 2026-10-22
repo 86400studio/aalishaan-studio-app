@@ -36,10 +36,10 @@
     },
     {
       "name": "hero-artwork",
-      "size": "800",
-      "width": 800,
-      "height": 875,
-      "object_path": "site/hero-artwork-800.webp",
+      "size": "817",
+      "width": 817,
+      "height": 894,
+      "object_path": "site/hero-artwork-817.webp",
       "source_path": "assets/site/Hero Artwork.png",
       "sha256": "044aa0b45a0ced820df6c44ca4a7f759eaadffe3ddbb1cc25d8ef86191e31d4c",
       "encode": true
@@ -372,26 +372,6 @@
       "object_path": "site/gen-04-print-closeup-1254.webp",
       "source_path": "assets/site/GEN-04-Print Closeup.png",
       "sha256": "69c925ea16aba4afc8ceac0e334ddf6d27b28e2a515ddef67c79f55c2aa85a12",
-      "encode": true
-    },
-    {
-      "name": "size-comparison-a2",
-      "size": "200",
-      "width": 200,
-      "height": 101,
-      "object_path": "site/size-comparison-a2-200.webp",
-      "source_path": "assets/site/size-comparison-A2.png",
-      "sha256": "b3a561d3b13726eeb2770676a2dee422bc2fcd0af160cb5f8a993e15bf5850f6",
-      "encode": true
-    },
-    {
-      "name": "size-comparison-a2",
-      "size": "400",
-      "width": 400,
-      "height": 202,
-      "object_path": "site/size-comparison-a2-400.webp",
-      "source_path": "assets/site/size-comparison-A2.png",
-      "sha256": "b3a561d3b13726eeb2770676a2dee422bc2fcd0af160cb5f8a993e15bf5850f6",
       "encode": true
     },
     {

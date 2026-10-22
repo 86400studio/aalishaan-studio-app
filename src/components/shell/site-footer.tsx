@@ -16,7 +16,7 @@ export function SiteFooter({ home = false }: { home?: boolean }) {
     // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
     <img
       src={BRAND.logo.src}
-      // The footer mark is 220 CSS px wide at every width (storefront.css): the 440 px copy at 2× (S1.3b, D-19).
+      // The footer mark is 220 CSS px wide at every width (storefront.css): the 450 px copy at 2× (S1.3b, D-19).
       srcSet={BRAND.logo.srcSet}
       sizes="220px"
       width={BRAND.logo.width}
@@ -148,7 +148,6 @@ function FooterCta() {
         src={siteImage("card-3-artstyle", "1200")}
         srcSet={siteImageSrcSet("card-3-artstyle", [
           ["600", "600w"],
-          ["800", "800w"],
           ["1200", "1122w"],
         ])}
         sizes="(max-width: 600px) calc(100vw - 36px), (max-width: 900px) 70vw, 33vw"

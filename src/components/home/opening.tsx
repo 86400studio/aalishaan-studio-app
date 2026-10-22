@@ -28,13 +28,14 @@ const HERO_ROOM = {
   src: siteImage("page-hero", "1600"),
   mobile: siteImage("page-hero", "1200"),
 } as const;
-// The prototype's srcset gains the 800 px delivery copy (S1.3b, D-19): the travelling frame lands at about 415 CSS
-// px on a phone, which at 1.75–2× needs 726–830 device pixels — the 1199 px copy is chosen only above that.
+// The prototype's srcset gains an 817 px delivery copy (S1.3b, D-19): the travelling frame lands at about 415 CSS
+// px on a phone, which at 1.75× needs 726 device pixels — the 1199 px copy is chosen above 1.94×. 817 × 894 keeps
+// the original's proportions (the cutout's height follows the loaded copy), so the frame's box is unchanged.
 const HERO_ART = {
   src: siteImage("hero-artwork", "1200"),
   srcSet: siteImageSrcSet("hero-artwork", [
     ["600", "600w"],
-    ["800", "800w"],
+    ["817", "817w"],
     ["1200", "1199w"],
   ]),
   sizes: "(max-width: 900px) 420px, 480px",

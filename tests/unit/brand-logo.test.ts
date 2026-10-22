@@ -37,13 +37,14 @@ describe("public/brand — the logo copies", () => {
   });
 
   it.each(LOGO_WIDTHS.map((w) => [w]))(
-    "the %i px copy is a lossless WebP of the logo's proportions",
+    "the %i px copy is a lossless WebP of exactly the logo's proportions",
     (width) => {
       const info = webpInfo(read(logoCopyPath(width)));
       expect(info.chunks).toContain("VP8L");
       expect(info.chunks).not.toContain("VP8 ");
       expect(info.width).toBe(width);
-      expect(info.height).toBe(Math.round((724 * width) / 2172));
+      // Exactly 3 : 1, not rounded: a loaded copy's own proportions size an image whose CSS sets one side only.
+      expect(info.height * 2172).toBe(info.width * 724);
     },
   );
 

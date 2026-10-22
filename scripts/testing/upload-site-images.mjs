@@ -12,19 +12,20 @@
  * "Encode responsive delivery copies of approved images. No creative edits or source changes."): the PNG-only
  * sources the storefront shows (the five craft details, the A2 size comparison, the FAQ illustration) at their
  * native size (S1.3), and, from S1.3b (D-19), narrower delivery copies of the images Home draws smaller than
- * the prototype's copies — the hero artwork and the three route pictures at 800 px, the craft details at 160 /
- * 320 / 480 px, the A2 comparison at 200 / 400 px — each scaled as that script scales (`min(1, width /
- * naturalWidth)`, rounded) and checked against the manifest's width and height. Each source file is resolved inside the source root — a path that
- * escapes the root, an absolute path, a symbolic link or a path that resolves outside the root is refused —,
+ * the prototype's copies — the hero artwork at 817 px (the width that keeps its proportions), the three route
+ * pictures at 800 px, the craft details at 160 / 320 / 480 px — each scaled as that script scales (`min(1,
+ * width / naturalWidth)`, rounded) and checked against the manifest's width and height. Each source file is
+ * resolved inside the source root — a path that escapes the root, an absolute path, a symbolic link or a path
+ * that resolves outside the root is refused —,
  * must be a regular file of at most 20 MiB whose bytes carry the signature its entry declares and whose
  * SHA-256 equals the manifest's (taken from the prototype's E10 development baseline). The checkout is
  * verified too: with a `.git` directory its HEAD must be the pinned commit. Nothing outside the manifest is
  * ever uploaded.
  *
  * Dry run by default — every file verified and every PNG copy encoded, then `.env.local` loaded and TEST read:
- * the five identity probes and one listing per manifest entry (46 read requests for the 41 entries: 44 with the
- * secret key, 2 with the publishable key), nothing uploaded; `--apply` adds one upload per missing object (21
- * uploads after S1.3's 20, so 67 requests; 87 on an empty prefix) with the server's
+ * the five identity probes and one listing per manifest entry (44 read requests for the 39 entries: 42 with the
+ * secret key, 2 with the publishable key), nothing uploaded; `--apply` adds one upload per missing object (19
+ * uploads after S1.3's 20, so 63 requests; 83 on an empty prefix) with the server's
  * secret key to the public bucket `catalogue-public` under `site/`. Idempotent and never
  * destructive without `--overwrite` (the catalogue tool's rule, reused: an existing object is kept; the
  * listing gives a length, not the content). PROD, an unknown target, missing credentials or mismatched refs
