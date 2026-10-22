@@ -1,0 +1,1231 @@
+/*
+ * The public shell and the shared storefront components — S1.3 (docs/DESIGN.md §3, §4). Effective values
+ * after the prototype's cascade (browse-home → home-r2 → browse → pending → about-hub → storefront-r7 →
+ * gallery-r8 → revision-r9 → revision-r11); every rule cites its source. The three family sheets are loaded by
+ * the public route group's layout and the global 404's `not-found.css` only, and every rule is scoped to the `.site` wrapper with `:where(.site)`, which
+ * adds no specificity: each ported selector weighs exactly what the prototype's own selector weighs, so the
+ * prototype's cascade decides as it does in the frozen pages (a prototype `body …` qualifier is ported as
+ * `body :where(.site) …`). Body-class variants of the prototype (`.browse-page .utility-page .help-page …`) sit on
+ * the page wrapper inside `.site`.
+ */
+
+/* ---------- Preflight, reverted inside the shell ----------
+ * globals.css loads Tailwind, whose Preflight (in @layer base) is the Admin's base. The prototype has none: inside
+ * `.site` every property Preflight sets on an element falls back to the browser's default, as the frozen pages
+ * render it; of its `html` rule, `.site` still inherits `tab-size: 4` (the copy has no tab) and the transparent tap
+ * highlight, which the prototype gives its controls itself (gallery-r8.css:5), and its `::-webkit-search-decoration`
+ * rule stays (only WebKit's search fields draw one: the help search on Safari). These
+ * rules are unlayered and weigh no more than an element selector, and they come first, so every ported prototype
+ * rule below still wins. */
+:where(.site) *,
+:where(.site) ::before,
+:where(.site) ::after {
+  margin: revert;
+  padding: revert;
+  border: revert;
+}
+:where(.site) :is(h1, h2, h3, h4, h5, h6) {
+  font-size: revert;
+  font-weight: revert;
+}
+:where(.site) a {
+  color: revert;
+  text-decoration: revert;
+}
+:where(.site) :is(ol, ul, menu) {
+  list-style: revert;
+}
+:where(.site) :is(img, svg, video, canvas, audio, iframe, embed, object) {
+  display: revert;
+  vertical-align: revert;
+}
+:where(.site) :is(img, video) {
+  max-width: revert;
+  height: revert;
+}
+:where(.site) :is(button, input, select, optgroup, textarea) {
+  font: revert;
+  letter-spacing: revert;
+  color: revert;
+  border-radius: revert;
+  background-color: revert;
+  opacity: revert;
+}
+:where(.site)
+  :is(button, input:where([type="button"], [type="reset"], [type="submit"])) {
+  appearance: revert;
+}
+:where(.site) ::placeholder {
+  opacity: revert;
+  color: revert;
+}
+:where(.site) small {
+  font-size: revert;
+}
+:where(.site) summary {
+  display: revert;
+}
+:where(.site) textarea {
+  resize: revert;
+}
+
+/* ---------- base (browse-home.css:47–76, scoped) ---------- */
+.site {
+  --font-display: var(--font-charsen), Georgia, "Times New Roman", serif;
+  --font-ui: var(--font-instrument-sans), "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--ink);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+:where(.site) *,
+:where(.site) *::before,
+:where(.site) *::after {
+  box-sizing: border-box;
+}
+:where(.site) img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+:where(.site) h1,
+:where(.site) h2,
+:where(.site) h3,
+:where(.site) h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+}
+:where(.site) h1 {
+  font-size: var(--text-display);
+  line-height: 1.02;
+}
+:where(.site) h2 {
+  font-size: var(--text-h2);
+  line-height: 1.12;
+}
+:where(.site) h3 {
+  font-size: var(--text-h3);
+  line-height: 1.2;
+}
+:where(.site) p {
+  margin: 0;
+}
+:where(.site) ul,
+:where(.site) ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+:where(.site) a {
+  color: inherit;
+  text-decoration: none;
+}
+:where(.site) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+/* One storefront ring (D-15): 2 px crimson; the effective offset is 4 px (gallery-r8.css:6 on every page). */
+:where(.site) :focus-visible {
+  outline: 2px solid var(--crimson);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+/* D-50 (accepted by the owner, 2026-10-19): on the two dark surfaces the crimson ring falls under WCAG 1.4.11's
+   3 : 1 (2.11 : 1 on Home's closing band, 2.24 : 1 around the help search in the dark help banner), so it is white
+   there; the editorial banner of the About hub is light and keeps the crimson ring. */
+:where(.site) .footer-cta :focus-visible,
+:where(.site) .help-banner:not(.help-banner--editorial) :focus-visible {
+  outline-color: var(--white);
+}
+:where(.site) button,
+:where(.site) a,
+:where(.site) input,
+:where(.site) select,
+:where(.site) textarea,
+:where(.site) summary {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.site) ::selection {
+  background: #eadfd1;
+  color: #191813;
+}
+:where(.site) [hidden] {
+  display: none !important;
+}
+:where(.site) .container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+:where(.site) .section {
+  padding-block: clamp(4rem, 7vw, 7rem);
+}
+:where(.site) .section--white {
+  background: var(--white);
+}
+:where(.site) .section--ink {
+  background: var(--ink);
+  color: #f3efe6;
+}
+:where(.site) .visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+:where(.site) .skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 200;
+  background: var(--ink);
+  color: var(--white);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-s);
+  transition: top var(--dur) var(--ease);
+}
+:where(.site) .skip-link:focus {
+  top: 1rem;
+}
+:where(.site) main [id],
+:where(.site) section[id] {
+  scroll-margin-top: 6.5rem;
+}
+
+:where(.site) .eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+}
+:where(.site) .eyebrow--light {
+  color: var(--gold-light);
+}
+:where(.site) .lead {
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+:where(.site) .muted {
+  color: var(--muted);
+}
+
+/* ---------- buttons and text links (browse-home.css:78–95; gallery-r8.css:10) ---------- */
+:where(.site) .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+:where(.site) .button:active {
+  transform: translateY(1px);
+}
+:where(.site) .button--primary {
+  background: var(--crimson);
+  color: #fff;
+}
+:where(.site) .button--primary:hover {
+  background: var(--crimson-hover);
+}
+:where(.site) .button--secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+:where(.site) .button--secondary:hover {
+  border-color: var(--ink);
+  background: rgba(25, 24, 19, 0.04);
+}
+:where(.site) .button--ondark {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(6px);
+}
+:where(.site) .button--ondark:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
+:where(.site) .button--full {
+  width: 100%;
+}
+:where(.site) .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+:where(.site) .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--crimson);
+  border-bottom: 1px solid rgba(181, 31, 42, 0.3);
+  padding-bottom: 1px;
+  transition: border-color var(--dur) var(--ease);
+}
+:where(.site) .text-link:hover {
+  border-color: var(--crimson);
+}
+:where(.site) .text-link::after {
+  content: "\2192";
+  transition: transform var(--dur) var(--ease);
+}
+:where(.site) .text-link:hover::after {
+  transform: translateX(3px);
+}
+/* storefront-r7.css:2 — the arrow is written into the copy on these pages. The prototype's page classes sit on
+   <body>, so the rule also reaches the drawers; here they sit on the page wrapper, and the drawers are its
+   siblings, so the shell is matched by what it holds (same weight as the prototype's selector). */
+:where(.site) .help-brand .text-link::after,
+:where(.site) .studio-page .text-link::after,
+:where(.site) .commerce-page .text-link::after,
+:where(.site) .recovery-page .text-link::after,
+:where(
+    .site:has(> :is(.help-brand, .studio-page, .commerce-page, .recovery-page))
+  )
+  .drawer
+  .text-link::after {
+  content: none;
+}
+
+:where(.site) .section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--space-6) var(--space-8);
+  align-items: end;
+  margin-bottom: var(--space-8);
+}
+:where(.site) .section-heading h2 {
+  margin-top: 0.6rem;
+}
+:where(.site) .section-heading p {
+  color: var(--taupe);
+  max-width: 38rem;
+}
+@media (max-width: 74.9375rem) {
+  :where(.site) .section-heading {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ---------- header (browse-home.css:104–134, 325–331, 364–368, 405–408, 434–436; browse.css; revision-r11.css:85–91) ---------- */
+:where(.site) .site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  pointer-events: none;
+  padding-block: var(--nav-top);
+  transition:
+    background 300ms,
+    box-shadow 300ms,
+    backdrop-filter 300ms;
+}
+:where(.site) .site-header[data-stuck="true"] {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 1px 0 rgba(25, 24, 19, 0.09);
+}
+/* every non-Home page (browse.css:1) */
+:where(.site) .browse-page .site-header {
+  position: sticky;
+  background: #fff;
+}
+:where(.site) .site-header .nav-shell {
+  pointer-events: auto;
+  width: min(76rem, calc(100% - var(--gutter) * 2));
+  margin-inline: auto;
+  height: var(--nav-height);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0 0.65rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+:where(.site) .site-header:not([data-stuck="true"]) .brand-logo {
+  mix-blend-mode: multiply;
+}
+:where(.site) .brand-logo {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: 0.6rem;
+}
+:where(.site) .brand-logo img {
+  height: 2.05rem;
+  width: auto;
+}
+:where(.site) .primary-nav {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+:where(.site) .primary-nav__list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+:where(.site) .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.35rem;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-m);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+:where(.site) .nav-link:hover {
+  background: rgba(25, 24, 19, 0.055);
+  color: var(--ink);
+}
+:where(.site) .utility-nav {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+:where(.site) .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: var(--radius-m);
+  color: var(--ink-soft);
+  transition: background var(--dur) var(--ease);
+}
+:where(.site) .icon-button:hover {
+  background: rgba(25, 24, 19, 0.06);
+}
+:where(.site) .icon-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 1.5;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:where(.site) .cart-count {
+  position: absolute;
+  top: 0.34rem;
+  right: 0.34rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.2rem;
+  border-radius: var(--radius-pill);
+  background: var(--crimson);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+}
+/* gallery-r8.css:7–8 over browse-home.css:132–133 */
+:where(.site) .site-header .nav-cta {
+  height: 2.85rem;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid #c9c4bb;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+:where(.site) .site-header .nav-cta:hover {
+  background: #f2eee8;
+  border-color: var(--ink);
+}
+:where(.site) .mobile-menu-trigger {
+  display: none;
+}
+@media (min-width: 75rem) {
+  :where(.site) .brand-logo img {
+    height: 2.5rem;
+  }
+  :where(.site) .nav-link {
+    font-size: 0.875rem;
+  }
+}
+@media (max-width: 74.9375rem) {
+  :where(.site) .primary-nav {
+    display: none;
+  }
+  :where(.site) .mobile-menu-trigger {
+    display: inline-flex;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  :where(.site) .site-header .nav-shell {
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+  :where(.site) .brand-logo {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    margin-left: 0;
+  }
+  :where(.site) .utility-nav {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  :where(.site) .site-header .nav-cta {
+    padding-inline: 0.95rem;
+    font-size: 0.8125rem;
+  }
+}
+/* M2 (revision-r11.css:85–91), signed off: menu left, logo centred, cart right; Track inside Menu */
+@media (max-width: 900px) {
+  :where(.site) .site-header .nav-shell {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+  :where(.site) .site-header .mobile-menu-trigger {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+  }
+  :where(.site) .site-header .brand-logo {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    margin-left: 0;
+  }
+  :where(.site) .site-header .utility-nav {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  :where(.site) .site-header .nav-cta {
+    display: none;
+  }
+}
+@media (max-width: 47.9375rem) {
+  :where(.site) .brand-logo img {
+    height: 1.7rem;
+  }
+  :where(.site) .site-header .nav-shell {
+    gap: 0.15rem;
+  }
+  :where(.site) .utility-nav {
+    gap: 0;
+  }
+}
+@media (max-width: 600px) {
+  :where(.site) .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ---------- overlays: backdrop, drawers, toast (browse-home.css:298–322) ---------- */
+:where(.site) .backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(16, 15, 12, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur) var(--ease),
+    visibility var(--dur);
+}
+:where(.site) .backdrop[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+}
+:where(.site) .drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 96;
+  width: min(24rem, 88vw);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  transition: transform 260ms var(--ease);
+  box-shadow: 0 0 60px rgba(25, 24, 19, 0.2);
+}
+:where(.site) .drawer--left {
+  left: 0;
+  transform: translateX(-102%);
+}
+:where(.site) .drawer--right {
+  right: 0;
+  transform: translateX(102%);
+}
+:where(.site) .drawer[data-open="true"] {
+  transform: none;
+}
+:where(.site) .drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+:where(.site) .drawer__header h2 {
+  font-size: 1.125rem;
+}
+:where(.site) .drawer__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+:where(.site) .drawer__footer {
+  padding: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+}
+:where(.site) .mobile-nav__list {
+  display: grid;
+  gap: 0.15rem;
+}
+:where(.site) .mobile-nav__list > li > a,
+:where(.site) .mobile-nav__list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+:where(.site) .mobile-nav__list > li > a:hover,
+:where(.site) .mobile-nav__list summary:hover {
+  background: var(--ivory);
+}
+:where(.site) .mobile-nav__list summary {
+  list-style: none;
+}
+:where(.site) .mobile-nav__list summary::-webkit-details-marker {
+  display: none;
+}
+:where(.site) .mobile-nav__list summary::after {
+  content: "+";
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+:where(.site) .mobile-nav__list details[open] summary::after {
+  content: "\2212";
+}
+:where(.site) .mobile-nav__sublist {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.25rem 0 0.5rem 0.75rem;
+  border-left: 1px solid var(--line-soft);
+  margin-left: 0.5rem;
+}
+:where(.site) .mobile-nav__sublist a {
+  display: block;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--taupe);
+  border-radius: var(--radius-s);
+}
+:where(.site) .mobile-nav__sublist a:hover {
+  background: var(--ivory);
+  color: var(--ink);
+}
+:where(.site) .cart-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  display: grid;
+  gap: 0.85rem;
+  justify-items: center;
+}
+:where(.site) .cart-empty h3 {
+  font-size: 1.25rem;
+}
+:where(.site) .cart-empty p {
+  font-size: 0.9375rem;
+  color: var(--taupe);
+  max-width: 20rem;
+}
+:where(.site) .toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translate(-50%, 1.5rem);
+  z-index: 120;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: var(--radius-pill);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    visibility var(--dur);
+}
+:where(.site) .toast[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- the shared R11 FAQ card (revision-r11.css:25–30, 42; DESIGN §3 "FAQ accordion") ----------
+   The prototype weights these rules as body .r11-faq.r11-faq.r11-faq … so they win over every page family's
+   heading and paragraph rules; the port keeps that weight exactly. */
+body :where(.site) .r11-faq.r11-faq.r11-faq {
+  border: 1px solid #19181309;
+  background: #faf9f7;
+  border-radius: 28px;
+  margin: 0 0 14px;
+  padding: 0 24px;
+}
+body :where(.site) .r11-faq.r11-faq.r11-faq summary {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #191813;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  margin: 0;
+  cursor: pointer;
+}
+body :where(.site) .r11-faq.r11-faq.r11-faq summary::after {
+  content: "+";
+  font: 400 24px/42px sans-serif;
+  text-align: center;
+  background: #f0eeea;
+  color: #191813;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  transform: none;
+}
+body :where(.site) .r11-faq.r11-faq.r11-faq[open] summary::after {
+  content: "\2212";
+}
+body :where(.site) .r11-faq.r11-faq.r11-faq summary::-webkit-details-marker {
+  display: none;
+}
+body :where(.site) .r11-faq.r11-faq.r11-faq p {
+  margin: 0;
+  max-width: none;
+  padding: 0 0 24px;
+  font: 400 16px/1.7 var(--font-ui);
+  color: #68645e;
+}
+@media (max-width: 700px) {
+  body :where(.site) .r11-faq.r11-faq.r11-faq summary {
+    font-size: 21px;
+  }
+}
+
+/* ---------- footer (home-r2.css:18–42; gallery-r8.css:79–82; revision-r9.css:4–15, 71–72; revision-r11.css:5–17, 43–82) ---------- */
+:where(.site) .site-footer {
+  margin: 0 1rem 1rem;
+  border-radius: 4px;
+  padding: 0;
+  background: #24231f;
+  color: #f7f2e9;
+  overflow: hidden;
+}
+/* about-hub.css:45 (margin); its background and radius are re-set by gallery-r8.css:79 (`.help-page .site-footer,
+   .site-footer` — the base rule above), which also overrides storefront-r7.css:20 on every help page. */
+:where(.site) .help-page .site-footer {
+  margin: 0;
+}
+/* storefront-r7.css:20, where gallery-r8 does not reach (no `.help-page` on these pages) */
+:where(.site) .studio-page .site-footer,
+:where(.site) .commerce-page .site-footer,
+:where(.site) .recovery-page .site-footer {
+  background: #191813;
+}
+/* the CTA band is Home-only (DESIGN §4) */
+:where(.site) .help-page .footer-cta,
+:where(.site) .studio-page .footer-cta,
+:where(.site) .commerce-page .footer-cta,
+:where(.site) .recovery-page .footer-cta {
+  display: none;
+}
+:where(.site) .footer-cta {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  background: #2d2d27;
+  border-bottom: 1px solid #b9a77c55;
+}
+:where(.site) .footer-photo {
+  width: 100%;
+  height: 100%;
+  max-height: 580px;
+  min-height: 500px;
+  object-fit: cover;
+  object-position: center 60%;
+}
+:where(.site) .footer-cta-content {
+  align-self: center;
+  padding: clamp(2rem, 4vw, 4rem);
+  max-width: 44rem;
+}
+:where(.site) .footer-cta-content h2 {
+  font-size: clamp(2.25rem, 3.4vw, 3.4rem);
+  line-height: 1.12;
+  margin-top: 0.75rem;
+  max-width: 12em;
+  text-wrap: balance;
+}
+:where(.site) .footer-rule {
+  display: block;
+  position: relative;
+  width: 10rem;
+  height: 1px;
+  background: #c6ae7e99;
+  margin: 1.5rem 0;
+}
+:where(.site) .footer-rule::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  background: #c6ae7e;
+  transform: rotate(45deg);
+}
+:where(.site) .footer-cta-content > p {
+  color: #e0ddcf;
+  max-width: 30rem;
+  font-size: 1rem;
+}
+:where(.site) .footer-rooms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.5rem;
+  margin: 1.4rem 0 1.8rem;
+}
+:where(.site) .footer-rooms a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 48px;
+  border-bottom: 1px solid #d2b87740;
+  font-size: 0.9375rem;
+}
+:where(.site) .footer-rooms a:hover {
+  color: var(--gold-light);
+}
+:where(.site) .footer-rooms span {
+  color: var(--gold-light);
+}
+:where(.site) .footer-cta-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+}
+:where(.site) .footer-cta-actions .button {
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+}
+:where(.site) .footer-help {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  font-size: 0.875rem;
+}
+
+/* R13 (revision-r11.css:44–67) */
+body :where(.site) .footer-watercolour {
+  position: relative;
+  background: #fffdf9;
+  padding: 58px 0 0;
+  color: #223039;
+}
+body :where(.site) .footer-watercolour .footer-main {
+  display: grid;
+  max-width: 1600px;
+  grid-template-columns: 1.5fr 0.85fr 1.05fr 1.15fr 1.85fr;
+  gap: 0;
+  padding: 0 40px 36px;
+  align-items: stretch;
+}
+body :where(.site) .footer-watercolour .footer-brand {
+  padding: 8px 26px 8px 0;
+}
+body :where(.site) .footer-watercolour .footer-brand__mark {
+  display: inline-block;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-s); /* browse-home.css:286 */
+}
+body :where(.site) .footer-watercolour .footer-brand img {
+  width: 220px;
+  height: auto;
+  mix-blend-mode: multiply;
+  border-radius: var(--radius-s); /* browse-home.css:285 */
+}
+body :where(.site) .footer-watercolour .footer-brand p {
+  max-width: 24rem; /* browse-home.css:287 */
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2vw, 32px);
+  line-height: 1.3;
+  margin: 20px 0 24px;
+  color: #223039;
+}
+body :where(.site) .footer-watercolour .footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  color: #223039;
+  margin-top: 20px;
+}
+:where(.site) .footer-social {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  color: #68645e;
+}
+:where(.site) .footer-social svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body :where(.site) .footer-watercolour .footer-column {
+  border-left: 1px solid #c5a98c60;
+  padding: 18px 24px;
+}
+body :where(.site) .footer-watercolour .footer-column h2 {
+  font: 700 12px/1.5 var(--font-ui);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 22px;
+  color: #90683f;
+}
+body :where(.site) .footer-watercolour .footer-links {
+  display: grid;
+  gap: 8px;
+}
+body :where(.site) .footer-watercolour .footer-links a {
+  display: inline-flex;
+  align-items: center;
+  font:
+    400 clamp(16px, 1.25vw, 20px) / 1.4 Georgia,
+    serif;
+  color: #223039;
+  min-height: 40px;
+}
+body :where(.site) .footer-watercolour .footer-newsletter {
+  border: 1px solid #c5a98c60;
+  border-radius: 8px;
+  background: #f9f6f180;
+  padding: 24px;
+  margin-left: 18px;
+  grid-column: auto;
+}
+body :where(.site) .footer-watercolour .footer-newsletter h2::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 1px;
+  background: #c5a98c60;
+  margin-top: 14px;
+}
+body :where(.site) .footer-watercolour .footer-newsletter p {
+  font:
+    400 17px/1.5 Georgia,
+    serif;
+  color: #223039;
+  margin: 0 0 22px;
+}
+body :where(.site) .footer-watercolour .newsletter-form > div {
+  display: flex;
+  border: 1px solid #c9c0b3;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #fffdfc;
+}
+/* revision-r11.css:58 weighs body .footer-watercolour.footer-watercolour …, enough to outweigh the M1 16px
+   field rule (utility.css, revision-r11.css:108) */
+body
+  :where(.site)
+  .footer-watercolour.footer-watercolour
+  .newsletter-form
+  input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 15px;
+  font:
+    400 17px/1.4 Georgia,
+    serif;
+  min-height: 52px;
+  color: #191813;
+}
+body :where(.site) .footer-watercolour .newsletter-form button {
+  background: linear-gradient(135deg, #ad8154, #96693f);
+  color: #fff;
+  font-size: 28px;
+  min-width: 58px;
+  min-height: 48px;
+}
+body :where(.site) .footer-watercolour .newsletter-form input:disabled,
+body :where(.site) .footer-watercolour .newsletter-form button:disabled {
+  cursor: not-allowed;
+}
+/* revision-r11.css:60 over :57 — the note is a paragraph of the card, so it keeps the card's Georgia (17px/1.5)
+   at 14px; its colour is the fine-print token rather than the prototype's #81766c (4.24 : 1 under NS-02's text,
+   under DESIGN §6's 4.5 : 1) — accepted by the owner, 2026-10-19 */
+body :where(.site) .footer-watercolour .footer-newsletter .newsletter-note {
+  font-size: 14px;
+  color: var(--fine-print);
+  margin: 14px 0 0;
+}
+body :where(.site) .footer-watercolour .newsletter-status:empty {
+  display: none;
+}
+body :where(.site) .footer-watercolour .footer-newsletter .newsletter-status {
+  font: 400 14px/1.5 var(--font-ui);
+  margin: 12px 0 0;
+}
+body :where(.site) .footer-watercolour .footer-bottom {
+  display: flex;
+  flex-wrap: wrap; /* browse-home.css:293 */
+  gap: 1rem; /* browse-home.css:293 */
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: calc(100% - 80px);
+  max-width: 1520px;
+  margin-top: 0;
+  padding: 12px 0 18px;
+  border-top: 1px solid #b98d6766;
+  font:
+    400 15px/1.5 Georgia,
+    serif;
+  color: #223039;
+}
+body :where(.site) .footer-watercolour .footer-bottom a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+:where(.site) .footer-identity {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+body :where(.site) .footer-watercolour .footer-bottom__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+body :where(.site) .footer-watercolour .footer-bottom__links a {
+  color: #223039;
+  padding: 0 16px;
+  position: relative;
+}
+body :where(.site) .footer-watercolour .footer-bottom__links a + a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  height: 14px;
+  width: 1px;
+  background: #b98d6780;
+}
+body :where(.site) .footer-watercolour a:hover {
+  color: #9a622f;
+}
+/* M5 (revision-r11.css:75–82): the mobile-only Legal column */
+:where(.site) .footer-mobile-legal {
+  display: none;
+}
+@media (max-width: 1150px) {
+  body :where(.site) .footer-watercolour .footer-main {
+    grid-template-columns: 1.25fr 1fr 1.15fr;
+    gap: 28px 0;
+  }
+  body :where(.site) .footer-watercolour .footer-newsletter {
+    grid-column: 2/4;
+  }
+  body :where(.site) .footer-watercolour .footer-column:nth-child(4) {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+@media (max-width: 900px) {
+  /* home-r2.css:58 — the brand takes the whole first row (from 701 px the R11 rules leave it in place) */
+  :where(.site) .footer-brand {
+    grid-column: 1/-1;
+  }
+  :where(.site) .footer-cta {
+    grid-template-columns: 1fr 1fr;
+  }
+  :where(.site) .footer-photo {
+    min-height: 440px;
+  }
+  :where(.site) .footer-cta-content {
+    padding: 2rem;
+  }
+}
+@media (max-width: 700px) {
+  body :where(.site) .footer-watercolour {
+    padding-top: 34px;
+  }
+  body :where(.site) .footer-watercolour .footer-main {
+    grid-template-columns: 1fr 1fr;
+    padding: 0 24px 28px;
+    gap: 28px 18px;
+  }
+  body :where(.site) .footer-watercolour .footer-brand {
+    grid-column: 1/-1;
+    padding: 0 0 26px;
+    border-bottom: 1px solid #c5a98c60;
+    text-align: center;
+  }
+  body :where(.site) .footer-watercolour .footer-brand__mark {
+    display: flex;
+    justify-content: center;
+  }
+  body :where(.site) .footer-watercolour .footer-socials {
+    justify-content: center;
+  }
+  body :where(.site) .footer-watercolour .footer-column {
+    padding: 0;
+    border: 0;
+  }
+  body :where(.site) .footer-watercolour .footer-column h2 {
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+  body :where(.site) .footer-watercolour .footer-newsletter {
+    grid-column: 1/-1;
+    padding: 22px;
+    margin: 0;
+    border: 1px solid #c5a98c60;
+  }
+  body :where(.site) .footer-watercolour .footer-mobile-legal {
+    display: block;
+  }
+  body :where(.site) .footer-watercolour .footer-bottom {
+    width: calc(100% - 48px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 13px;
+  }
+  body :where(.site) .footer-watercolour .footer-bottom__links {
+    display: none;
+  }
+  body :where(.site) .footer-watercolour .footer-bottom__links a {
+    padding: 0 12px;
+  }
+  body :where(.site) .footer-watercolour .footer-bottom__links a:first-child {
+    padding-left: 0;
+  }
+  /* revision-r9.css:80 sets an 18px margin here; revision-r11.css:17 (`body .footer-watercolour .footer-identity
+     {margin:0}`) outweighs it at every width — so no mobile margin. */
+}
+@media (max-width: 600px) {
+  :where(.site) .site-footer {
+    margin: 0 0.5rem 0.5rem;
+  }
+  :where(.site) .footer-cta {
+    grid-template-columns: 1fr;
+  }
+  :where(.site) .footer-photo {
+    min-height: 0;
+    height: 260px;
+    object-position: center 55%;
+  }
+  :where(.site) .footer-cta-content {
+    padding: 2rem 1.25rem;
+  }
+  :where(.site) .footer-cta-content h2 {
+    font-size: 2.6rem;
+    max-width: 11em;
+  }
+  :where(.site) .footer-cta-actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  :where(.site) .footer-help {
+    justify-content: center;
+  }
+}
+@media (max-width: 599px) {
+  :where(.site) .footer-cta-content {
+    padding: 32px 24px;
+  }
+  :where(.site) .footer-cta-content h2 {
+    font-size: 2.35rem;
+  }
+  :where(.site) .footer-rooms {
+    gap: 0 20px;
+  }
+  :where(.site) .footer-photo {
+    height: 240px;
+  }
+}

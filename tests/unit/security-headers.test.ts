@@ -98,6 +98,30 @@ describe(
       expect(connect).toEqual(["'self'", EXAMPLE_INGEST_ORIGIN]);
     });
 
+    // S1.3 (D-48): the deployed policy's img-src, as next.config.ts wires it from the public build value.
+    it.each([
+      [
+        "https://abcdefghijklmnopqrst.supabase.co",
+        ["'self'", "data:", "https://abcdefghijklmnopqrst.supabase.co"],
+      ],
+      [undefined, ["'self'", "data:"]],
+      ["https://abcdefghijklmnopqrst.supabase.co:8443", ["'self'", "data:"]],
+      ["https://example.com", ["'self'", "data:"]],
+      ["not a url", ["'self'", "data:"]],
+    ])(
+      "serves img-src %j → %j from NEXT_PUBLIC_SUPABASE_URL",
+      async (supabaseUrl, expected) => {
+        const config = await loadNextConfig({
+          NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
+        });
+        const rules = (await config.headers?.()) ?? [];
+        const csp = rules[0]?.headers.find(
+          (h) => h.key.toLowerCase() === "content-security-policy",
+        );
+        expect(parsePolicy(csp?.value ?? "").get("img-src")).toEqual(expected);
+      },
+    );
+
     it.each([
       ["production", "production"],
       ["preview", "preview"],
@@ -163,16 +187,38 @@ describe("Content-Security-Policy", () => {
     }
   });
 
-  it("allows images from self and data: URLs only — the TOTP enrolment QR is a data: SVG rendered through <img>", () => {
+  it("allows images from self and data: URLs only without a Storage origin — the TOTP enrolment QR is a data: SVG rendered through <img>", () => {
     for (const options of [
       {},
       { sentryDsn: EXAMPLE_DSN },
       { isDevelopment: true },
+      { supabaseUrl: "" },
+      { supabaseUrl: "https://example.com" },
+      { supabaseUrl: "http://abcdefghijklmnopqrst.supabase.co" },
     ]) {
       expect(
         parsePolicy(contentSecurityPolicy(options)).get("img-src"),
       ).toEqual(["'self'", "data:"]);
     }
+  });
+
+  it("adds the project's own Storage origin to img-src alone when the public URL is set (S1.3, D-48)", () => {
+    const policy = parsePolicy(
+      contentSecurityPolicy({
+        supabaseUrl: "https://abcdefghijklmnopqrst.supabase.co/",
+        sentryDsn: EXAMPLE_DSN,
+      }),
+    );
+    expect(policy.get("img-src")).toEqual([
+      "'self'",
+      "data:",
+      "https://abcdefghijklmnopqrst.supabase.co",
+    ]);
+    for (const [name, sources] of policy)
+      if (name !== "img-src")
+        expect(sources, name).not.toContain(
+          "https://abcdefghijklmnopqrst.supabase.co",
+        );
   });
 
   it("names no third-party origin except the configured Sentry ingest origin", () => {
@@ -182,6 +228,16 @@ describe("Content-Security-Policy", () => {
 
     const withDsn = contentSecurityPolicy({ sentryDsn: EXAMPLE_DSN });
     expect(withDsn.match(/https?:\/\/[^\s;]+/g)).toEqual([
+      EXAMPLE_INGEST_ORIGIN,
+    ]);
+    // The Storage origin is the only other remote origin, and only on img-src (S1.3).
+    expect(
+      contentSecurityPolicy({
+        sentryDsn: EXAMPLE_DSN,
+        supabaseUrl: "https://abcdefghijklmnopqrst.supabase.co",
+      }).match(/https?:\/\/[^\s;]+/g),
+    ).toEqual([
+      "https://abcdefghijklmnopqrst.supabase.co",
       EXAMPLE_INGEST_ORIGIN,
     ]);
     // Only the origin is exposed: never the DSN's key or project path.

@@ -1,0 +1,1248 @@
+/*
+ * Home — S1.3 (docs/DESIGN.md §4, §5; prototype/index.html with browse-home.css §4–§10, home-r2.css,
+ * home-r6.css, gallery-r8.css, revision-r9.css:3, 69–70, revision-r11.css:2–4). Effective values; the
+ * wall-to-materials handoff is driven by the custom properties the Home client component sets
+ * (`data-handoff` off / on / mobile on the sequence). Image URLs come from custom properties the
+ * component sets (`--site-image-page-hero-1600`, `--site-image-page-hero-1200`, `--site-image-before-you-buy`).
+ */
+
+/* ---------- hero (browse-home.css:138–165; home-r2.css:2–6; home-r6.css:2–42) ---------- */
+:where(.site) .opening-sequence,
+:where(.site) .opening-stage {
+  position: relative;
+}
+:where(.site) .opening {
+  position: relative;
+  min-height: 42rem;
+  height: 100svh;
+  overflow: hidden;
+  background: #f2f1ee;
+  isolation: isolate;
+}
+:where(.site) .hero-scene {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  aspect-ratio: 1672/941;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+}
+:where(.site) .hero-scene picture,
+:where(.site) .hero-scene__room {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:where(.site) .hero-scene picture {
+  aspect-ratio: 1672/941;
+  mask-image: none;
+}
+/* the wall cover: an empty portion of the room photograph under the lifted frame (home-r2.css:5; home-r6.css:6) */
+:where(.site) .hero-scene::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: 76%;
+  background: var(--site-image-page-hero-1600) 0 30% / 600% 180%;
+  mask-image: linear-gradient(to bottom, #000 92%, transparent);
+  /* home-r2.css:5 sets opacity 1 for the handoff state as well, after the inline sheet's --wall-cover fade
+     (index.html:458): the cover is fully opaque in every state */
+  opacity: 1;
+}
+:where(.site) .hero-scene::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% - 4rem);
+  height: 100svh;
+  background: linear-gradient(transparent, #f2f1ee 4rem);
+  pointer-events: none;
+}
+:where(.site) .hero-scene__frame {
+  position: absolute;
+  left: 52.885%;
+  top: 12.5%;
+  width: 26.73%;
+  height: auto;
+  aspect-ratio: 880/1160;
+  z-index: 2;
+}
+:where(.site) .framed-art,
+:where(.site) .hero-scene__frame .framed-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 880/1160;
+  height: auto;
+  overflow: clip;
+  overflow-clip-margin: 4px;
+  clip-path: none;
+  isolation: auto;
+}
+:where(.site) .framed-art__cutout {
+  position: absolute;
+  width: 136.364%;
+  max-width: none;
+  height: auto;
+  left: -18.18%;
+  top: -3.45%;
+}
+:where(.site) .hero-panel {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-block: 7rem 11rem;
+}
+:where(.site) .hero-copy {
+  max-width: 38%;
+  color: var(--ink);
+}
+:where(.site) .hero-copy h1 {
+  font-size: clamp(2.25rem, 3.3vw, 3.4rem);
+  line-height: 1.14;
+  max-width: 10em;
+  text-wrap: balance;
+}
+:where(.site) .hero-copy__lead {
+  margin-top: 1.1rem;
+  font-size: clamp(0.9375rem, 1.05vw, 1rem);
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 23rem;
+}
+:where(.site) .hero-copy__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+:where(.site) .hero-copy__actions .button {
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+  padding-inline: 1.25rem;
+  min-height: 2.9rem;
+}
+:where(.site) .hero-copy__actions .button--secondary {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(25, 24, 19, 0.25);
+}
+:where(.site) .opening::after {
+  content: "";
+  position: absolute;
+  inset: 76% 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(transparent, rgba(35, 35, 32, 0.65));
+}
+:where(.site) .hero-truth {
+  position: absolute;
+  bottom: 2.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(69rem, calc(100% - 2 * var(--gutter)));
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr;
+  gap: 2rem;
+  color: #fff;
+}
+:where(.site) .hero-truth li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+:where(.site) .hero-truth li + li {
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  padding-left: 2rem;
+}
+:where(.site) .hero-truth strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+:where(.site) .hero-truth li > span > span {
+  display: block;
+  color: rgba(255, 255, 255, 0.86);
+}
+:where(.site) .hero-truth svg {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:where(.site) .travelling-art {
+  display: none;
+  pointer-events: none;
+}
+@media (min-width: 901px) {
+  :where(.site) .hero-scene {
+    width: min(92vw, calc((100svh - 112px) * 1.777));
+    top: calc(50% + 48px);
+    mask-image:
+      linear-gradient(to bottom, transparent, #000 6%, #000 96%, transparent),
+      linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    mask-composite: intersect;
+  }
+  :where(.site) .hero-copy {
+    margin-left: clamp(20px, 3vw, 52px);
+    max-width: 36%;
+  }
+  :where(.site) .hero-panel {
+    padding-block: 7rem 10rem;
+  }
+}
+
+/* ---------- materials (browse-home.css:168–192, 442–454; home-r2.css:7–12; home-r6.css:11) ---------- */
+:where(.site) .anatomy {
+  background: var(--ivory);
+}
+:where(.site) .anatomy__head {
+  text-align: center;
+  margin: 0 auto 2.5rem;
+}
+:where(.site) .anatomy__head h2 {
+  margin-top: 0.6rem;
+}
+:where(.site) .anatomy__figure {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+:where(.site) .anatomy__art {
+  margin: 0;
+  width: 100%;
+  max-width: 19rem;
+  margin-inline: auto;
+  filter: drop-shadow(0 12px 16px rgba(25, 24, 19, 0.12));
+}
+:where(.site) .anatomy__col {
+  display: grid;
+  gap: 1.8rem;
+}
+:where(.site) .spec {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+:where(.site) .spec__swatch {
+  width: 5.25rem;
+  height: 5.25rem;
+  flex: none;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: #fff;
+}
+:where(.site) .spec__swatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+:where(.site) .spec__swatch--size img {
+  object-fit: contain;
+}
+:where(.site) .spec__swatch--size:hover {
+  outline: 1px solid var(--gold);
+  outline-offset: 2px;
+}
+:where(.site) .spec__title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+:where(.site) .spec__title[data-number]::before {
+  content: attr(data-number);
+  display: inline-grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font: 10px var(--font-ui);
+  color: var(--gold-dark);
+  margin-right: 0.45rem;
+  vertical-align: middle;
+}
+:where(.site) .spec__line {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--taupe);
+}
+:where(.site) .anatomy__connectors {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+}
+:where(.site) .anatomy__connectors path {
+  fill: none;
+  stroke: var(--gold-dark);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.65;
+}
+:where(.site) .anatomy__connectors circle {
+  fill: #fffdf8;
+  stroke: var(--gold-dark);
+  stroke-width: 1;
+}
+:where(.site) .anatomy__connectors text {
+  font: 10px var(--font-ui);
+  fill: var(--gold-dark);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+/* the desktop handoff — enabled only by the component (browse-home.css:184–192, 444–447) */
+:where(.site) [data-handoff="on"] .opening-sequence {
+  height: 280svh;
+}
+:where(.site) [data-handoff="on"] .opening-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--ivory);
+}
+:where(.site) [data-handoff="on"] .opening {
+  position: absolute;
+  inset: 0;
+  opacity: var(--room-opacity, 1);
+  transform: translateY(var(--room-shift, 0px));
+  will-change: transform, opacity;
+}
+:where(.site) [data-handoff="on"] .hero-panel,
+:where(.site) [data-handoff="on"] .hero-truth {
+  opacity: var(--copy-opacity, 1);
+  pointer-events: var(--hero-events, auto);
+}
+:where(.site) [data-handoff="on"] .hero-scene__frame {
+  visibility: hidden;
+}
+:where(.site) [data-handoff="on"] .anatomy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-block: 6rem 3rem;
+  opacity: var(--details-opacity, 0);
+  pointer-events: var(--detail-events, none);
+  background: transparent;
+}
+:where(.site) [data-handoff="on"] .anatomy__art .framed-art {
+  visibility: hidden;
+}
+:where(.site) [data-handoff="on"] .travelling-art {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  transform-origin: top left;
+  will-change: transform;
+  filter: drop-shadow(
+    0 var(--lift-y, 0px) var(--lift-blur, 0px) rgba(25, 24, 19, 0.18)
+  );
+}
+:where(.site) [data-handoff="on"] .anatomy__col {
+  opacity: var(--labels-opacity, 0);
+  transform: none;
+}
+:where(.site) [data-handoff="on"] .anatomy__connectors {
+  opacity: var(--labels-opacity, 0);
+}
+@media (min-width: 56.251rem) and (max-width: 74.9375rem) {
+  :where(.site) [data-handoff="on"] .anatomy__figure {
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 1.3rem;
+  }
+  :where(.site) [data-handoff="on"] .anatomy__art {
+    grid-column: auto;
+    grid-row: auto;
+    max-width: none;
+    margin: 0;
+  }
+  :where(.site) [data-handoff="on"] .spec {
+    gap: 0.6rem;
+  }
+  :where(.site) [data-handoff="on"] .spec__swatch {
+    width: 3.8rem;
+    height: 3.8rem;
+  }
+  :where(.site) [data-handoff="on"] .spec__title {
+    font-size: 1rem;
+  }
+}
+
+/* ---------- routes (browse-home.css:196–208, 455–461; revision-r9.css:3; revision-r11.css:2–4; gallery-r8.css:11) ---------- */
+:where(.site) .routes {
+  background: var(--ivory);
+  padding-top: 1rem;
+}
+:where(.site) .routes__track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  max-width: 72rem;
+  margin-inline: auto;
+}
+:where(.site) .route-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e5e1da;
+  border-radius: 4px;
+  box-shadow: none;
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+/* the one surviving card lift (DESIGN §2 "Shadows") */
+:where(.site) .route-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-5px);
+}
+:where(.site) .route-card__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  background: #fff;
+  border-bottom: 1px solid #e5e1da;
+  overflow: hidden;
+}
+body :where(.site) .route-card .route-card__media .route-card__image {
+  background: #fff; /* index.html inline `.route-card__image` — no later rule removes it */
+  width: 92%;
+  height: 92%;
+  min-height: 0;
+  aspect-ratio: auto;
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  flex: none;
+}
+body
+  :where(.site)
+  .route-card:nth-child(3)
+  .route-card__media
+  .route-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 57%;
+  padding: 0;
+}
+:where(.site) .route-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  flex: 1;
+  padding: 1.1rem 1.25rem 1.25rem;
+  min-height: 0;
+}
+:where(.site) .route-card h3 {
+  font-size: clamp(1.25rem, 1.65vw, 1.6rem);
+}
+:where(.site) .route-card p {
+  color: var(--taupe);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  flex: 1;
+}
+:where(.site) .route-card .button {
+  font-size: 0.75rem;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  margin-top: 0.35rem;
+}
+:where(.site) .routes__dots {
+  display: none;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+}
+:where(.site) .routes__dots button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+}
+:where(.site) .routes__dots button::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+:where(.site) .routes__dots button[aria-selected="true"]::before {
+  background: var(--ink);
+  transform: scale(1.35);
+}
+
+/* ---------- featured art cards (browse-home.css:211–234, 462–464; gallery-r8.css:11–23) ---------- */
+:where(.site) .featured {
+  background: #fff;
+}
+:where(.site) .featured__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.75rem;
+}
+:where(.site) .art-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #e5e1da;
+  box-shadow: none;
+  overflow: hidden;
+  transition:
+    box-shadow 250ms var(--ease),
+    transform 250ms var(--ease);
+}
+:where(.site) .art-card:hover,
+:where(.site) .art-card:focus-within {
+  transform: none;
+  box-shadow: none;
+  border-color: #b8afa2;
+}
+:where(.site) .art-card__media {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 0;
+  border-bottom: 1px solid #eeeae4;
+}
+:where(.site) .art-card__main {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:where(.site) .art-card__main img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+:where(.site) .wishlist {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  color: var(--crimson);
+  background: rgba(255, 255, 255, 0.94);
+  transition: background var(--dur);
+}
+:where(.site) .wishlist:hover {
+  background: var(--ivory);
+}
+:where(.site) .wishlist svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:where(.site) .wishlist[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+:where(.site) .art-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  flex: 1;
+}
+:where(.site) .art-card__label {
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: #716044;
+}
+:where(.site) .art-card__body h3 {
+  font-size: clamp(1.6rem, 2.2vw, 2rem);
+  line-height: 1.18;
+  text-wrap: balance;
+}
+:where(.site) .art-card__body h3 a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+:where(.site) .art-card__hook {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--taupe);
+  white-space: normal;
+  overflow: visible;
+}
+:where(.site) .art-card__price {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  line-height: 1.35;
+  margin-top: 0.55rem;
+  margin-bottom: 0.45rem;
+  padding-top: 8px;
+}
+:where(.site) .art-card__price span {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  margin: 0 0 4px;
+  color: var(--taupe);
+}
+:where(.site) .art-card__actions {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 0;
+}
+:where(.site) .art-card__view {
+  min-height: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1.1rem;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #c9c2b7;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background var(--dur);
+}
+:where(.site) .art-card__view:hover {
+  background: var(--ink);
+  color: #fff;
+}
+:where(.site) .art-card__view span {
+  font-size: 1.1rem;
+  transition: transform var(--dur);
+}
+:where(.site) .art-card__view:hover span {
+  transform: translateX(3px);
+}
+:where(.site) .featured__action {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-8);
+}
+
+/* ---------- journey (browse-home.css:238–249) ---------- */
+:where(.site) .journey__head {
+  max-width: 46rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+:where(.site) .journey__head h2 {
+  margin-top: 0.6rem;
+  color: #fff;
+}
+:where(.site) .journey__rail {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+:where(.site) .journey__rail::before {
+  content: "";
+  position: absolute;
+  left: 1.6rem;
+  right: 1.6rem;
+  top: 1.6rem;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(210, 184, 119, 0.15),
+    rgba(210, 184, 119, 0.6),
+    rgba(210, 184, 119, 0.15)
+  );
+}
+:where(.site) .step {
+  position: relative;
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+:where(.site) .step__node {
+  position: relative;
+  z-index: 1;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  border: 1px solid rgba(210, 184, 119, 0.45);
+  color: var(--gold-light);
+}
+:where(.site) .step__node svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:where(.site) .step__index {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(210, 184, 119, 0.75);
+}
+:where(.site) .step h3 {
+  font-size: 1.0625rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #fff;
+}
+:where(.site) .step p {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(243, 239, 230, 0.66);
+}
+:where(.site) .journey__note {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(243, 239, 230, 0.14);
+  font-size: 0.8125rem;
+  color: rgba(243, 239, 230, 0.6);
+}
+
+/* ---------- FAQ (browse-home.css:252–255; revision-r9.css:24, 69–70; revision-r11.css:23) ---------- */
+:where(.site) .faq__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+:where(.site) .faq__aside h2 {
+  margin-top: 0.6rem;
+}
+:where(.site) .faq__aside p {
+  margin-top: 0.9rem;
+  color: var(--taupe);
+}
+body :where(.site) .faq__list {
+  border: 0;
+}
+body :where(.site) .faq-illustration {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.92;
+  max-width: none;
+  margin-bottom: 20px;
+  object-fit: contain; /* revision-r9.css:24 */
+  background: var(--site-image-before-you-buy) left top / 260% auto no-repeat;
+}
+
+/* ---------- responsive (browse-home.css:325–431, 466–477; home-r2.css:43–110; home-r6.css:18–70; gallery-r8.css:111–117) ---------- */
+@media (max-width: 74.9375rem) {
+  :where(.site) .journey__rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 2.5rem;
+  }
+  :where(.site) .journey__rail::before {
+    display: none;
+  }
+  :where(.site) .faq__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  :where(.site) .anatomy__figure {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  /* the 34rem of the inline sheet (index.html:353) is overridden by home-r6.css:11 (19rem, unconditional) */
+  :where(.site) .anatomy__art {
+    grid-column: 1/-1;
+    grid-row: 1;
+    margin: auto;
+  }
+}
+/* home-r6.css:45 hides the copies above 900px by default (the prototype toggles `hidden` at innerWidth <= 900) */
+:where(.site) .mobile-materials {
+  display: none;
+}
+@media (max-width: 900px) {
+  :where(.site) .opening {
+    min-height: 0;
+    height: auto;
+    padding-bottom: 2rem;
+    --mobile-room-height: min(104vw, max(180px, calc(100svh - 340px)));
+  }
+  :where(.site) .hero-scene {
+    top: 76px;
+    left: calc(50% - var(--mobile-room-height) * 1.177);
+    width: calc(var(--mobile-room-height) * 1.777);
+    min-width: 0;
+    aspect-ratio: 1672/941;
+    transform: none;
+  }
+  :where(.site) .hero-scene picture {
+    mask-image: none;
+  }
+  :where(.site) .hero-scene__frame {
+    left: 52.885%;
+    top: 12.5%;
+    width: 26.73%;
+    height: auto;
+    aspect-ratio: 880/1160;
+  }
+  :where(.site) .hero-scene::before {
+    height: 76%;
+    background-image: var(--site-image-page-hero-1200);
+    background-position: 0 30%;
+    background-size: 600% 180%;
+    mask-image: linear-gradient(
+      to bottom,
+      #000 91%,
+      transparent
+    ); /* home-r2.css:44 */
+  }
+  :where(.site) .hero-scene::after {
+    height: 4rem;
+  }
+  :where(.site) .hero-panel {
+    height: auto;
+    padding: calc(76px + var(--mobile-room-height)) 0 1.5rem;
+    align-items: flex-start;
+  }
+  :where(.site) .hero-copy {
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+  :where(.site) .hero-copy h1 {
+    font-size: clamp(2.1rem, 5.2vw, 3rem);
+    max-width: 14em;
+  }
+  :where(.site) .hero-copy__lead {
+    margin-top: 0.75rem;
+    max-width: 28rem;
+  }
+  :where(.site) .hero-copy__actions {
+    margin-top: 1rem;
+  }
+  :where(.site) .opening::after {
+    display: none;
+  }
+  :where(.site) .hero-truth {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    margin-inline: auto;
+    color: var(--ink);
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+    width: calc(100% - 2 * var(--gutter));
+    max-width: 36rem;
+  }
+  :where(.site) .hero-truth li {
+    gap: 0.8rem;
+    font-size: 0.75rem;
+  }
+  :where(.site) .hero-truth li + li {
+    border: 0;
+    padding: 0;
+  }
+  :where(.site) .hero-truth strong {
+    font-size: 0.8125rem;
+    margin: 0;
+  }
+  :where(.site) .hero-truth svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+  :where(.site) .hero-truth li > span {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.65rem;
+  }
+  :where(.site) .hero-truth li > span > span {
+    color: var(--ink-soft);
+  }
+  :where(.site) .anatomy__art {
+    width: min(100%, 19rem, calc((100svh - 210px) * 0.7586));
+    max-width: 19rem;
+    grid-column: 1/-1;
+    grid-row: 1;
+  }
+  :where(.site) .anatomy__figure {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 1.5rem;
+  }
+  :where(.site) .spec {
+    align-items: flex-start;
+  }
+  :where(.site) .spec__swatch {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+  :where(.site) .spec__title {
+    font-size: 1.2rem;
+  }
+  :where(.site) .anatomy__col {
+    gap: 1.5rem;
+  }
+  :where(.site) .featured__grid {
+    gap: 1rem;
+  }
+
+  /* M4 (home-r6.css:44–70): the mobile lift, then natural scrolling to the material cards */
+  :where(.site) [data-handoff="mobile"] .opening-sequence {
+    height: 200svh;
+  }
+  :where(.site) [data-handoff="mobile"] .opening-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    isolation: isolate;
+    overflow: clip;
+    background: #fff;
+  }
+  :where(.site) [data-handoff="mobile"] .opening {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    padding-bottom: 0;
+    opacity: var(--room-opacity, 1);
+  }
+  :where(.site) [data-handoff="mobile"] .hero-panel {
+    opacity: var(--copy-opacity, 1);
+  }
+  :where(.site) [data-handoff="mobile"] .hero-scene__frame {
+    visibility: hidden;
+  }
+  :where(.site) [data-handoff="mobile"] .anatomy {
+    position: absolute;
+    inset: 0;
+    padding: 100px 0 24px;
+    opacity: var(--details-opacity, 0);
+    background: transparent;
+  }
+  :where(.site) [data-handoff="mobile"] .anatomy__head {
+    margin-bottom: 24px;
+    opacity: 1;
+  }
+  :where(.site) [data-handoff="mobile"] .anatomy__figure {
+    display: block;
+  }
+  :where(.site) [data-handoff="mobile"] .anatomy__art {
+    width: min(100%, 19rem, calc((100svh - 260px) * 0.7586));
+    margin: 0 auto;
+  }
+  :where(.site) [data-handoff="mobile"] .travelling-art {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 4;
+    transform-origin: top left;
+    pointer-events: none;
+    visibility: visible;
+    filter: drop-shadow(0 10px 16px #19181326);
+    will-change: transform;
+  }
+  :where(.site) [data-handoff="mobile"] .anatomy__art .framed-art {
+    visibility: var(--landed, visible);
+  }
+  :where(.site) .anatomy__connectors {
+    display: none;
+  }
+  :where(.site) .spec__title[data-number]::before {
+    content: none;
+  }
+  /* M4/M5 (home-r6.css:57–60): the six specs become cards below the landing and the three promises are
+     removed on mobile; the desktop columns are hidden here and the cards rendered in .mobile-materials */
+  :where(.site) .anatomy__figure > .anatomy__col,
+  :where(.site) .hero-truth {
+    display: none;
+  }
+  :where(.site) .mobile-materials {
+    display: block;
+    padding: 16px 0 56px;
+    background: #fff;
+  }
+  :where(.site) .mobile-material-details {
+    display: grid;
+    gap: 16px;
+  }
+  :where(.site) .mobile-material-details .spec {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    background: var(--ivory);
+    align-items: stretch;
+  }
+  :where(.site) .mobile-material-details .spec__swatch {
+    width: 100%;
+    height: 100%;
+    min-height: 112px;
+    border-radius: 0;
+    background: #fff;
+  }
+  :where(.site) .mobile-material-details .spec__swatch img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  :where(.site) .mobile-material-details .spec__swatch--size img {
+    object-fit: contain;
+  }
+  :where(.site) .mobile-material-details .spec > span:last-child {
+    padding: 14px;
+    align-self: center;
+  }
+  :where(.site) .mobile-material-details .spec__title {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+  :where(.site) .mobile-material-details .spec__line {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+}
+@media (max-width: 47.9375rem) {
+  :where(.site) .hero-copy h1 {
+    font-size: clamp(2rem, 7.4vw, 2.75rem);
+    max-width: 12em;
+  }
+  /* index.html:452–454 (unconditional, later) keep the lead's 1.65 line height, the .65rem gap and the 1.25rem
+     button padding; the <= 900 rules set the 28rem measure */
+  :where(.site) .hero-copy__lead {
+    font-size: 0.9375rem;
+  }
+  :where(.site) .hero-copy__actions .button {
+    font-size: 0.8125rem;
+  }
+  :where(.site) .hero-truth li > span {
+    display: block;
+  }
+  :where(.site) .anatomy__figure {
+    grid-template-columns: 1fr;
+  }
+  :where(.site) .anatomy__art {
+    grid-column: 1;
+  }
+  :where(.site) .anatomy__col {
+    gap: 1.4rem;
+  }
+  :where(.site) .routes__track {
+    position: relative;
+    grid-auto-flow: column;
+    grid-auto-columns: 88%;
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1rem;
+    padding: 0 0.2rem 1rem;
+    scrollbar-width: none;
+  }
+  :where(.site) .routes__track::-webkit-scrollbar {
+    display: none;
+  }
+  :where(.site) .route-card {
+    scroll-snap-align: start;
+  }
+  :where(.site) .route-card__image {
+    aspect-ratio: 1;
+    padding: 0.85rem;
+  }
+  :where(.site) .route-card__body {
+    min-height: 0;
+    padding: 1.15rem;
+    gap: 0.65rem;
+  }
+  :where(.site) .route-card h3 {
+    font-size: 1.5rem;
+  }
+  :where(.site) .routes__dots {
+    display: flex;
+  }
+  :where(.site) .featured__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+  :where(.site) .art-card__body h3 {
+    font-size: 1.75rem;
+  }
+  :where(.site) .journey__rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 2rem;
+  }
+}
+@media (max-width: 700px) {
+  :where(.site) .route-card__media {
+    aspect-ratio: 4/3;
+  }
+}
+@media (max-width: 600px) {
+  :where(.site) .hero-copy h1 {
+    max-width: 11em;
+    font-size: clamp(2.2rem, 8vw, 2.8rem);
+    line-height: 1.12;
+  }
+  /* home-r6.css:35 (.75rem, <= 900) outweighs home-r2.css:69 by order */
+  :where(.site) .hero-copy__lead {
+    font-size: 0.9375rem;
+  }
+  :where(.site) .hero-copy__actions .button {
+    min-height: 44px;
+  }
+  :where(.site) .hero-truth li > span {
+    display: block;
+  }
+  :where(.site) .anatomy__figure {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  :where(.site) .anatomy__col {
+    gap: 1.2rem;
+  }
+  /* home-r2.css:78's 23rem is overridden by home-r6.css's 19rem (<= 900, later) */
+  :where(.site) .anatomy__art {
+    margin: 0 auto 1.25rem;
+  }
+  :where(.site) .spec__swatch {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+  :where(.site) .spec {
+    align-items: center;
+    gap: 1rem;
+  }
+  :where(.site) .spec__line {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  :where(.site) .spec__title {
+    font-size: 1.3rem;
+  }
+  :where(.site) .anatomy__head {
+    margin-bottom: 2rem;
+  }
+  :where(.site) .anatomy__head h2 {
+    font-size: 2.25rem;
+  }
+  :where(.site) .routes__track {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    grid-auto-columns: auto;
+    overflow: visible;
+    gap: 1.5rem;
+    max-width: 26rem;
+    padding: 0;
+  }
+  :where(.site) .routes__dots {
+    display: none;
+  }
+  :where(.site) .route-card {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+  }
+  :where(.site) .route-card__body {
+    padding: 1rem;
+    gap: 0.55rem;
+  }
+  :where(.site) .route-card h3 {
+    font-size: 1.5rem;
+  }
+  :where(.site) .route-card p {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  :where(.site) .route-card .button {
+    font-size: 0.75rem;
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    align-self: stretch;
+  }
+  :where(.site) .featured__grid {
+    gap: 1.5rem;
+  }
+  :where(.site) .art-card__body h3 {
+    font-size: 1.9rem;
+  }
+}
+@media (max-width: 599px) {
+  :where(.site) .route-card {
+    grid-template-columns: 1fr;
+  }
+  :where(.site) .route-card__image {
+    aspect-ratio: 4/3;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 1rem;
+  }
+  :where(.site) .route-card__body {
+    padding: 24px;
+    gap: 12px;
+  }
+  :where(.site) .route-card h3 {
+    font-size: 2rem;
+  }
+  :where(.site) .route-card p {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  :where(.site) .route-card .button {
+    font-size: 14px;
+    min-height: 48px;
+  }
+  :where(.site) .art-card__body {
+    padding: 22px;
+    gap: 10px;
+  }
+  :where(.site) .art-card__body h3 {
+    font-size: 1.9rem;
+    line-height: 1.18;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.site) .art-card,
+  :where(.site) .route-card {
+    transition: none;
+    transform: none;
+  }
+}

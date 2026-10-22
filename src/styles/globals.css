@@ -1,34 +1,145 @@
 @import "tailwindcss";
 
 /*
- * S0.1 holding page only. The docs/DESIGN.md §2 tokens and the self-hosted Charsen / Instrument Sans faces
- * are ported in S1.3; until then the page uses the documented values below and the documented fallback
- * font stacks, with no font download.
+ * The one global stylesheet (docs/DESIGN.md §2) — S1.3. Tokens are transcribed from the frozen prototype
+ * (prototype/shared/browse-home.css:10–44, the inline sheet of prototype/index.html) with the EFFECTIVE values
+ * after the R-series overrides (gallery-r8.css:3 re-points ivory and white to #fff and darkens taupe and
+ * muted); names carry over from the prototype so a diff stays literal. The Admin reuses --ink, --muted and
+ * --line with different values and declares them on its own shell root (S1.9). The storefront's component
+ * sheets (storefront.css, home.css, utility.css) are not imported here: the public route group's layout loads
+ * them, so no Admin page downloads them, and every rule in them is scoped to the `.site` wrapper.
  */
+:root {
+  color-scheme: light;
 
+  /* Colours — browse-home.css:13–17; effective page values per gallery-r8.css:3 */
+  --crimson: #b51f2a;
+  --crimson-hover: #9c1a24;
+  --crimson-active: #821720;
+  --ivory: #fff; /* token default #faf7f0 is the predevelopment ivory; never built (DESIGN §2) */
+  --white: #fff; /* token default #fffdfc */
+  --ink: #191813;
+  --ink-soft: #302e29;
+  --taupe: #605b55; /* token default #68645e */
+  --muted: #68635d; /* token default #7c7770 */
+  --line: #d8d2c8;
+  --line-soft: #e7e1d8;
+  --line-strong: #958f86;
+  --gold: #a8874e;
+  --gold-light: #d2b877;
+  --gold-dark: #735a32;
+  --gallery-ink: #191813; /* storefront-r7.css:9 */
+  --fine-print: #625e58; /* the literal fine-print / form-label value of gallery-r8.css:61,73–74 (DESIGN §2) */
+
+  /* Type scale — browse-home.css:22–26 */
+  --text-display: clamp(2.85rem, 5.4vw, 4.75rem);
+  --text-h2: clamp(2rem, 3.1vw, 2.75rem);
+  --text-h3: clamp(1.3rem, 1.7vw, 1.6rem);
+  --text-body: 1.0625rem;
+  --text-small: 0.875rem;
+
+  /* Spacing, measure, chrome — browse-home.css:28–32 */
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --container: 82rem;
+  --gutter: 2.5rem;
+  --nav-height: 3.65rem;
+  --nav-top: 1.1rem;
+
+  /* Shape and elevation — browse-home.css:34–38 (R8 flattens the storefront to 4 px; DESIGN §2 "Shape") */
+  --radius-s: 0.375rem;
+  --radius-m: 0.75rem;
+  --radius-l: 1.25rem;
+  --radius-pill: 999px;
+  --shadow-card:
+    0 1px 2px rgba(25, 24, 19, 0.04), 0 10px 30px rgba(25, 24, 19, 0.06);
+  --shadow-card-hover:
+    0 2px 6px rgba(25, 24, 19, 0.06), 0 18px 44px rgba(25, 24, 19, 0.1);
+  --shadow-nav:
+    0 1px 1px rgba(25, 24, 19, 0.03), 0 12px 34px rgba(25, 24, 19, 0.1);
+  --shadow-art:
+    0 24px 60px rgba(25, 24, 19, 0.28), 0 6px 16px rgba(25, 24, 19, 0.18);
+
+  /* Motion — browse-home.css:40–41 (DESIGN §5) */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur: 200ms;
+}
+
+/* browse-home.css:43–44 */
+@media (max-width: 74.9375rem) {
+  :root {
+    --gutter: 1.75rem;
+    --nav-height: 3.65rem;
+  }
+}
+@media (max-width: 47.9375rem) {
+  :root {
+    --gutter: 1.15rem;
+    --nav-top: 0.65rem;
+    --nav-height: 3.6rem;
+    --text-body: 1rem;
+    --space-9: 4rem;
+    --space-8: 3rem;
+  }
+}
+
+/* browse-home.css:48–49 */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+html:has(.site):not(.no-smooth) {
+  scroll-behavior: smooth;
+}
+
+/* The page is white on every shell (DESIGN §2: never an ivory page background). */
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--ink);
+}
 /*
- * DESIGN.md §2: effective storefront page background; --ink; the Instrument Sans fallback stack; the Body
- * type size (1rem at ≤ 47.9375rem).
+ * The base the S1.2 Admin pages render with — the S0.1 values (the DESIGN §2 fallback stacks; the Body and
+ * Display sizes), kept for every page outside the public shell until the Admin shell (S1.9) brings its own.
+ * `.site` sets its own font, size and line height, and its headings are the storefront's.
  */
 body {
-  background: #fff;
-  color: #191813;
   font-family: "Helvetica Neue", Arial, sans-serif;
   font-size: 1.0625rem;
   line-height: 1.6;
 }
-
 @media (max-width: 47.9375rem) {
   body {
     font-size: 1rem;
   }
 }
-
-/* DESIGN.md §2: the Charsen fallback stack and the Display / h1 type size. */
-h1 {
+h1:not(.site *) {
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.85rem, 5.4vw, 4.75rem);
   font-weight: 400;
   letter-spacing: -0.012em;
   line-height: 1.02;
+}
+/* browse-home.css:53 — the drawers slide from ±102 %; nothing may widen the page. */
+body:has(.site) {
+  overflow-x: hidden;
+}
+
+/* browse-home.css:399–402 (DESIGN §5: every animation respects reduced motion) */
+@media (prefers-reduced-motion: reduce) {
+  html:has(.site):not(.no-smooth) {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

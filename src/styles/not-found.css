@@ -1,0 +1,58 @@
+/*
+ * The global 404's stylesheet — S1.3: the three storefront sheets again and the two font families, as one module
+ * of its own. The framework counts the global 404's styles among every route's assets: had the 404 imported the
+ * sheets directly, it would have shared the public layout's chunk, which also holds the shell's preloaded font
+ * faces, and every route — the Admin's included — would preload those fonts. A module of its own gets a chunk of
+ * its own, downloaded for a 404 only (by the 404, or by a page that follows a link to one), and its faces are plain
+ * declarations of the shell's files under names of their own, never preloaded — so a 404 reached from a public page
+ * downloads the five files again (about 100 KB).
+ */
+@import "./storefront.css";
+@import "./home.css";
+@import "./utility.css";
+
+/* The shell's two families (src/components/shell/public-site.tsx has their sources and licences), under names of
+   their own; `.site` adds the fallback stacks. */
+@font-face {
+  font-family: "Charsen 404";
+  src: url("../app/(public)/fonts/charsen.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans 404";
+  src: url("../app/(public)/fonts/instrument-sans/instrument-sans-latin-400-normal.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans 404";
+  src: url("../app/(public)/fonts/instrument-sans/instrument-sans-latin-500-normal.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans 404";
+  src: url("../app/(public)/fonts/instrument-sans/instrument-sans-latin-600-normal.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans 404";
+  src: url("../app/(public)/fonts/instrument-sans/instrument-sans-latin-700-normal.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+.site.not-found-fonts {
+  --font-charsen: "Charsen 404";
+  --font-instrument-sans: "Instrument Sans 404";
+}
