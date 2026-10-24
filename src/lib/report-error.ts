@@ -3,9 +3,10 @@
  * public page ran before it became interactive; it now loads as a separate chunk, once, when
  * `src/instrumentation-client.ts` schedules it after the page has loaded — or at once when there is an error to
  * send. Until then the window's `error` and `unhandledrejection` events are listened to from the first script
- * and each is sent as soon as the SDK is initialised, so nothing captured before is lost; once initialised, the
- * SDK's own global handlers take over and the early listeners are removed. The error boundaries report through
- * `reportToSentry` too. No client module imports `@sentry/nextjs` statically.
+ * and each is sent as soon as the SDK is initialised; one is lost only if the page is left before the chunk
+ * arrives, or if the chunk fails to load (the next report retries the load; the failed one is not kept — D-53).
+ * Once initialised, the SDK's own global handlers take over and the early listeners are removed. The error
+ * boundaries report through `reportToSentry` too. No client module imports `@sentry/nextjs` statically.
  */
 type SentryBrowser = typeof import("./sentry-browser");
 type Mechanism = { type: string; handled: boolean };
@@ -54,8 +55,10 @@ const ON_UNHANDLED_REJECTION: Mechanism = {
 };
 
 function onError(event: ErrorEvent): void {
-  // Without an Error object (a cross-origin script) the message is sent, as the SDK does.
-  reportToSentry(event.error ?? event.message, ON_ERROR);
+  // Without an Error object the message is captured, as the SDK's own handler does (`error || msg`), but without the
+  // frame that handler adds from the event's filename, line and column; a thrown object gets this call's frames
+  // instead. "Script error." from a cross-origin script is dropped by the SDK's default filters either way.
+  reportToSentry(event.error || event.message, ON_ERROR);
 }
 
 function onUnhandledRejection(event: PromiseRejectionEvent): void {

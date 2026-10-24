@@ -17,11 +17,13 @@ import { siteImage, siteImageSrcSet } from "@/lib/site-images";
  * properties home.css reads. Static content is the default (`data-handoff="off"`): every section reads in
  * order without JavaScript.
  *
- * Two deliberate differences from the prototype's DOM work: the six specification cards are rendered in
- * `.mobile-materials` statically (the prototype moves the desktop nodes) and shown by the ≤ 900 px rules,
- * and `data-handoff` / `data-flying` / `--landed` sit on this component's wrapper rather than on `<html>`
- * (the selectors are descendant selectors, so the rules match the same). The three promises are removed
- * on mobile (M5) by CSS; the connectors SVG is drawn into the figure as the prototype draws it.
+ * Three deliberate differences from the prototype's DOM work: the six specification cards are rendered in
+ * `.mobile-materials` statically (the prototype moves the desktop nodes) and shown by the ≤ 900 px rules;
+ * `data-handoff` / `data-flying` / `--landed` sit on this component's wrapper rather than on `<html>` (the
+ * selectors are descendant selectors, so the rules match the same); and the connectors SVG, drawn into the
+ * figure as the prototype draws it, is not drawn while the ≤ 900 px rules hide it (the prototype draws it
+ * hidden — S1.3b, D-19): the resize or the media change that shows it draws it. The three promises are removed
+ * on mobile (M5) by CSS.
  */
 
 const HERO_ROOM = {
@@ -33,7 +35,11 @@ const HERO_ROOM = {
 // home.css draws, measured at S1.3b (the sprint record → "Cloud execution"): the landed frame ≤ 414.5 px and the
 // wall 67.4vw up to 900 px; the landed frame up to calc(56.2vw - 54px) from 901 to 1199 px; the wall about 33.5vw
 // from 1200 px. The prototype's "420px, 480px" undercounts the last three, which let the 817 copy be drawn enlarged; with
-// these no viewport at DPR 1–3 draws a copy narrower than the picture where S1.3 drew a wider one.
+// these no viewport at DPR 1–3 draws a copy narrower than the picture where S1.3 drew a wider one. The frame (19rem),
+// the gutters and the layout's breakpoints are in rem, so the fixed slots and the breakpoints where they meet the vw
+// slots are too (26.25rem = 420 px, 30rem = 480 px, 3.375rem = 54 px, 38.5625rem = 617 px, 56.25rem = 900 px and
+// 88.1875rem = 1411 px at the default 16 px font size, where the clauses read exactly as before): a larger default
+// font size widens slot and frame together.
 const HERO_ART = {
   src: siteImage("hero-artwork", "1200"),
   srcSet: siteImageSrcSet("hero-artwork", [
@@ -42,7 +48,7 @@ const HERO_ART = {
     ["1200", "1199w"],
   ]),
   sizes:
-    "(max-width: 617px) 420px, (max-width: 900px) 68vw, (max-width: 74.9375rem) calc(56.2vw - 54px), (max-width: 1411px) 480px, 34vw",
+    "(max-width: 38.5625rem) 26.25rem, (max-width: 900px) 68vw, (max-width: 56.25rem) 26.25rem, (max-width: 74.9375rem) calc(56.2vw - 3.375rem), (max-width: 88.1875rem) 30rem, 34vw",
 } as const;
 
 const SEQUENCE_STYLE = {

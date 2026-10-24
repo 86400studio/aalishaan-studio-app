@@ -26,9 +26,17 @@ const read = (relative: string) => readFileSync(path.join(ROOT, relative));
 const baseline = JSON.parse(
   read("prototype/data/development-baseline.json").toString("utf8"),
 ) as { files: Record<string, string> };
+// The encoder's output from that PNG (scripts/assets/encode-brand-logo.mjs, Playwright 1.64.1 / Chromium 1248),
+// reproduced byte for byte on Windows in the S1.3b VS Code leg. Re-pin only after re-running the encoder with
+// --write and reviewing the new copies.
+const COPY_SHA256: Record<number, string> = {
+  240: "824d8289507a884e3c94942f8cd4eb2638c1094d395a0f3a2b03caec0b43ca5d",
+  450: "ba4181fdfb5478a0f79c460f5b17624e68216f31a32afbabaf9834994e139c25",
+  660: "f1f41d71be7d8f8160ab47ac06300966b54add0cf32223ffce9dad6c9f124d52",
+};
 
 describe("public/brand — the logo copies", () => {
-  it("are encoded from the approved logo (the E10 baseline's SHA-256, 2172 × 724)", () => {
+  it("the PNG the copies are encoded from is the approved logo (the E10 baseline's SHA-256, 2172 × 724)", () => {
     const png = read(LOGO_SOURCE);
     expect(createHash("sha256").update(png).digest("hex")).toBe(
       baseline.files[LOGO_BASELINE_KEY],
@@ -45,6 +53,17 @@ describe("public/brand — the logo copies", () => {
       expect(info.width).toBe(width);
       // Exactly 3 : 1, not rounded: a loaded copy's own proportions size an image whose CSS sets one side only.
       expect(info.height * 2172).toBe(info.width * 724);
+    },
+  );
+
+  it.each(LOGO_WIDTHS.map((w) => [w]))(
+    "the %i px copy is the reviewed encode of that PNG (its SHA-256 pinned)",
+    (width) => {
+      expect(
+        createHash("sha256")
+          .update(read(logoCopyPath(width)))
+          .digest("hex"),
+      ).toBe(COPY_SHA256[width]);
     },
   );
 
@@ -68,7 +87,7 @@ describe("the shell offers the copies", () => {
     const footer = read("src/components/shell/site-footer.tsx").toString();
     expect(header).toContain("srcSet={BRAND.logo.srcSet}");
     expect(header).toContain(
-      '"(min-width: 75rem) 120px, (max-width: 47.9375rem) 82px, 99px"',
+      '"(min-width: 75rem) 7.5rem, (max-width: 47.9375rem) 5.1rem, 6.15rem"',
     );
     expect(footer).toContain("srcSet={BRAND.logo.srcSet}");
     expect(footer).toContain('sizes="220px"');

@@ -92,12 +92,14 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
 }
 
 /**
- * The header logo is drawn 2.05rem tall (82–120 CSS px wide at the logo's 3 : 1): 1.7rem up to 47.9375rem,
- * 2.5rem from 75rem (storefront.css). `sizes` names those widths so a phone takes the 240 px copy, not the
- * 417 KB PNG (S1.3b, D-19); React's preload of this eager image follows the same srcset.
+ * The header logo is drawn 2.05rem tall, 1.7rem up to 47.9375rem and 2.5rem from 75rem (storefront.css), so at the
+ * logo's 3 : 1 it is 6.15rem, 5.1rem and 7.5rem wide (98.4, 81.6 and 120 CSS px at the default 16 px font size).
+ * `sizes` names those widths in rem, so a larger default font size widens the slot as it widens the box, and a phone
+ * takes the 240 px copy, not the 417 KB PNG (S1.3b, D-19); React's preload of this eager image follows the same
+ * srcset.
  */
 const HEADER_LOGO_SIZES =
-  "(min-width: 75rem) 120px, (max-width: 47.9375rem) 82px, 99px";
+  "(min-width: 75rem) 7.5rem, (max-width: 47.9375rem) 5.1rem, 6.15rem";
 
 function BrandLogo() {
   return (

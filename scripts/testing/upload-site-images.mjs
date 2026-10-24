@@ -236,46 +236,54 @@ export async function encodeDeliveryCopies(sources) {
     const page = await browser.newPage();
     await page.setContent("<!doctype html><title>encode</title>");
     for (const { entry, file } of sources) {
-      const source = readFileSync(file);
-      const natural = pngSize(source);
-      const target = deliverySize(natural, entry);
-      const encoded = await page.evaluate(
-        async ({ src, quality, natural, target }) => {
-          const image = new Image();
-          image.src = src;
-          await image.decode();
-          if (
-            image.naturalWidth !== natural.width ||
-            image.naturalHeight !== natural.height
-          )
-            throw new Error("the decoded size differs from the PNG header");
-          const canvas = document.createElement("canvas");
-          canvas.width = target.width;
-          canvas.height = target.height;
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("no 2d context");
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
-          return {
-            width: canvas.width,
-            height: canvas.height,
-            data: canvas.toDataURL("image/webp", quality).split(",")[1],
-          };
-        },
-        {
-          src: `data:image/png;base64,${source.toString("base64")}`,
-          quality: WEBP_QUALITY,
-          natural,
-          target,
-        },
-      );
-      const bytes = Buffer.from(encoded.data, "base64");
-      if (!isWebp(bytes))
-        throw new Error(`${entry.name}: the browser did not produce WebP`);
-      copies.set(entry.object_path, {
-        bytes,
-        width: encoded.width,
-        height: encoded.height,
-      });
+      // Every failure names the copy: one PNG gives up to four copies (S1.3b), and an error thrown inside the
+      // page reaches here without any.
+      try {
+        const source = readFileSync(file);
+        const natural = pngSize(source);
+        const target = deliverySize(natural, entry);
+        const encoded = await page.evaluate(
+          async ({ src, quality, natural, target }) => {
+            const image = new Image();
+            image.src = src;
+            await image.decode();
+            if (
+              image.naturalWidth !== natural.width ||
+              image.naturalHeight !== natural.height
+            )
+              throw new Error("the decoded size differs from the PNG header");
+            const canvas = document.createElement("canvas");
+            canvas.width = target.width;
+            canvas.height = target.height;
+            const context = canvas.getContext("2d");
+            if (!context) throw new Error("no 2d context");
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            return {
+              width: canvas.width,
+              height: canvas.height,
+              data: canvas.toDataURL("image/webp", quality).split(",")[1],
+            };
+          },
+          {
+            src: `data:image/png;base64,${source.toString("base64")}`,
+            quality: WEBP_QUALITY,
+            natural,
+            target,
+          },
+        );
+        const bytes = Buffer.from(encoded.data, "base64");
+        if (!isWebp(bytes)) throw new Error("the browser did not produce WebP");
+        copies.set(entry.object_path, {
+          bytes,
+          width: encoded.width,
+          height: encoded.height,
+        });
+      } catch (error) {
+        throw new Error(
+          `${entry.object_path}: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error },
+        );
+      }
     }
   } finally {
     await browser.close();

@@ -22,6 +22,7 @@ import {
   storageOriginFromUrl,
   type SiteImageKey,
 } from "@/lib/site-images";
+import { LOGO_WIDTHS } from "../../scripts/assets/encode-brand-logo.mjs";
 import { PINNED_PROTOTYPE_COMMIT } from "../../scripts/testing/lib/catalogue.mjs";
 import {
   MANIFEST_PATH,
@@ -236,7 +237,9 @@ describe("the S1.3b delivery copies — no box moves", () => {
  * (cards 1–2 are square copies in a 1122 × 1402 box). Measured on a local build of the head with Playwright's
  * Chromium 1248 (the sprint record → "Cloud execution", the audit; commit 5031782); the footer logo is 220 px at
  * every width. Rows sit on each `sizes` breakpoint and one pixel past it, and every 5–50 px where a slot runs close
- * to the picture (601–900, 901–1199 and 1412–2560 px).
+ * to the picture (601–900, 901–1199 and 1412–2560 px). All at the browser's default 16 px font size; the S1.3b VS
+ * Code leg re-measured rows on Windows (Chromium 1248) to within 0.1 px, and DRAWN_20 below holds its measurements
+ * at 20 px.
  */
 const DRAWN: ReadonlyArray<
   readonly [number, number, number, number, number, number]
@@ -314,23 +317,63 @@ const DRAWN: ReadonlyArray<
   [3000, 860.2, 335.8, 366, 84, 120],
   [3840, 860.2, 335.8, 366, 84, 120],
 ];
+/**
+ * The same columns at a 20 px default font size (Chrome's "Large"), measured in the S1.3b VS Code leg on a local
+ * build with Playwright's Chromium 1248 on Windows (the default font size set to 20 through the DevTools protocol; four
+ * viewport heights, both motion modes, every image loaded). The hero column is kept from 901 px only: below it the
+ * measurement did not follow the phone lift's travelling frame (at 16 px it read 473.2 at 768 px, against 517.4
+ * above), so those cells are null.
+ */
+const DRAWN_20: ReadonlyArray<
+  readonly [number, number | null, number, number, number, number]
+> = [
+  [280, null, 159.2, 232, 229.6, 102],
+  [290, null, 166, 242, 206.5, 102],
+  [300, null, 173, 252, 180.2, 102],
+  [310, null, 179.9, 262, 157.1, 102],
+  [320, null, 186.8, 272, 157.1, 102],
+  [386, null, 232.3, 338, 134, 102],
+  [387, null, 233, 339, 134, 102],
+  [412, null, 250.2, 364, 112, 102],
+  [500, null, 311, 452, 112, 102],
+  [600, null, 151, 220.1, 112, 102],
+  [700, null, 389.9, 566.5, 112, 102],
+  [768, null, 575.3, 626.3, 112, 102],
+  [850, null, 641.7, 698.5, 112, 102],
+  [900, null, 682.1, 742.5, 112, 102],
+  [901, 518.2, 683, 743.4, 105, 102],
+  [1000, 518.2, 264, 288, 105, 123],
+  [1100, 518.2, 294.7, 321.3, 105, 123],
+  [1125, 518.2, 302.4, 329.7, 105, 123],
+  [1126, 563.8, 302.7, 330, 105, 123],
+  [1200, 605.3, 325.4, 354.7, 105, 123],
+  [1300, 661.4, 356, 388, 105, 123],
+  [1499, 518.2, 407.9, 444.3, 105, 123],
+  [1500, 518.2, 408.2, 444.7, 105, 150],
+  [1600, 536.5, 420.4, 458, 105, 150],
+  [1920, 575.2, 420.4, 458, 105, 150],
+];
 /** Every pixel ratio from 1 to 3 in steps of 0.01 — an undercount shows only in narrow bands of ratios. */
 const DPRS = Array.from({ length: 201 }, (_, i) => 1 + i / 100);
 
-/** The `sizes` slot at a viewport width: the media conditions and lengths these components use. */
-function sizesSlot(sizes: string, vw: number): number {
+/** The `sizes` slot at a viewport width: the media conditions and lengths these components use. `root` is the
+ * browser's default font size, which rem follows in `sizes` as in the CSS (the pages set no root font size). */
+function sizesSlot(sizes: string, vw: number, root = 16): number {
   for (const part of sizes.split(/,(?![^(]*\))/).map((p) => p.trim())) {
     const m = part.match(/^\((max|min)-width:\s*([\d.]+)(px|rem)\)\s+(.+)$/);
     if (m) {
-      const bound = Number(m[2]) * (m[3] === "rem" ? 16 : 1);
+      const bound = Number(m[2]) * (m[3] === "rem" ? root : 1);
       if (m[1] === "max" ? vw > bound : vw < bound) continue;
     }
     const len = m ? m[4]! : part;
     let n: RegExpMatchArray | null;
     if ((n = len.match(/^([\d.]+)px$/))) return Number(n[1]);
+    if ((n = len.match(/^([\d.]+)rem$/))) return Number(n[1]) * root;
     if ((n = len.match(/^([\d.]+)vw$/))) return (Number(n[1]) * vw) / 100;
-    if ((n = len.match(/^calc\(([\d.]+)vw - ([\d.]+)px\)$/)))
-      return (Number(n[1]) * vw) / 100 - Number(n[2]);
+    if ((n = len.match(/^calc\(([\d.]+)vw - ([\d.]+)(px|rem)\)$/)))
+      return (
+        (Number(n[1]) * vw) / 100 - Number(n[2]) * (n[3] === "rem" ? root : 1)
+      );
     throw new Error(`unsupported sizes length: ${len}`);
   }
   throw new Error(`no default slot in: ${sizes}`);
@@ -338,8 +381,14 @@ function sizesSlot(sizes: string, vw: number): number {
 
 /** The candidate Chromium picks: the narrowest whose density reaches the DPR, else the widest (it matched
  * Chromium 1248 on all 28,990 picks of the S1.3b audit). */
-function pick(widths: number[], sizes: string, vw: number, dpr: number) {
-  const slot = sizesSlot(sizes, vw);
+function pick(
+  widths: number[],
+  sizes: string,
+  vw: number,
+  dpr: number,
+  root = 16,
+) {
+  const slot = sizesSlot(sizes, vw, root);
   const sorted = [...widths].sort((a, b) => a - b);
   return sorted.find((w) => w / slot >= dpr) ?? sorted[sorted.length - 1]!;
 }
@@ -370,7 +419,7 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
   );
   const swatchSizes = sizesIn(
     "src/components/product/spec-card.tsx",
-    /const SWATCH_SIZES = "([^"]+)"/,
+    /const SWATCH_SIZES =\s*"([^"]+)"/,
   );
   const headerSizes = sizesIn(
     "src/components/shell/site-header.tsx",
@@ -386,7 +435,7 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
     widthOf(`site/card-3-artstyle-${s}.webp`),
   );
   const swatch = [160, 320, 480, 1254];
-  const logo = [240, 450, 660];
+  const logo = [...LOGO_WIDTHS];
 
   const cases: Array<{
     name: string;
@@ -464,6 +513,77 @@ describe("the S1.3b delivery copies — no picture is drawn from a narrower copy
       expect(regressions).toEqual([]);
     },
   );
+
+  it("the components offer exactly the copies evaluated here, each described by its own width", () => {
+    expect(source("src/components/home/opening.tsx")).toMatch(
+      /siteImageSrcSet\("hero-artwork", \[\s*\["600", "600w"\],\s*\["817", "817w"\],\s*\["1200", "1199w"\],\s*\]\)/,
+    );
+    expect(source("src/components/catalogue/route-card.tsx")).toMatch(
+      /siteImageSrcSet\(image, \[\s*\["600", "600w"\],\s*\["800", "800w"\],\s*\["1200", largeWidth\],\s*\]\)/,
+    );
+    expect(source("src/components/home/routes.tsx")).toMatch(
+      /"card-1-shop-all": "1200w",\s*"card-2-collection": "1200w",\s*"card-3-artstyle": "1122w",/,
+    );
+    expect(source("src/components/product/spec-card.tsx")).toMatch(
+      /siteImageSrcSet\(spec\.image, \[\s*\["160", "160w"\],\s*\["320", "320w"\],\s*\["480", "480w"\],\s*\[CRAFT\.size, `\$\{CRAFT\.width\}w`\],\s*\]\)/,
+    );
+    expect(source("src/components/product/spec-card.tsx")).toMatch(
+      /const CRAFT = \{ size: "1254", width: 1254, height: 1254 \};/,
+    );
+    expect(hero).toEqual([600, 817, 1199]);
+    expect(card12).toEqual([600, 800, 1200]);
+    expect(
+      ["600", "800", "1200"].map((s) =>
+        widthOf(`site/card-2-collection-${s}.webp`),
+      ),
+    ).toEqual(card12);
+    expect(card3).toEqual([600, 800, 1122]);
+    for (const key of [
+      "gen-01-craft-detail-gold-frame",
+      "gen-02-paper-closeup",
+      "gen-03-acrylic-glazing",
+      "gen-03-back-of-frame-and-hanging-system",
+      "gen-04-print-closeup",
+    ])
+      expect(
+        ["160", "320", "480", "1254"].map((s) =>
+          widthOf(`site/${key}-${s}.webp`),
+        ),
+      ).toEqual(swatch);
+  });
+
+  it.each(cases.map((c) => [c.name, c]))(
+    '%s: at a 20 px default font size (Chrome\'s "Large") its slot still covers the picture',
+    (_name, c) => {
+      const short = DRAWN_20.filter((row) => row[c.column] !== null)
+        .filter((row) => sizesSlot(c.sizes, row[0], 20) < row[c.column]!)
+        .map(
+          (row) =>
+            `${row[0]}px: slot ${sizesSlot(c.sizes, row[0], 20)}, drawn ${row[c.column]}`,
+        );
+      expect(short).toEqual([]);
+    },
+  );
+
+  it("the earlier slots in px would not: in rem the slot grows with the box at 20 px", () => {
+    const fails = (sizes: string, column: number) =>
+      DRAWN_20.some(
+        (row) =>
+          row[column] !== null && sizesSlot(sizes, row[0], 20) < row[column]!,
+      );
+    expect(
+      fails(
+        "(max-width: 617px) 420px, (max-width: 900px) 68vw, (max-width: 74.9375rem) calc(56.2vw - 54px), (max-width: 1411px) 480px, 34vw",
+        1,
+      ),
+    ).toBe(true);
+    expect(
+      fails("(max-width: 309px) 190px, (max-width: 900px) 146px, 84px", 4),
+    ).toBe(true);
+    expect(
+      fails("(min-width: 75rem) 120px, (max-width: 47.9375rem) 82px, 99px", 5),
+    ).toBe(true);
+  });
 
   it("the footer logo's 450 / 660 copies cover its 220 px at every DPR up to 3", () => {
     for (const dpr of DPRS)
