@@ -23,7 +23,8 @@ session branch `claude/hopeful-gates-rq8oiv` from `main` = `8a106fb` (the PR #24
 cloud session (the cloud leg done and handed off 2026-10-22); step 0 reconciled S1.3 to Done, the prompt was planned and saved on the branch (Mode A) and executed in the same session as
 far as the cloud goes — the open Dependabot updates adopted first (the owner's one-time exception to D-42, §5 #31), then the speed work
 toward Lighthouse mobile ≥ 90 on Home with the approved design unchanged; the TEST integration run, any image upload to TEST, the Preview
-e2e and the Lighthouse measurement on the Preview are the VS Code leg, after the owner's written OK of its TEST plan (§5 #32). Its paired
+e2e and the Lighthouse measurement on the Preview are the VS Code leg, after the owner's written OK of its TEST plan (§5 #32) — the VS Code leg
+since 2026-10-24: the pick-up audit and its corrections, then the owner's written OK of 2026-10-26 and the TEST run the same day. Its paired
 [review record](../code-reviews/S1.3b-home-speed-review.md) holds the review context (verdict pending).
 
 Latest completed sprint: [S1.3 — Public shell, tokens, Home & copy pages](S1.3-public-shell.md), prepared 2026-10-16 and In Progress the
