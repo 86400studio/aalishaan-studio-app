@@ -87,7 +87,7 @@ describe("the shell offers the copies", () => {
     const footer = read("src/components/shell/site-footer.tsx").toString();
     expect(header).toContain("srcSet={BRAND.logo.srcSet}");
     expect(header).toContain(
-      '"(min-width: 75rem) 7.5rem, (max-width: 47.9375rem) 5.1rem, 6.15rem"',
+      '"(min-width: 75rem) 7.5rem, (max-width: 47.9375rem) 5.125rem, 6.1875rem"',
     );
     expect(footer).toContain("srcSet={BRAND.logo.srcSet}");
     expect(footer).toContain('sizes="220px"');

@@ -4,7 +4,8 @@
  * `src/instrumentation-client.ts` schedules it after the page has loaded — or at once when there is an error to
  * send. Until then the window's `error` and `unhandledrejection` events are listened to from the first script
  * and each is sent as soon as the SDK is initialised; one is lost only if the page is left before the chunk
- * arrives, or if the chunk fails to load (the next report retries the load; the failed one is not kept — D-53).
+ * arrives, or if the chunk still fails to load after the framework's one automatic retry (the next report retries
+ * the load; the failed one is not kept — D-53).
  * Once initialised, the SDK's own global handlers take over and the early listeners are removed. The error
  * boundaries report through `reportToSentry` too. No client module imports `@sentry/nextjs` statically.
  */
