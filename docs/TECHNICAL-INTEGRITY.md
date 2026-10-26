@@ -53,7 +53,7 @@ jobs:
         # `--log-opts="--all --full-history --diff-filter=tuxdb -m"` (every commit of every fetched branch, merge
         # commits included); `--redact`, `--ignore-gitleaks-allow`; a .gitleaks.toml or .gitleaksignore fails the job
       - uses: pnpm/action-setup@<full SHA> # v6.1.0 — pnpm version from package.json packageManager
-      - uses: actions/setup-node@<full SHA> # v7.0.0 — node-version-file: .nvmrc (24), cache: pnpm
+      - uses: actions/setup-node@<full SHA> # v7.1.0 (v7.0.0 at S0.1; Dependabot's PR #22, adopted by S1.3b) — node-version-file: .nvmrc (24), cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Types are sound
         run: pnpm typecheck
