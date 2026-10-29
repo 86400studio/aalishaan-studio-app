@@ -27,7 +27,8 @@ on Preview; Production image loading remains scheduled for S3.3 under D-48. Step
 migration is planned; Gate 0: none. Steps 1–5 and the hermetic part of step 6 were done the same day in the working tree, uncommitted (the record
 → "Execution"): the reader, the hook, the five pages, the listing, `browse.css`, the 12 browse images in the manifest, the unit and e2e
 tests and a sealed local run beside the frozen prototype; a whole-diff review (four lenses, each finding challenged by an independent skeptic) confirmed 24 findings, none blocking, each fixed or put to the owner; a verification pass over the fixes confirmed 14 more, all fixed; and the checks were run again. The owner authorised the TEST plan and Commit / Push for this branch and answered the decisions on 2026-10-29
-(`PROJECT-STATUS.md` §5 #36, #37); the TEST plan runs next, in order.
+(`PROJECT-STATUS.md` §5 #36, #37); the TEST plan's steps 1–5 ran the same day (the record → "The TEST run") — draft
+PR #28.
 
 Latest completed sprint: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
 2026-10-21 (`PROJECT-STATUS.md` §5 #30), prepared and In Progress the same day in the fourth Claude Code cloud session on
