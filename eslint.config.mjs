@@ -131,7 +131,7 @@ const SUPABASE_SDK_PATTERNS = [
 ];
 
 const SERVER_ONLY_NAMES =
-  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN|UPSTASH_REDIS_REST_URL|UPSTASH_REDIS_REST_TOKEN)$";
+  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN|UPSTASH_REDIS_REST_URL|UPSTASH_REDIS_REST_TOKEN|CATALOGUE_REVALIDATION_SECRET)$";
 const PROCESS_ENV =
   "[object.type='MemberExpression'][object.object.name='process'][object.property.name='env']";
 const SERVER_ONLY_ENV_MESSAGE =
@@ -160,6 +160,8 @@ const APP_FILES = ["src/**/*.{ts,tsx,js,jsx,mts,mjs}"];
 const BROWSER_SHARED_FILES = [
   "src/lib/supabase/**/*.{ts,tsx,js,jsx,mts,mjs}",
   "src/instrumentation-client.ts",
+  // S1.4: the browse pages' pure filter, saved-artwork and card helpers, which the listing's client code imports.
+  "src/lib/catalogue/**/*.{ts,tsx,js,jsx,mts,mjs}",
 ];
 
 const eslintConfig = defineConfig([

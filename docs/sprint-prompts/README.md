@@ -17,27 +17,36 @@ Deliver the Codex review prompt after implementation and candidate verification.
 record post-merge smoke in the merged PR and carry repository tracker reconciliation into the next sprint.
 No routine closeout PR (WORKFLOW §8); fixes after review still require re-review on the same branch.
 
-Active sprint: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
-2026-10-21 (`PROJECT-STATUS.md` §5 #30) and **In Progress the same day** in the fourth Claude Code cloud session (`CLOUD.md`, D-41) on the
-session branch `claude/hopeful-gates-rq8oiv` from `main` = `8a106fb` (the PR #24 merge): one branch, one PR — draft PR #26, opened from the
-cloud session (the cloud leg done and handed off 2026-10-22); step 0 reconciled S1.3 to Done, the prompt was planned and saved on the branch (Mode A) and executed in the same session as
-far as the cloud goes — the open Dependabot updates adopted first (the owner's one-time exception to D-42, §5 #31), then the speed work
-toward Lighthouse mobile ≥ 90 on Home with the approved design unchanged; the TEST integration run, any image upload to TEST, the Preview
-e2e and the Lighthouse measurement on the Preview are the VS Code leg, after the owner's written OK of its TEST plan (§5 #32) — the VS Code leg
-since 2026-10-24: the pick-up audit and its corrections, then the owner's written OK of 2026-10-26 and the TEST run the same day. Its paired
-[review record](../code-reviews/S1.3b-home-speed-review.md) holds the review context (verdict pending).
+Active sprint: [S1.4 — Catalogue browse pages from the database](S1.4-catalogue-browse.md), prepared 2026-10-29 with `/sprint-prompt`
+(Mode A) and saved locally on `claude/s1.4-catalogue-browse` for a fresh Claude session, and **In Progress the same day** in a local Claude
+Code session in VS Code — no cloud leg this time: the owner ran the planning and the execution locally on 2026-10-29. The branch was created
+locally from `main` = `0d209b1` (the PR #26 merge) and is not pushed: one branch, one eventual PR, no PR yet; **Commit: NO · Push: NO** (no
+commit or push authorised yet). The full prompt includes the owner's requirement to use the exact prototype images and verify that they load
+on Preview; Production image loading remains scheduled for S3.3 under D-48. Step 0 reconciled S1.3b to Done from the PR #26 records — the
+[merge-and-smoke record](https://github.com/86400studio/aalishaan-studio-app/pull/26#issuecomment-6418598629) confirms its closure. No
+migration is planned; Gate 0: none. Steps 1–5 and the hermetic part of step 6 were done the same day in the working tree, uncommitted (the record
+→ "Execution"): the reader, the hook, the five pages, the listing, `browse.css`, the 12 browse images in the manifest, the unit and e2e
+tests and a sealed local run beside the frozen prototype; a whole-diff review (four lenses, each finding challenged by an independent skeptic) confirmed 24 findings, none blocking, each fixed or put to the owner; a verification pass over the fixes confirmed 14 more, all fixed; and the checks were run again. The owner authorised the TEST plan and Commit / Push for this branch and answered the decisions on 2026-10-29
+(`PROJECT-STATUS.md` §5 #36, #37); the TEST plan runs next, in order.
 
-Latest completed sprint: [S1.3 — Public shell, tokens, Home & copy pages](S1.3-public-shell.md), prepared 2026-10-16 and In Progress the
-same day in the third Claude Code cloud session on `claude/compassionate-shannon-j9moby` (PR #24) with the VS Code leg from 2026-10-17 (the
-read-only audit and its corrections, the owner's answers of 2026-10-19, the authorised branch rewrite, the TEST plan run on 2026-10-20 under
-the owner's authorisation), and **Done 2026-10-22** (the Preview test at the reviewed head `208cc09` — 104 passed, `/browser-qa`, the E8
-comparison, axe, the manual checks; Lighthouse mobile on Home median 38, overridden for S1.3 by the owner on 2026-10-21 — D-19; Codex
-**APPROVE** on `649cf2c..208cc09`; `/close` GO; merged by the owner as `8a106fb`; Production deployment 7248881608; smoke pass, the bucket
-images missing on Production by design until S3.3 — the Preview record, the `/close` record and the merge note are comments on PR #24;
-reconciled 2026-10-22 in the S1.3b branch). Its paired [review record](../code-reviews/S1.3-public-shell-review.md) holds the review context
+Latest completed sprint: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
+2026-10-21 (`PROJECT-STATUS.md` §5 #30), prepared and In Progress the same day in the fourth Claude Code cloud session on
+`claude/hopeful-gates-rq8oiv` (PR #26) — the open Dependabot updates adopted first (the owner's one-time exception to D-42, §5 #31), then the
+speed work — with the VS Code leg from 2026-10-24 (the pick-up audit and its corrections, the owner's answers of 2026-10-26, the TEST run the
+same day under the owner's written OK), and **Done 2026-10-26** (the Preview test at the reviewed head `e879f34` — 104 passed, the pixel
+comparison with S1.3's reviewed Preview, axe, the deferred Sentry SDK; Lighthouse mobile on Home median 61, logged under the owner's D-19
+override of 2026-10-26 — ≥ 90 still required before launch; D-51–D-53 accepted by the builder under the owner's delegation; Codex
+**APPROVE** on `8a106fb..e879f34`; `/close` GO; merged by the owner as `0d209b1`; Production deployment 7334209847; smoke pass, the bucket
+images missing on Production by design until S3.3 — the Preview record, the `/close` record and the merge note are comments on PR #26;
+reconciled 2026-10-29 in the S1.4 branch). Its paired [review record](../code-reviews/S1.3b-home-speed-review.md) holds the review context
 and the returned record.
 
-Before that: [S1.2 — Staff auth, MFA & server RBAC guard](S1.2-staff-auth.md), **Done 2026-10-16** (PR #21, merged as `649cf2c`; Codex
+Before that: [S1.3 — Public shell, tokens, Home & copy pages](S1.3-public-shell.md), **Done 2026-10-22** (PR #24, merged as `8a106fb`;
+Codex APPROVE on `649cf2c..208cc09`; Lighthouse mobile on Home median 38, overridden for S1.3 by the owner — D-19; smoke pass, the bucket
+images missing on Production by design until S3.3). Its paired [review record](../code-reviews/S1.3-public-shell-review.md) holds the review
+context and the returned record.
+
+Before S1.3: [S1.2 — Staff auth, MFA & server RBAC guard](S1.2-staff-auth.md), **Done 2026-10-16** (PR #21, merged as `649cf2c`; Codex
 APPROVE on `76ef060..4c61c0c`; the owner's PROD apply of `0003_staff_auth` verified read-only; smoke pass). Its paired [review
 record](../code-reviews/S1.2-staff-auth-review.md) holds the review context and the returned record; the database record is
 `docs/database-changes/S1.2-0003-staff-auth.md`.

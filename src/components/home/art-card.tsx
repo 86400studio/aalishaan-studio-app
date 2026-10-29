@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { ArtCardView } from "@/components/catalogue/art-card";
 import {
   FEATURED,
   FINISHES,
@@ -8,11 +7,10 @@ import {
 } from "@/content/public/home";
 import { catalogueImage, type CatalogueSlot } from "@/lib/site-images";
 
-import { WishlistHeart } from "./wishlist-heart";
-
 /**
- * The reusable product card (docs/DESIGN.md §3 "Art card"; prototype/index.html:643–681): one image, the
- * title, the hook, the launch price for the card's finish and one clear next step. The image is the S1.1
+ * Home's featured card (docs/DESIGN.md §3 "Art card"; prototype/index.html:643–681): the shared art card
+ * (src/components/catalogue/art-card.tsx) with Home's launch price for the card's finish, the image as Home's
+ * prototype sizes it (`90vw` below 768 px, a 1200 × 1200 box) and the title naming the card. The image is the S1.1
  * bucket object for that finish (`frame-<finish>` at 480 / 1200); the product route arrives with S1.5.
  */
 export function ArtCard({
@@ -28,50 +26,27 @@ export function ArtCard({
   finish: FinishCode;
   alt: string;
 }) {
-  const href = `/artworks/${slug}`;
   const slot: CatalogueSlot = `frame-${finish}`;
-  const titleId = `${slug}-title`;
   return (
-    <article className="art-card" data-product={slug} aria-labelledby={titleId}>
-      <div className="art-card__media">
-        <Link
-          className="art-card__main"
-          href={href}
-          prefetch={false}
-          aria-label={`View ${title}`}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48) */}
-          <img
-            src={catalogueImage(slug, slot, "1200")}
-            srcSet={`${catalogueImage(slug, slot, "480")} 480w, ${catalogueImage(slug, slot, "1200")} 1200w`}
-            sizes="(max-width:767px) 90vw, 420px"
-            alt={alt}
-            width={1200}
-            height={1200}
-            loading="lazy"
-            decoding="async"
-          />
-        </Link>
-        <WishlistHeart slug={slug} title={title} />
-      </div>
-      <div className="art-card__body">
-        <p className="art-card__label">{FEATURED.label}</p>
-        <h3 id={titleId}>
-          <Link href={href} prefetch={false}>
-            {title}
-          </Link>
-        </h3>
-        <p className="art-card__hook">{hook}</p>
-        <p className="art-card__price">
-          <span>{FINISHES[finish].label} frame</span>
-          {formatRupees(FINISHES[finish].pricePaise)}
-        </p>
-        <div className="art-card__actions">
-          <Link className="art-card__view" href={href} prefetch={false}>
-            {FEATURED.view} <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </div>
-    </article>
+    <ArtCardView
+      slug={slug}
+      title={title}
+      hook={hook}
+      label={FEATURED.label}
+      view={FEATURED.view}
+      price={{
+        frame: `${FINISHES[finish].label} frame`,
+        amount: formatRupees(FINISHES[finish].pricePaise),
+      }}
+      image={{
+        src: catalogueImage(slug, slot, "1200"),
+        srcSet: `${catalogueImage(slug, slot, "480")} 480w, ${catalogueImage(slug, slot, "1200")} 1200w`,
+        sizes: "(max-width:767px) 90vw, 420px",
+        alt,
+        width: 1200,
+        height: 1200,
+      }}
+      labelledByTitle
+    />
   );
 }

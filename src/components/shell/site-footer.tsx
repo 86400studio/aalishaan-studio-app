@@ -8,10 +8,18 @@ import { siteImage, siteImageSrcSet } from "@/lib/site-images";
  * The E7 / R13 footer — S1.3 (docs/DESIGN.md §4 "Footer"; prototype/index.html:743–768, revision-r11.css
  * 43–82). Five columns with the mobile-only Legal column and the centred mobile brand (M5); the five social
  * marks have no destination (D-PRE-12); the newsletter form is rendered disabled with NS-02 until S2.12; the
- * decorative watercolour strip of earlier revisions is not reintroduced (M3). The photo-led CTA band is
- * Home-only (`home`), and on Home the brand mark is the in-page link to the top (prototype/index.html:761).
+ * decorative watercolour strip of earlier revisions is not reintroduced (M3). The photo-led CTA band (`cta`) is
+ * shown on Home and the S1.4 browse pages — the prototype renders it on every page and hides it on the help,
+ * studio, commerce and recovery pages (about-hub.css:45, storefront-r7.css:20), which never render it here; on
+ * Home the brand mark is the in-page link to the top (prototype/index.html:761).
  */
-export function SiteFooter({ home = false }: { home?: boolean }) {
+export function SiteFooter({
+  home = false,
+  cta = home,
+}: {
+  home?: boolean;
+  cta?: boolean;
+}) {
   const mark = (
     // eslint-disable-next-line @next/next/no-img-element -- the prototype's <img> markup ported verbatim; next/image is not used (D-48)
     <img
@@ -28,7 +36,7 @@ export function SiteFooter({ home = false }: { home?: boolean }) {
   );
   return (
     <footer className="site-footer" id="practical">
-      {home ? <FooterCta /> : null}
+      {cta ? <FooterCta /> : null}
       <div className="footer-watercolour">
         <div className="container footer-main">
           <div className="footer-brand">
