@@ -103,8 +103,20 @@ test.describe("S1.3 — routes, redirects and the 404", () => {
       ).toBeVisible();
       await expect(page.locator("h1")).toHaveCount(1);
       await expect(page.locator("#main")).toHaveCount(1);
+      // S1.4 gave PublicPage a classless <main> for the browse pages: Home keeps none, every S1.3 page its own.
+      if (path === "/")
+        await expect(page.locator("#main")).not.toHaveAttribute("class", /./);
+      else
+        await expect(page.locator("#main")).toHaveAttribute(
+          "class",
+          "container utility-main",
+        );
       await expect(page.locator("header.site-header")).toBeVisible();
       await expect(page.locator("footer.site-footer")).toBeVisible();
+      // The footer's CTA band: Home's, never on a copy, studio, commerce or recovery page (the prototype hides it).
+      await expect(page.locator("footer .footer-cta")).toHaveCount(
+        path === "/" ? 1 : 0,
+      );
       await noOverflow(page);
       // On the Preview every Storage object exists (the TEST bucket holds the site and catalogue images); a
       // local build without the public URL renders the app's own paths, which answer 404 by design.
@@ -560,6 +572,35 @@ test.describe("S1.3 — the shell, the search, the filter, the handoff and the h
       "data-handoff",
       "off",
     );
+  });
+
+  test("Home's featured card renders as S1.3 shipped it, now through the shared art card (S1.4)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const card = page.getByRole("article", {
+      name: "The Ship Between Two Storms",
+    });
+    await expect(card).toHaveAttribute(
+      "data-product",
+      "the-ship-between-two-storms",
+    );
+    const image = card.locator("img");
+    await expect(image).toHaveAttribute(
+      "sizes",
+      "(max-width:767px) 90vw, 420px",
+    );
+    await expect(image).toHaveAttribute("width", "1200");
+    await expect(image).toHaveAttribute("height", "1200");
+    await expect(card.locator(".art-card__label")).toHaveText(
+      "Museum Grade Giclée Artwork",
+    );
+    await expect(card.locator(".art-card__price")).toHaveText(
+      "Black frame₹21,000",
+    );
+    await expect(
+      card.getByRole("link", { name: "View Artwork" }),
+    ).toHaveAttribute("href", "/artworks/the-ship-between-two-storms");
   });
 
   test("the wishlist heart writes the prototype's key in this browser only and announces", async ({

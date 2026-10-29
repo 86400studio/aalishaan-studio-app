@@ -1,10 +1,30 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { PUBLIC_CATALOGUE_COLUMNS } from "@/lib/schemas/catalogue";
+import {
+  ART_CARD,
+  ART_STYLES_PAGE,
+  BROWSE_DETAIL,
+  BROWSE_HERO_IMAGES,
+  CATALOGUE_STATES,
+  COLLECTION_ROUTES,
+  COLLECTIONS_PAGE,
+  LISTING,
+  SAVED_VIEW,
+  SHOP_PAGE,
+  STYLE_ROUTES,
+} from "@/content/public/browse";
+import { FEATURED, FINISHES } from "@/content/public/home";
+import { SELECT_KEYS } from "@/lib/catalogue/filters";
+import { formatRupees } from "@/lib/money";
+import {
+  FINISH_NAMES,
+  PUBLIC_CATALOGUE_COLUMNS,
+  type FinishCode,
+} from "@/lib/schemas/catalogue";
 
 /**
  * Regression guards over the S1.1 migrations as written (hermetic — the SQL text; the TEST proofs are the
@@ -514,5 +534,633 @@ describe("the down files — schema recovery only, in reverse order", () => {
       expect(down2, table).not.toContain(`public.${table}`);
     expect(down2).toMatch(/DELETES every order/);
     expect(down2).toMatch(/cannot restore/);
+  });
+});
+
+/**
+ * Copy parity — S1.4 (CLAUDE.md "Approved content and design"; docs/APPROVED-INPUTS.md §2): the browse copy of
+ * src/content/public/browse.ts, read back at test time from the 17 frozen pages prototype/scripts/build-browse.cjs
+ * generated — Shop All, the Collections and Art Styles hubs and their 3 + 11 detail pages — and from the runtime
+ * literals of prototype/shared/browse.js; the pages decoded and their white space collapsed as the browser renders
+ * them (the approach of public-content.test.ts, restated here: a test file imports no other). A destination is
+ * compared through the prototype's route map (`prototype/site-manifest.json` aliases), an image through the
+ * site-image manifest (scripts/testing/site-images.json). The honest states the prototype has no copy for
+ * (NS-26–NS-29) are held to the register's rules. Hermetic: files only.
+ */
+describe("S1.4 browse copy — Shop All, the two hubs and the fourteen detail pages", () => {
+  const ENTITIES: Record<string, string> = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    nbsp: String.fromCharCode(160),
+  };
+  type Page = { file: string; html: string; head: string; main: string };
+  const loaded = new Map<string, Page>();
+  /**
+   * A frozen page by its prototype path, read once: entities decoded, ordinary white space collapsed (a no-break
+   * space stays one). The generated markup has no white space inside an attribute, so attributes read as written.
+   */
+  function browsePage(file: string): Page {
+    const cached = loaded.get(file);
+    if (cached) return cached;
+    const html = read(`prototype/${file}`)
+      .replace(/&#(\d+);/g, (_, code: string) =>
+        String.fromCodePoint(Number(code)),
+      )
+      .replace(/&([a-z]+);/g, (match, name: string) => ENTITIES[name] ?? match)
+      .replace(/[ \t\n\r\f]+/g, " ");
+    const page = {
+      file,
+      html,
+      head: html.slice(0, html.indexOf("</head>")),
+      main: html.slice(
+        html.indexOf('<main id="main">'),
+        html.indexOf("</main>"),
+      ),
+    };
+    loaded.set(file, page);
+    return page;
+  }
+  /** The capture groups of the pattern's first match, which must exist. */
+  function groups(html: string, pattern: RegExp, what: string): string[] {
+    const match = pattern.exec(html);
+    expect(match, `expected the prototype to carry ${what}`).not.toBeNull();
+    return match!.slice(1);
+  }
+  /** A prototype href, relative to its page, as the prototype path it opens (a hash kept). */
+  const resolveFrom = (page: Page, href: string) =>
+    path.posix.join(path.posix.dirname(page.file), href);
+
+  /** The prototype's route map: each app route to the frozen page it serves. */
+  const ROUTE_MAP = (
+    JSON.parse(read("prototype/site-manifest.json")) as {
+      aliases: Record<string, string>;
+    }
+  ).aliases;
+  /**
+   * The prototype page an app href stands for (a hash kept). The route must be the canonical one — the first the
+   * manifest lists for its page; the later ones are the 301 aliases (TECH-ARCHITECTURE §3d).
+   */
+  function prototypeHref(appHref: string): string {
+    const [, route, rest] = /^([^?#]*)(.*)$/.exec(appHref)!;
+    const file = ROUTE_MAP[route];
+    expect(file, `the manifest maps ${route}`).toBeDefined();
+    const canonical = Object.entries(ROUTE_MAP).find(([, f]) => f === file)![0];
+    expect(route, `${route} is the canonical route of ${file}`).toBe(canonical);
+    return `${file}${rest}`;
+  }
+  const collectionPage = (slug: string) =>
+    browsePage(prototypeHref(`/collections/${slug}`));
+  const stylePage = (slug: string) =>
+    browsePage(prototypeHref(`/art-styles/${slug}`));
+  /** Shop All and the fourteen detail pages: the pages with the listing. */
+  const listingPages = () => [
+    browsePage(prototypeHref("/shop")),
+    ...COLLECTION_ROUTES.map(({ slug }) => collectionPage(slug)),
+    ...STYLE_ROUTES.map(({ slug }) => stylePage(slug)),
+  ];
+  /** The listing's cards (build-browse.cjs:61): each artwork's slug and its card's markup. */
+  const cardsOf = (page: Page) =>
+    [
+      ...page.main.matchAll(
+        /<article class="art-card" data-product="([a-z0-9-]+)">([\s\S]*?)<\/article>/g,
+      ),
+    ].map((m) => ({ slug: m[1]!, html: m[2]! }));
+  /** A hub's cards in order (build-browse.cjs:80, :81): the link and its name, the image and its alt, the heading, the action. */
+  function hubCards(page: Page, kind: "collection-card" | "browse-story") {
+    const body =
+      kind === "collection-card"
+        ? "collection-card__body"
+        : "browse-story__copy";
+    const card = new RegExp(
+      `<article class="${kind}"><a class="${kind}__image" href="([^"]*)" aria-label="([^"]*)"><img src="([^"]*)" srcset="([^"]*)"[^>]* alt="([^"]*)"[^>]*></a><div class="${body}"><h2>([^<]*)</h2><p>[^<]*</p><a class="button button--primary" href="([^"]*)">([^<]*) <span aria-hidden="true">→</span></a></div></article>`,
+      "g",
+    );
+    return [...page.main.matchAll(card)].map((m) => ({
+      href: resolveFrom(page, m[1]!),
+      open: m[2]!,
+      image: resolveFrom(page, m[3]!),
+      srcSet: m[4]!.split(", ").map((candidate) => {
+        const [url, width] = candidate.split(" ");
+        return { file: resolveFrom(page, url!), width: width! };
+      }),
+      alt: m[5]!,
+      name: m[6]!,
+      actionHref: resolveFrom(page, m[7]!),
+      action: m[8]!,
+    }));
+  }
+  /** The site images the manifest delivers from a prototype file, by key and size. */
+  const SITE_IMAGES = (
+    JSON.parse(read("scripts/testing/site-images.json")) as {
+      entries: { name: string; size: string; source_path: string }[];
+    }
+  ).entries;
+  const deliveredFrom = (source: string) =>
+    SITE_IMAGES.filter((entry) => entry.source_path === source).map(
+      ({ name, size }) => ({ name, size }),
+    );
+  const TITLE = /<title>([^<]*)<\/title>/;
+  const META_DESCRIPTION = /<meta [^>]*name="description"/;
+
+  it.each([
+    { route: "/shop", copy: SHOP_PAGE },
+    { route: "/collections", copy: COLLECTIONS_PAGE },
+    { route: "/art-styles", copy: ART_STYLES_PAGE },
+  ])(
+    "$route — the head title and the hero's eyebrow, heading and intro are the page's; it has no meta description",
+    ({ route, copy }) => {
+      const page = browsePage(prototypeHref(route));
+      const [title] = groups(page.head, TITLE, `${page.file}: a title`);
+      const [eyebrow, heading, intro] = groups(
+        page.main,
+        /^<main id="main"><section class="browse-hero browse-hero--r9"[^>]*><div class="container browse-hero__inner"><div><span class="eyebrow">([^<]*)<\/span><h1>([^<]*)<\/h1><p>([^<]*)<\/p><\/div><\/div><\/section>/,
+        `${page.file}: the hero`,
+      );
+      expect({ title, eyebrow, heading, intro }).toEqual({
+        title: copy.head.title,
+        ...copy.hero,
+      });
+      expect(copy.head.description).toBe("");
+      expect(page.head).not.toMatch(META_DESCRIPTION);
+    },
+  );
+
+  it("the detail routes are §3a's, in its order; each name is its page's heading and title stem, with the page's back link", () => {
+    const architecture = read("docs/TECH-ARCHITECTURE.md").split("\n");
+    /** The slugs §3a's row for the route pattern lists, in its order. */
+    const slugsOf = (pattern: string) => {
+      const row = architecture.find((line) =>
+        line.startsWith("| `" + pattern + "` |"),
+      );
+      expect(row, `§3a has a ${pattern} row`).toBeDefined();
+      return [...row!.split(" | ")[1]!.matchAll(/`([a-z0-9-]+)`/g)].map(
+        (m) => m[1],
+      );
+    };
+    expect(COLLECTION_ROUTES.map(({ slug }) => slug)).toEqual(
+      slugsOf("/collections/[slug]"),
+    );
+    expect(STYLE_ROUTES.map(({ slug }) => slug)).toEqual(
+      slugsOf("/art-styles/[slug]"),
+    );
+    expect([COLLECTION_ROUTES.length, STYLE_ROUTES.length]).toEqual([3, 11]);
+
+    const families: ReadonlyArray<{
+      folder: string;
+      routes: readonly { slug: string; name: string }[];
+      page: (slug: string) => Page;
+      back: { label: string; href: string };
+    }> = [
+      {
+        folder: "pages/collections",
+        routes: COLLECTION_ROUTES,
+        page: collectionPage,
+        back: BROWSE_DETAIL.collectionsBack,
+      },
+      {
+        folder: "pages/art-styles",
+        routes: STYLE_ROUTES,
+        page: stylePage,
+        back: BROWSE_DETAIL.stylesBack,
+      },
+    ];
+    for (const family of families) {
+      // The prototype has exactly these detail pages.
+      expect(
+        readdirSync(path.join(ROOT, "prototype", family.folder), {
+          withFileTypes: true,
+        })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => entry.name)
+          .sort(),
+      ).toEqual(family.routes.map(({ slug }) => slug).sort());
+      for (const route of family.routes) {
+        const page = family.page(route.slug);
+        const [title] = groups(page.head, TITLE, `${page.file}: a title`);
+        // The arrow is the link's decoration only: aria-hidden, before the label.
+        const [backHref, backLabel, heading] = groups(
+          page.main,
+          /<a class="back-link" href="([^"]*)"><span aria-hidden="true">←<\/span> ([^<]*)<\/a>(?:<div class="browse-detail-text">)?<h1>([^<]*)<\/h1>/,
+          `${page.file}: the back link and the heading`,
+        );
+        expect(
+          {
+            title,
+            stem: title.replace(/ \| Aalishaan Studio$/, ""),
+            heading,
+            back: { label: backLabel, href: resolveFrom(page, backHref) },
+          },
+          page.file,
+        ).toEqual({
+          title: BROWSE_DETAIL.title(route.name),
+          stem: route.name,
+          heading: route.name,
+          back: {
+            label: family.back.label,
+            href: prototypeHref(family.back.href),
+          },
+        });
+        expect(page.head).not.toMatch(META_DESCRIPTION);
+      }
+    }
+  });
+
+  it("the hubs' cards: the section names, and each card's link name, alt, heading and action are the hubs'", () => {
+    const collections = browsePage(prototypeHref("/collections"));
+    const styles = browsePage(prototypeHref("/art-styles"));
+    expect(
+      groups(
+        collections.main,
+        /<section class="container collection-grid" aria-label="([^"]*)">/,
+        "the collection grid",
+      ),
+    ).toEqual([COLLECTIONS_PAGE.sectionLabel]);
+    expect(
+      groups(
+        styles.main,
+        /<section class="container browse-stories" aria-label="([^"]*)">/,
+        "the style stories",
+      ),
+    ).toEqual([ART_STYLES_PAGE.sectionLabel]);
+    // Card by card, in the routes' order (the images are the next test's). The link names are the build's, article
+    // and all: "Open the " + "The Age of Sail" + " collection" is the approved wording.
+    expect(hubCards(collections, "collection-card")).toMatchObject(
+      COLLECTION_ROUTES.map(({ slug, name }) => ({
+        href: prototypeHref(`/collections/${slug}`),
+        open: COLLECTIONS_PAGE.open(name),
+        alt: COLLECTIONS_PAGE.coverAlt(name),
+        name,
+        actionHref: prototypeHref(`/collections/${slug}`),
+        action: COLLECTIONS_PAGE.action,
+      })),
+    );
+    expect(hubCards(styles, "browse-story")).toMatchObject(
+      STYLE_ROUTES.map(({ slug, name }) => ({
+        href: prototypeHref(`/art-styles/${slug}`),
+        open: ART_STYLES_PAGE.open(name),
+        alt: name,
+        name,
+        actionHref: prototypeHref(`/art-styles/${slug}`),
+        action: ART_STYLES_PAGE.action,
+      })),
+    );
+  });
+
+  it("the covers: a collection's site image is its page's cover file; a style's picture is the hub's close-up of one of its artworks", () => {
+    const collections = hubCards(
+      browsePage(prototypeHref("/collections")),
+      "collection-card",
+    );
+    for (const [i, route] of COLLECTION_ROUTES.entries()) {
+      const card = collections[i]!;
+      const files = [card.image, ...card.srcSet.map(({ file }) => file)];
+      for (const file of files)
+        expect(file).toMatch(
+          new RegExp(
+            `^assets/web-artworks/${route.slug}-cover-[0-9a-f]+-(480|1200)[.]webp$`,
+          ),
+        );
+      expect(card.srcSet.map(({ width }) => width)).toEqual(["480w", "1200w"]);
+      expect(files.map(deliveredFrom), route.slug).toEqual([
+        [{ name: route.cover, size: "1200" }],
+        [{ name: route.cover, size: "480" }],
+        [{ name: route.cover, size: "1200" }],
+      ]);
+      // The collection page's hero shows the same cover, with the same alt.
+      const page = collectionPage(route.slug);
+      const [src, srcSet, alt] = groups(
+        page.main,
+        /<img src="([^"]*)" srcset="([^"]*)"[^>]* alt="([^"]*)" width="700" height="700" fetchpriority="high">/,
+        `${page.file}: the cover`,
+      );
+      expect({
+        files: [src, ...srcSet.split(", ").map((c) => c.split(" ")[0]!)].map(
+          (href) => resolveFrom(page, href),
+        ),
+        alt,
+      }).toEqual({ files, alt: COLLECTIONS_PAGE.coverAlt(route.name) });
+    }
+
+    const styles = hubCards(
+      browsePage(prototypeHref("/art-styles")),
+      "browse-story",
+    );
+    for (const [i, route] of STYLE_ROUTES.entries()) {
+      const [artwork, finish] = groups(
+        styles[i]!.image,
+        /^assets\/web-artworks\/(.+)-close-(white|black|antique-gold)-[0-9a-f]+-1200\.webp$/,
+        `the ${route.slug} picture`,
+      );
+      expect({ artwork, finish }, route.slug).toEqual(route.cover);
+      // One of the style's own artworks, in the frame its card shows (the style's suggested frame).
+      const card = cardsOf(stylePage(route.slug)).find(
+        ({ slug }) => slug === artwork,
+      );
+      expect(card, `${route.slug} shows ${artwork}`).toBeDefined();
+      expect(card!.html).toContain(`/${artwork}-frame-${finish}-`);
+    }
+  });
+
+  it("the supplied-image heroes: Shop All's and each hub's own picture, and the Art Styles picture on every style page", () => {
+    /** The head <style>'s background URLs (build-browse.cjs:55), as prototype paths. */
+    const heroFiles = (page: Page) =>
+      [...page.head.matchAll(/url\('([^']*)'\)/g)].map((m) =>
+        resolveFrom(page, m[1]!),
+      );
+    const cases: ReadonlyArray<readonly [Page, string]> = [
+      [browsePage(prototypeHref("/shop")), BROWSE_HERO_IMAGES.shop],
+      [
+        browsePage(prototypeHref("/collections")),
+        BROWSE_HERO_IMAGES.collections,
+      ],
+      [browsePage(prototypeHref("/art-styles")), BROWSE_HERO_IMAGES.styles],
+      ...STYLE_ROUTES.map(
+        ({ slug }) => [stylePage(slug), BROWSE_HERO_IMAGES.styles] as const,
+      ),
+    ];
+    for (const [page, key] of cases) {
+      const files = heroFiles(page);
+      expect(
+        files.map((file) => path.posix.basename(file)),
+        page.file,
+      ).toEqual([`${key}-1600.webp`, `${key}-600.webp`]);
+      expect(files.map(deliveredFrom), page.file).toEqual([
+        [{ name: key, size: "1600" }],
+        [{ name: key, size: "600" }],
+      ]);
+    }
+    // A collection page has no picture band: its hero is the cover beside the copy.
+    for (const { slug } of COLLECTION_ROUTES)
+      expect(heroFiles(collectionPage(slug)), slug).toEqual([]);
+  });
+
+  it("the listing's static copy is Shop All's, and every detail page carries the same (build-browse.cjs:70)", () => {
+    /** The listing's copy as a page carries it. */
+    const listingCopy = (page: Page) => {
+      const at = page.main.indexOf(
+        '<section class="container catalogue" id="artworks">',
+      );
+      expect(at, `${page.file} has the listing`).toBeGreaterThan(-1);
+      const html = page.main.slice(at);
+      const what = (part: string) => `${page.file}: ${part}`;
+      const [label, count] = groups(
+        html,
+        /<span data-catalogue-label>([^<]*)<\/span> <span id="artwork-count" role="status" aria-live="polite">([^<]*)<\/span>/,
+        what("the heading"),
+      );
+      const [noteHref, noteLink, noteText] = groups(
+        html,
+        /<p class="saved-view-note" data-saved-note hidden><a href="([^"]*)">([^<]*)<\/a>([^<]*)<\/p>/,
+        what("the saved view's note"),
+      );
+      const [summary, summaryMark] = groups(
+        html,
+        /<summary>([^<]*) <span aria-hidden="true">([^<]*)<\/span><\/summary>/,
+        what("the filters' summary"),
+      );
+      const [searchLabel, placeholder] = groups(
+        html,
+        /<label class="search-field">([^<]*)<input type="search" name="q" placeholder="([^"]*)"/,
+        what("the search field"),
+      );
+      const [clear] = groups(
+        html,
+        /<button type="reset" class="filter-clear">([^<]*)<\/button>/,
+        what("the reset button"),
+      );
+      const [chips] = groups(
+        html,
+        /<div class="active-filters" aria-label="([^"]*)"><\/div>/,
+        what("the active filters"),
+      );
+      const [emptyHeading, emptyBody, emptyAction] = groups(
+        html,
+        /<div class="empty-results" hidden><h3>([^<]*)<\/h3><p>([^<]*)<\/p><button class="button button--secondary" data-reset-filters>([^<]*)<\/button><\/div>/,
+        what("the empty state"),
+      );
+      return {
+        label,
+        count,
+        savedNote: {
+          link: noteLink,
+          href: resolveFrom(page, noteHref),
+          text: noteText,
+        },
+        summary,
+        summaryMark,
+        search: { label: searchLabel, placeholder },
+        selects: [
+          ...html.matchAll(
+            /<label>([^<]*)<select name="([^"]*)"><option value="">([^<]*)<\/option>/g,
+          ),
+        ].map((m) => ({ key: m[2], label: m[1], all: m[3] })),
+        clear,
+        chips,
+        empty: { heading: emptyHeading, body: emptyBody, action: emptyAction },
+      };
+    };
+    const expected = (cards: number) => ({
+      label: LISTING.label,
+      count: LISTING.count(cards),
+      // Always Shop All's whole list, even from a detail page.
+      savedNote: {
+        ...LISTING.savedNote,
+        href: prototypeHref(LISTING.savedNote.href),
+      },
+      summary: LISTING.filters.summary,
+      summaryMark: LISTING.filters.summaryMark,
+      search: LISTING.filters.search,
+      selects: Object.entries(LISTING.filters.selects).map(
+        ([key, { label, all }]) => ({ key, label, all }),
+      ),
+      clear: LISTING.filters.clear,
+      chips: LISTING.chips.label,
+      empty: {
+        heading: LISTING.empty.heading,
+        body: LISTING.empty.body,
+        action: LISTING.empty.action,
+      },
+    });
+    const pages = listingPages();
+    expect(pages).toHaveLength(15);
+    for (const page of pages)
+      expect(listingCopy(page), page.file).toEqual(
+        expected(cardsOf(page).length),
+      );
+    expect(LISTING.savedNote.href).toMatch(/^\/shop#artworks$/);
+    expect(LISTING.filters.summaryMark).toBe(String.fromCharCode(0xff0b));
+    expect(Object.keys(LISTING.filters.selects)).toEqual([...SELECT_KEYS]);
+  });
+
+  it("the listing's runtime strings are prototype/shared/browse.js's own literals (rule 7)", () => {
+    const js = read("prototype/shared/browse.js");
+    const [one, many] = groups(
+      js,
+      /#artwork-count'\)\.textContent=`\$\{count\} artwork\$\{count===1\?'([^']*)':'([^']*)'\}`/,
+      "the count",
+    );
+    for (const n of [0, 1, 2, 22])
+      expect(LISTING.count(n)).toBe(`${n} artwork${n === 1 ? one : many}`);
+    expect([LISTING.count(1), LISTING.count(0), LISTING.count(22)]).toEqual([
+      "1 artwork",
+      "0 artworks",
+      "22 artworks",
+    ]);
+    const [savedLabel, label] = groups(
+      js,
+      /\[data-catalogue-label\]'\)\.textContent=savedOnly\?'([^']*)':'([^']*)'/,
+      "the heading's label",
+    );
+    const [savedHeading, heading] = groups(
+      js,
+      /querySelector\('h3'\)\.textContent=savedOnly\?'([^']*)':'([^']*)'/,
+      "the empty state's heading",
+    );
+    const [savedBody, body] = groups(
+      js,
+      /querySelector\('p'\)\.textContent=savedOnly\?'([^']*)':'([^']*)'/,
+      "the empty state's line",
+    );
+    expect({
+      savedLabel,
+      label,
+      savedHeading,
+      heading,
+      savedBody,
+      body,
+    }).toEqual({
+      savedLabel: LISTING.savedLabel,
+      label: LISTING.label,
+      savedHeading: LISTING.empty.savedHeading,
+      heading: LISTING.empty.heading,
+      savedBody: LISTING.empty.savedBody,
+      body: LISTING.empty.body,
+    });
+    // A chip: the value, then the multiplication sign; its name says which filter it removes.
+    const [after] = groups(js, /b\.textContent=v\+'([^']*)'/, "the chip");
+    const [before, end] = groups(
+      js,
+      /b\.setAttribute\('aria-label','([^']*)'\+v\+'([^']*)'\)/,
+      "the chip's name",
+    );
+    for (const value of ["Bedroom", "Study & Office"]) {
+      expect(LISTING.chips.text(value)).toBe(`${value}${after}`);
+      expect(LISTING.chips.remove(value)).toBe(`${before}${value}${end}`);
+    }
+    expect(LISTING.chips.text("Bedroom")).toBe(
+      `Bedroom ${String.fromCharCode(0xd7)}`,
+    );
+  });
+
+  it("every card's words, link name, alt and price line are ART_CARD's (build-browse.cjs:61) — and its words are Home's", () => {
+    expect({ label: ART_CARD.label, view: ART_CARD.view }).toEqual({
+      label: FEATURED.label,
+      view: FEATURED.view,
+    });
+    // The 22 artworks: on Shop All, then each once on its collection's page and once on its style's (two each, §3a).
+    const shop = cardsOf(browsePage(prototypeHref("/shop"))).map(
+      ({ slug }) => slug,
+    );
+    expect(new Set(shop).size).toBe(22);
+    expect(shop).toHaveLength(22);
+    expect(
+      COLLECTION_ROUTES.flatMap(({ slug }) =>
+        cardsOf(collectionPage(slug)).map((card) => card.slug),
+      ).sort(),
+    ).toEqual([...shop].sort());
+    expect(
+      STYLE_ROUTES.map(({ slug }) => cardsOf(stylePage(slug)).length),
+    ).toEqual(STYLE_ROUTES.map(() => 2));
+    expect(
+      STYLE_ROUTES.flatMap(({ slug }) =>
+        cardsOf(stylePage(slug)).map((card) => card.slug),
+      ).sort(),
+    ).toEqual([...shop].sort());
+
+    let cards = 0;
+    for (const page of listingPages())
+      for (const card of cardsOf(page)) {
+        const what = (part: string) => `${page.file} ${card.slug}: ${part}`;
+        const [viewLabel, src, alt] = groups(
+          card.html,
+          /<a class="art-card__main" href="[^"]*" aria-label="([^"]*)"><img src="([^"]*)"[^>]* alt="([^"]*)"/,
+          what("the image link"),
+        );
+        const [label] = groups(
+          card.html,
+          /<p class="art-card__label">([^<]*)<\/p>/,
+          what("the label"),
+        );
+        const [title] = groups(
+          card.html,
+          /<h3><a href="[^"]*">([^<]*)<\/a><\/h3>/,
+          what("the title"),
+        );
+        const [frame, amount] = groups(
+          card.html,
+          /<p class="art-card__price"><span>([^<]*)<\/span>([^<]*)<\/p>/,
+          what("the price"),
+        );
+        const [view] = groups(
+          card.html,
+          /<a class="art-card__view" href="[^"]*">([^<]*) <span aria-hidden="true">→<\/span><\/a>/,
+          what("the view link"),
+        );
+        // The card shows the artwork in its suggested frame; the image's file name says which.
+        const finish = groups(
+          path.posix.basename(src),
+          new RegExp(
+            `^${card.slug}-frame-(white|black|antique-gold)-[0-9a-f]+-1200[.]webp$`,
+          ),
+          what("the frame image"),
+        )[0] as FinishCode;
+        expect(
+          { label, view, viewLabel, alt, frame, amount },
+          what("the card"),
+        ).toEqual({
+          label: ART_CARD.label,
+          view: ART_CARD.view,
+          viewLabel: ART_CARD.viewLabel(title),
+          alt: ART_CARD.alt(title, finish),
+          frame: ART_CARD.frame(FINISH_NAMES[finish]),
+          amount: formatRupees(BigInt(FINISHES[finish].pricePaise)),
+        });
+        cards += 1;
+      }
+    expect(cards).toBe(66);
+  });
+
+  it("NS-26–NS-29 — the honest states the prototype has no copy for are plain strings with no prototype demo wording", () => {
+    // New strings (D-24 technical states, proposed at S1.4): their wording and approval are tracked in
+    // docs/content/new-strings.md.
+    const strings = [
+      CATALOGUE_STATES.unavailable.heading, // NS-26
+      CATALOGUE_STATES.unavailable.body,
+      CATALOGUE_STATES.empty.heading, // NS-27
+      CATALOGUE_STATES.empty.body,
+      SAVED_VIEW.unavailable.heading, // NS-28
+      SAVED_VIEW.unavailable.body,
+      CATALOGUE_STATES.notAvailable, // NS-29
+    ];
+    const prototype = [
+      ...listingPages(),
+      browsePage(prototypeHref("/collections")),
+      browsePage(prototypeHref("/art-styles")),
+    ]
+      .map((page) => page.html)
+      .concat(read("prototype/shared/browse.js"))
+      .join("\n");
+    for (const line of strings) {
+      expect(typeof line).toBe("string");
+      expect(line.length, line).toBeGreaterThan(0);
+      expect(line.trim(), line).toBe(line);
+      // Plain text: no markup, entity, placeholder or template.
+      expect(line).not.toMatch(/[<>{}$`]|&[#a-z0-9]+;/i);
+      expect(line).not.toMatch(/sample|preview|demo/i);
+      // Not ported copy: none of the browse pages, nor their script, says it.
+      expect(prototype).not.toContain(line);
+    }
   });
 });

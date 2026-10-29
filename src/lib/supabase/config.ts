@@ -32,7 +32,8 @@ function present(value: string | undefined): value is string {
 
 /**
  * The project ref of a Supabase API URL, or null unless the value is exactly `https://<ref>.supabase.co`
- * (an optional trailing slash; no userinfo, path, query or fragment).
+ * (an optional trailing slash; no userinfo, port, path, query or fragment — the port refused from S1.4, as
+ * `storageOriginFromUrl` already refuses it).
  */
 export function projectRefFromUrl(value: string | undefined): string | null {
   if (!present(value)) return null;
@@ -44,7 +45,7 @@ export function projectRefFromUrl(value: string | undefined): string | null {
   }
   if (url.protocol !== "https:" || url.username !== "" || url.password !== "")
     return null;
-  if (url.search !== "" || url.hash !== "") return null;
+  if (url.port !== "" || url.search !== "" || url.hash !== "") return null;
   if (url.pathname !== "/" && url.pathname !== "") return null;
   const match = SUPABASE_HOST_PATTERN.exec(url.hostname);
   return match ? match[1] : null;
@@ -188,6 +189,54 @@ export function serverConfig(env: ServerSupabaseEnv): ServerConfigResult {
       prodRef,
     },
   };
+}
+
+// --- Server-side public read (session-less, publishable key) --------------------------------------------------
+
+/** What a server-side read of the public projection needs: the build's public pair and the configured identity facts — no secret. */
+export type PublicReadEnv = PublicSupabaseEnv &
+  Pick<
+    ServerSupabaseEnv,
+    "SUPABASE_TEST_PROJECT_REF" | "SUPABASE_PROD_PROJECT_REF" | "VERCEL_ENV"
+  >;
+
+export type PublicReadConfig = BrowserConfig & {
+  context: Exclude<DeploymentContext, "unknown">;
+  /** The ref this context must use: PROD in Production, TEST everywhere else. */
+  expectedRef: string;
+};
+
+export type PublicReadReason =
+  | BrowserConfigReason
+  | "unknown_context"
+  | "refs_not_distinct"
+  | "identity_mismatch";
+
+export type PublicReadResult =
+  | { ok: true; config: PublicReadConfig }
+  | { ok: false; reason: PublicReadReason };
+
+/**
+ * The storefront's catalogue read on the server (S1.4, `@/lib/server/catalogue.ts`): the public pair validated as
+ * `browserConfig` does, held to the identity rule of `serverConfig` — a known deployment context, both configured
+ * refs well formed and distinct, and the API URL's ref equal to the ref this context expects (Production → PROD,
+ * everything else → TEST) — without requiring the secret key the read never uses, so a missing or malformed secret
+ * cannot take the public catalogue offline. Fails closed with a reason, never a value.
+ */
+export function publicReadConfig(env: PublicReadEnv): PublicReadResult {
+  const context = deploymentContext(env.VERCEL_ENV);
+  if (context === "unknown") return { ok: false, reason: "unknown_context" };
+  const testRef = env.SUPABASE_TEST_PROJECT_REF;
+  const prodRef = env.SUPABASE_PROD_PROJECT_REF;
+  if (!isProjectRef(testRef) || !isProjectRef(prodRef))
+    return { ok: false, reason: "not_configured" };
+  if (testRef === prodRef) return { ok: false, reason: "refs_not_distinct" };
+  const pair = browserConfig(env);
+  if (!pair.ok) return pair;
+  const expectedRef = context === "production" ? prodRef : testRef;
+  if (pair.config.projectRef !== expectedRef)
+    return { ok: false, reason: "identity_mismatch" };
+  return { ok: true, config: { ...pair.config, context, expectedRef } };
 }
 
 /** The identity facts of a configuration, built field by field so the secret can never ride along. */
