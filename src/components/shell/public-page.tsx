@@ -7,10 +7,13 @@ import { SiteHeader } from "./site-header";
  * One public page: the shared header, the main landmark and the shared footer, inside the wrapper that
  * carries the prototype's body classes for that page (docs/DESIGN.md §4: "Per-page variation is limited to
  * body-class scoping"). Home carries none; every other S1.3 page is `browse-page utility-page` plus its own
- * family class, exactly as prototype/pages/** render them.
+ * family class, exactly as prototype/pages/** render them; the S1.4 browse pages are `browse-page` alone, and their
+ * `<main>`, like Home's, has no class — each section brings its own container and the hero is full-bleed
+ * (prototype/scripts/build-browse.cjs:58) — and their footer shows Home's CTA band, as the frozen browse pages do.
  */
 export type PageVariant =
   | "home"
+  | "browse" // shop all, the collections and art styles hubs and their detail pages: browse-page only
   | "help-hub" // about: browse-page utility-page help-page help-brand
   | "help" // help: the same classes as the hub
   | "help-article" // the seven policies
@@ -21,6 +24,7 @@ export type PageVariant =
 
 const VARIANT_CLASSES: Record<PageVariant, string> = {
   home: "page page--home",
+  browse: "page browse-page",
   "help-hub": "page browse-page utility-page help-page help-brand",
   help: "page browse-page utility-page help-page help-brand",
   "help-article":
@@ -45,14 +49,14 @@ export function PublicPage({
   return (
     <div className={VARIANT_CLASSES[variant]} style={style}>
       <SiteHeader home={home} />
-      {home ? (
+      {home || variant === "browse" ? (
         <main id="main">{children}</main>
       ) : (
         <main id="main" className="container utility-main">
           {children}
         </main>
       )}
-      <SiteFooter home={home} />
+      <SiteFooter home={home} cta={home || variant === "browse"} />
     </div>
   );
 }

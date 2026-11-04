@@ -41,7 +41,9 @@ import {
  * Storage origin, and without a valid public URL the pages render the app's own relative paths, never another
  * origin; and the upload tool refuses escaping paths, links, wrong signatures and wrong hashes on a scratch
  * directory. From S1.3b (D-19) the manifest also lists narrower delivery copies encoded from the PNG originals,
- * and the tool's scaling — the prototype's — is checked here as pure arithmetic. No network, no database.
+ * and the tool's scaling — the prototype's — is checked here as pure arithmetic. From S1.4 it also lists the
+ * browse pages' page heroes (the prototype's responsive copies) and collection covers (its web copies, the only
+ * WebP copies from outside the responsive folder). No network, no database.
  */
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -115,10 +117,10 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         `baseline hash for ${entry.source_path}`,
       ).toBe(entry.sha256);
     }
-    expect(manifest.entries).toHaveLength(39);
+    expect(manifest.entries).toHaveLength(51);
   });
 
-  it("the encoded copies come from PNG originals — native for the PNG-only sources, narrower delivery copies from S1.3b; the rest are the prototype's responsive WebP copies", () => {
+  it("the encoded copies come from PNG originals — native for the PNG-only sources, narrower delivery copies from S1.3b; the rest are the prototype's responsive WebP copies, and from S1.4 its web copies of the three collection covers", () => {
     const encoded = manifest.entries.filter((e) => e.encode);
     const native = encoded.filter(
       (e) => e.size === "native" || e.width === NATIVE[e.source_path]?.width,
@@ -155,7 +157,27 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
     );
     for (const entry of encoded)
       expect(entry.source_path).toMatch(/^assets\/site\/[^/]+\.png$/);
-    for (const entry of manifest.entries.filter((e) => !e.encode))
+    // The S1.4 collection covers are the prototype's web copies (prototype/scripts/prepare-artwork-web.cjs:
+    // `<cover>-<hash>-<size>.webp`) — exactly these six, each named by its own key and size; every other WebP
+    // copy is a responsive one.
+    const covers = manifest.entries.filter(
+      (e) => !e.encode && e.source_path.startsWith("assets/web-artworks/"),
+    );
+    expect(covers.map((e) => e.object_path).sort()).toEqual(
+      ["painted-in-gold", "blossoms-in-ink", "the-age-of-sail"]
+        .flatMap((c) => [480, 1200].map((w) => `site/${c}-cover-${w}.webp`))
+        .sort(),
+    );
+    for (const entry of covers)
+      expect(
+        /^assets\/web-artworks\/([a-z0-9-]+)-[0-9a-f]{8}-(\d+)\.webp$/
+          .exec(entry.source_path)
+          ?.slice(1),
+        entry.source_path,
+      ).toEqual([entry.name, entry.size]);
+    for (const entry of manifest.entries.filter(
+      (e) => !e.encode && !covers.includes(e),
+    ))
       expect(entry.source_path).toMatch(
         /^assets\/site\/responsive\/[a-z0-9-]+\.webp$/,
       );

@@ -63,7 +63,13 @@ export type SiteImageKey =
   | "card-1-shop-all"
   | "card-2-collection"
   | "card-3-artstyle"
+  | "shop-all-page-hero"
+  | "collections-page-hero"
+  | "art-styles-page-hero"
   | "about-page-hero"
+  | "painted-in-gold-cover"
+  | "blossoms-in-ink-cover"
+  | "the-age-of-sail-cover"
   | "gen-01-craft-detail-gold-frame"
   | "gen-02-paper-closeup"
   | "gen-03-acrylic-glazing"
@@ -77,8 +83,12 @@ export type SiteImageKey =
  * a PNG source at its native width, the FAQ illustration as one native copy; from S1.3b — D-19 — the
  * narrower delivery copies encoded from the PNG originals by the same method, at the widths Home draws: 817
  * for the hero artwork — the width that keeps its proportions (1199 : 1312) to 0.0002 %, since the cutout's
- * height follows the loaded copy —, 800 for the route pictures, 160 / 320 / 480 for the craft swatches). Mirrors
- * the manifest.
+ * height follows the loaded copy —, 800 for the route pictures, 160 / 320 / 480 for the craft swatches; from
+ * S1.4, the browse pages' images as the prototype draws them: the Shop, Collections and Art Styles page heroes
+ * at 600 / 1600 — its responsive copies, the 600 at 700 px and below, the 1600 above; their 1200 copies go
+ * unused and are not stored —, and the three collection covers at 480 / 1200 — its web copies, scaled on the
+ * longer side by prototype/scripts/prepare-artwork-web.cjs; The Age of Sail's is the picture of
+ * `card-2-collection`, stored from its own copies). Mirrors the manifest.
  */
 export const SITE_IMAGE_SIZES: Readonly<
   Record<SiteImageKey, readonly string[]>
@@ -88,7 +98,13 @@ export const SITE_IMAGE_SIZES: Readonly<
   "card-1-shop-all": ["600", "800", "1200"],
   "card-2-collection": ["600", "800", "1200", "1600"],
   "card-3-artstyle": ["600", "800", "1200"],
+  "shop-all-page-hero": ["600", "1600"],
+  "collections-page-hero": ["600", "1600"],
+  "art-styles-page-hero": ["600", "1600"],
   "about-page-hero": ["600", "1600"],
+  "painted-in-gold-cover": ["480", "1200"],
+  "blossoms-in-ink-cover": ["480", "1200"],
+  "the-age-of-sail-cover": ["480", "1200"],
   "gen-01-craft-detail-gold-frame": ["160", "320", "480", "1254"],
   "gen-02-paper-closeup": ["160", "320", "480", "1254"],
   "gen-03-acrylic-glazing": ["160", "320", "480", "1254"],

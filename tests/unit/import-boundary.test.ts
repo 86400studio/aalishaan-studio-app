@@ -37,9 +37,12 @@ const IMPORT_RULE = "no-restricted-imports";
 const SYNTAX_RULE = "no-restricted-syntax";
 const USE_CLIENT = '"use client";\n';
 
-/** Every way a source file can read one of the server-only names from process.env. */
+/**
+ * Every way a source file can read one of the server-only names from process.env — the names of eslint.config.mjs
+ * `SERVER_ONLY_NAMES` (since S1.4 the catalogue's revalidation secret too; a test below checks each is covered).
+ */
 const SERVER_ONLY_NAMES =
-  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)";
+  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)|CATALOGUE_REVALIDATION_SECRET";
 const SERVER_ONLY_READ = new RegExp(
   `process\\.env(?:\\.|\\[\\s*["'\`])(?:${SERVER_ONLY_NAMES})\\b|\\{[^}]*\\b(?:${SERVER_ONLY_NAMES})\\b[^}]*\\}\\s*=\\s*process\\.env`,
 );
@@ -199,6 +202,21 @@ describe(
         "src/lib/server/staff-session.ts",
         'import { GoTrueClient } from "@supabase/auth-js";\nexport const x = GoTrueClient;\n',
       ],
+      [
+        "a browse helper importing the catalogue reader (S1.4: src/lib/catalogue is browser-shared)",
+        "src/lib/catalogue/browse-model.ts",
+        'import { getPublicCatalogue } from "@/lib/server/catalogue";\nexport const x = getPublicCatalogue;\n',
+      ],
+      [
+        "a browse helper importing a server module by a relative path (S1.4)",
+        "src/lib/catalogue/filters.ts",
+        'import { CATALOGUE_TAG } from "../server/catalogue";\nexport const x = CATALOGUE_TAG;\n',
+      ],
+      [
+        "a browse helper importing the SDK (S1.4)",
+        "src/lib/catalogue/saved-artworks.ts",
+        'import { createClient } from "@supabase/supabase-js";\nexport const x = createClient;\n',
+      ],
     ])("reports %s", async (_label, file, code) => {
       expect(await errorRulesFor(file, code)).toContain(IMPORT_RULE);
     });
@@ -289,6 +307,16 @@ describe(
         "tests/unit/example.test.ts",
         'import { checkHealth } from "@/lib/server/health";\nexport const x = checkHealth;\n',
       ],
+      [
+        "a browse helper importing the site-image registry (S1.4)",
+        "src/lib/catalogue/browse-model.ts",
+        'import { catalogueImage } from "@/lib/site-images";\nexport const x = catalogueImage;\n',
+      ],
+      [
+        "the revalidation module importing a browse helper (S1.4)",
+        "src/lib/server/catalogue-revalidation.ts",
+        'import { CATALOGUE_PAGE_PATHS } from "@/lib/catalogue/browse-model";\nexport const x = CATALOGUE_PAGE_PATHS;\n',
+      ],
     ])("allows %s", async (_label, file, code) => {
       const rules = await errorRulesFor(file, code);
       expect(rules).not.toContain(CLIENT_RULE);
@@ -351,6 +379,16 @@ describe(
         "src/proxy.ts",
         "export const k = process.env.UPSTASH_REDIS_REST_URL;\n",
       ],
+      [
+        "the revalidation route handler (S1.4 — the server module behind it reads the secret, the route does not)",
+        "src/app/api/revalidate/catalogue/route.ts",
+        "export const k = process.env.CATALOGUE_REVALIDATION_SECRET;\n",
+      ],
+      [
+        "a browse helper destructuring the revalidation secret (S1.4)",
+        "src/lib/catalogue/browse-model.ts",
+        "const { CATALOGUE_REVALIDATION_SECRET } = process.env;\nexport const k = CATALOGUE_REVALIDATION_SECRET;\n",
+      ],
     ])(
       "reports a server-only environment name read in %s",
       async (_label, file, code) => {
@@ -389,8 +427,41 @@ describe(
         "src/lib/server/login-throttle.ts",
         "export const k = [process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN];\n",
       ],
+      [
+        "the revalidation secret inside the revalidation module (S1.4)",
+        "src/lib/server/catalogue-revalidation.ts",
+        "export const k = process.env.CATALOGUE_REVALIDATION_SECRET;\n",
+      ],
     ])("allows %s", async (_label, file, code) => {
       expect(await errorRulesFor(file, code)).not.toContain(SYNTAX_RULE);
+    });
+
+    it("the sweep's server-only names are eslint.config.mjs's, every one of them", async () => {
+      const config = readFileSync(path.join(ROOT, "eslint.config.mjs"), "utf8");
+      const listed = /const SERVER_ONLY_NAMES =\s*"\^\(([^)]*)\)\$";/.exec(
+        config,
+      );
+      expect(
+        listed,
+        "eslint.config.mjs lists SERVER_ONLY_NAMES",
+      ).not.toBeNull();
+      const names = listed![1]!.split("|");
+      expect(names).toContain("CATALOGUE_REVALIDATION_SECRET");
+      const mirrored = new RegExp(`^(?:${SERVER_ONLY_NAMES})$`);
+      for (const name of names) {
+        expect(name, "mirrored by the sweep").toMatch(mirrored);
+        expect(
+          `export const k = process.env.${name};\n`,
+          "read in a source file",
+        ).toMatch(SERVER_ONLY_READ);
+        expect(
+          await errorRulesFor(
+            "src/components/x.tsx",
+            `export const k = process.env.${name};\n`,
+          ),
+          `${name} is reported outside src/lib/server`,
+        ).toContain(SYNTAX_RULE);
+      }
     });
   },
 );
@@ -403,6 +474,8 @@ describe("transitive protection — the marker the bundler enforces", () => {
 
   it("has the expected server modules", () => {
     expect(serverFiles.sort()).toEqual([
+      "catalogue-revalidation.ts",
+      "catalogue.ts",
       "health.ts",
       "login-throttle.ts",
       "staff-access.ts",
@@ -446,6 +519,25 @@ describe("transitive protection — the marker the bundler enforces", () => {
       for (const specifier of specifiers) {
         expect(specifier, `${name} imports ${specifier}`).not.toMatch(
           /(^|\/)server(\/|$)|^server-only$/,
+        );
+      }
+      expect(source).not.toMatch(SERVER_ONLY_READ);
+    }
+  });
+
+  it("the browse helpers (src/lib/catalogue — browser-shared since S1.4) import no server module or SDK and read no server-only name", () => {
+    const dir = path.join(ROOT, "src", "lib", "catalogue");
+    const names = readdirSync(dir).filter((name) => /\.(ts|tsx)$/.test(name));
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      const source = readFileSync(path.join(dir, name), "utf8");
+      // Import specifiers only — `from "…"` and a bare `import "…"` — as above.
+      const specifiers = [...source.matchAll(/(?:from|import) "([^"]+)"/g)].map(
+        (match) => match[1],
+      );
+      for (const specifier of specifiers) {
+        expect(specifier, `${name} imports ${specifier}`).not.toMatch(
+          /(^|\/)server(\/|$)|^server-only$|^@supabase\//,
         );
       }
       expect(source).not.toMatch(SERVER_ONLY_READ);

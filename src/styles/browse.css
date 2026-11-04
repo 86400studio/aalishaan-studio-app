@@ -1,0 +1,736 @@
+/*
+ * The catalogue browse pages — S1.4: Shop All, the Collections and Art Styles hubs, the three collection pages and
+ * the eleven style pages (docs/DESIGN.md §3, §4). Effective values after the prototype's browse cascade
+ * (browse-home → home-r2 → browse → gallery-r8 → revision-r9 → revision-r11, then each page's in-document hero
+ * rule); every rule cites its source, and browse.css (minified onto nine lines) and revision-r9.css:64 are cited
+ * line:column. Scoped as storefront.css is: `:where(.site)` adds no specificity, so each ported selector weighs
+ * exactly what the prototype's own selector weighs, and a prototype `body …` qualifier is ported as
+ * `body :where(.site) …`. The base, button, eyebrow and art card rules the browse pages share with Home already come
+ * from storefront.css and home.css; only the browse cascade's own rules and its overrides of those shared rules are
+ * here. A declaration that a later rule overrides on every browse element is left out.
+ *
+ * Imported by the five browse page files (src/app/(public)/shop, collections, collections/[slug], art-styles,
+ * art-styles/[slug]), so it loads after the public layout's three sheets, as browse.css follows browse-home.css in
+ * the prototype; two pairs tie on weight and rely on that order — `.collection-grid` (900 px and below) and
+ * `.browse-stories` (1050 px and below) set a max-width over storefront.css's `.container`. Never import it in the
+ * Admin, the root layout or the global 404: tests/e2e/smoke.spec.ts fails when the Admin fetches a sheet containing
+ * `:where(.site)`.
+ *
+ * The R9 hero's picture: each page sets `--site-image-browse-hero-1600` and `--site-image-browse-hero-600` on its page
+ * wrapper (complete url("…") values; the About hero's pattern in utility.css), in place of the prototype's
+ * in-document rule (prototype/scripts/build-browse.cjs:55).
+ *
+ * The copy pages (About, Help, Contact, Track, the policies, 404 / 500) carry `browse-page` too and may keep this sheet
+ * after a client-side navigation: every selector here names a class only the browse markup uses, and the one
+ * `.browse-page` rule matches art card prices, which those pages do not have.
+ *
+ * Not ported: the gold `.browse-page :focus-visible` ring (browse.css:1:6390; D-15 keeps the one crimson ring); the
+ * hero scrim (browse.css:1:167, 1:778), which revision-r9.css:17 hides on every R9 hero and the detail hero never
+ * draws; `.browse-hero--index` (no page uses it); the receipt print rules (revision-r9.css:65, 81); the reduced-motion
+ * `.browse-page *` rule (browse.css:8:39), whose visible result globals.css's reduced-motion rule already gives; and
+ * the `[hidden]` rules (browse.css:1:3262, revision-r11.css:100), which storefront.css's `[hidden]` outweighs.
+ */
+
+/* ---------- the hero (browse.css:1:88–1:1220; gallery-r8.css:30; revision-r9.css:16–20; build-browse.cjs:55) ---------- */
+/* browse.css:1:88 — its white text is overridden on both heroes (revision-r9.css:16, browse.css:1:993) */
+:where(.site) .browse-hero {
+  background: #262a24;
+  position: relative;
+  isolation: isolate;
+}
+/* browse.css:1:370 */
+:where(.site) .browse-hero__inner {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  padding-block: 56px;
+}
+/* browse.css:1:458; line height gallery-r8.css:30 */
+:where(.site) .browse-hero h1 {
+  font-size: clamp(2.7rem, 5vw, 4.5rem);
+  line-height: 1.1;
+  margin: 0.6rem 0 1rem;
+  max-width: 14em;
+  text-wrap: balance;
+}
+/* browse.css:1:579 */
+:where(.site) .browse-hero p {
+  max-width: 580px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+/* The R9 image hero of Shop All, the hubs and the style pages (revision-r9.css:16); its picture is the page's
+   in-document rule (build-browse.cjs:55), read here from the page wrapper's custom property. */
+body :where(.site) .browse-hero--r9 {
+  background-image: var(--site-image-browse-hero-1600);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  color: #191813;
+}
+/* revision-r9.css:18 */
+body :where(.site) .browse-hero--r9 h1,
+body :where(.site) .browse-hero--r9 p {
+  color: #191813;
+  text-shadow: none;
+}
+/* revision-r9.css:19 */
+body :where(.site) .browse-hero--r9 .eyebrow {
+  color: #b51f2a;
+}
+/* revision-r9.css:20 — outweighs every hero min-height of browse.css and gallery-r8.css, the style pages' too */
+body :where(.site) .browse-hero--r9 .browse-hero__inner {
+  min-height: 340px;
+}
+/* The collection pages' white hero, the cover beside the copy: browse.css:1:993 */
+:where(.site) .browse-hero--detail {
+  background: white;
+  color: var(--ink);
+}
+/* browse.css:1:1101 */
+:where(.site) .browse-hero--detail .browse-hero__inner {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 4rem;
+  padding-block: 30px 50px;
+}
+/* browse.css:1:1220 */
+:where(.site) .browse-hero--detail img {
+  width: 100%;
+  height: 340px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* ---------- the back link (browse.css:1:1307–1:1881; gallery-r8.css:35; revision-r11.css:18) ---------- */
+/* browse.css:1:1307; radius and weight gallery-r8.css:35. Each hero sets the border colour (below), so the
+   prototype's own white one never shows. */
+:where(.site) .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.05rem 0 0.9rem;
+  margin-bottom: 1.35rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: inherit;
+  transition:
+    background var(--dur),
+    border-color var(--dur);
+}
+/* browse.css:1:1662 */
+:where(.site) .browse-hero--detail .back-link {
+  border-color: var(--line-strong);
+}
+/* browse.css:1:1726 */
+:where(.site) .browse-hero--detail .back-link:hover {
+  background: rgba(25, 24, 19, 0.05);
+  border-color: var(--ink);
+}
+/* revision-r11.css:18 — it also outweighs `.back-link:hover` (browse.css:1:1594), so on a style page only the
+   arrow moves */
+body :where(.site) .browse-hero--r9 .back-link {
+  color: #191813;
+  border-color: #19181340;
+  background: #fffdfc80;
+}
+/* browse.css:1:1818 */
+:where(.site) .back-link span {
+  font-size: 1rem;
+  transition: transform var(--dur);
+}
+/* browse.css:1:1881 */
+:where(.site) .back-link:hover span {
+  transform: translateX(-3px);
+}
+
+/* ---------- the catalogue: heading, saved view, filters, chips, grid, empty state ---------- */
+/* browse.css:1:2061 */
+:where(.site) .catalogue {
+  padding-block: 48px 80px;
+}
+/* browse.css:9:1 */
+:where(.site) .catalogue-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+/* browse.css:1:2096; size gallery-r8.css:25, at every width. Its margins are overridden by browse.css:9:127's 0,
+   which the base heading rule already gives. */
+:where(.site) .catalogue-heading h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 2.2rem;
+}
+/* browse.css:1:2212 */
+:where(.site) .catalogue-heading h2 #artwork-count {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--taupe);
+}
+/* revision-r11.css:98 */
+:where(.site) .saved-view-note {
+  margin: 0 0 24px;
+  color: var(--taupe);
+  font-size: 0.9rem;
+}
+/* revision-r11.css:99 */
+:where(.site) .saved-view-note a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  margin-right: 16px;
+}
+/* browse.css:1:2328; background and radius gallery-r8.css:26 */
+:where(.site) .filters {
+  border: 1px solid #e3e1da;
+  background: #faf9f6;
+  border-radius: 4px;
+  margin-bottom: 18px;
+}
+/* browse.css:1:2419; height and alignment gallery-r8.css:27 */
+:where(.site) .filters summary {
+  min-height: 56px;
+  padding: 14px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+/* browse.css:1:2560 */
+:where(.site) .filters summary::-webkit-details-marker {
+  display: none;
+}
+/* browse.css:1:2614 — the plus turns to a cross while the filters are open */
+:where(.site) .filters[open] summary span {
+  transform: rotate(45deg);
+}
+/* browse.css:1:2666 */
+:where(.site) .filters form {
+  padding: 4px 20px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+/* browse.css:1:2770; size gallery-r8.css:28 */
+:where(.site) .filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--taupe);
+}
+/* browse.css:1:2842; radius gallery-r8.css:29 */
+:where(.site) .filters input,
+:where(.site) .filters select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #d8d6ce;
+  border-radius: 4px;
+  background: white;
+  color: var(--ink);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+}
+/* browse.css:1:3023 */
+:where(.site) .filter-clear {
+  align-self: end;
+  min-height: 46px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-align: left;
+}
+/* browse.css:1:3323 — the chips' row, while a filter is active */
+:where(.site) .active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 24px;
+}
+/* browse.css:1:3394 */
+:where(.site) .active-filters:empty {
+  margin: 0 0 24px;
+}
+/* browse.css:1:3432 */
+:where(.site) .active-filters button {
+  padding: 9px 14px;
+  border: 1px solid #d5d2c8;
+  border-radius: 24px;
+  min-height: 44px;
+  font-size: 0.8rem;
+}
+/* browse.css:1:3136; gap gallery-r8.css:24, at every width */
+:where(.site) .catalogue-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+/* browse.css:1:6463 — the prices of a row line up; it outweighs home.css's `.art-card__price`, and Home has no
+   `.browse-page` */
+:where(.site) .browse-page .art-card__price {
+  margin-top: auto;
+}
+/* browse.css:1:3548 */
+:where(.site) .empty-results {
+  text-align: center;
+  padding: 60px 20px;
+}
+/* browse.css:1:3599 */
+:where(.site) .empty-results p {
+  margin: 12px 0 24px;
+}
+
+/* ---------- the Collections hub (browse.css:1:3635–1:4542; gallery-r8.css:11, 12, 31, 32, 34) ---------- */
+/* browse.css:1:3635 */
+:where(.site) .collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  padding-block: 52px 84px;
+}
+/* browse.css:1:3744; the flat R8 card gallery-r8.css:11 */
+:where(.site) .collection-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e5e1da;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: none;
+  transition:
+    box-shadow 250ms var(--ease),
+    transform 250ms var(--ease);
+}
+/* gallery-r8.css:12 over browse.css:1:3984 — no lift; the border darkens */
+:where(.site) .collection-card:hover,
+:where(.site) .collection-card:focus-within {
+  transform: none;
+  box-shadow: none;
+  border-color: #b8afa2;
+}
+/* browse.css:1:4097; gallery-r8.css:34 colours the border, every side (only the bottom one is drawn) */
+:where(.site) .collection-card__image {
+  display: block;
+  aspect-ratio: 1;
+  background: #fff;
+  border-bottom: 1px solid;
+  border-color: #eeeae4;
+}
+/* browse.css:1:4207 */
+:where(.site) .collection-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* browse.css:1:4277; padding gallery-r8.css:31 */
+:where(.site) .collection-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  flex: 1;
+  padding: 28px;
+}
+/* browse.css:1:4398 */
+:where(.site) .collection-card h2 {
+  font-size: 2rem;
+  line-height: 1.15;
+}
+/* browse.css:1:4450; size and line height gallery-r8.css:32 */
+:where(.site) .collection-card p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--taupe);
+  margin-bottom: 0.6rem;
+}
+/* browse.css:1:4542 */
+:where(.site) .collection-card .button {
+  margin-top: auto;
+  font-size: 0.8125rem;
+  gap: 12px;
+  min-height: 46px;
+  padding: 11px 18px;
+}
+
+/* ---------- the Art Styles hub (browse.css:1:4645–1:5333; gallery-r8.css:11, 31–33) ---------- */
+/* browse.css:1:4645 */
+:where(.site) .browse-stories {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  padding-block: 56px 80px;
+}
+/* browse.css:1:4753; the flat R8 card gallery-r8.css:11 (no hover state: gallery-r8.css:12 does not name it) */
+:where(.site) .browse-story {
+  display: grid;
+  grid-template-columns: 38% minmax(0, 1fr);
+  border: 1px solid #e5e1da;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: none;
+  min-width: 0;
+  background: #fff;
+}
+/* browse.css:1:4941; background gallery-r8.css:33 */
+:where(.site) .browse-story__image {
+  display: flex;
+  background: #fff;
+  align-items: center;
+}
+/* browse.css:1:5013 */
+:where(.site) .browse-story__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* browse.css:1:5078; padding gallery-r8.css:31 */
+:where(.site) .browse-story__copy {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+/* browse.css:1:5179 */
+:where(.site) .browse-story h2 {
+  font-size: 1.7rem;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+/* browse.css:1:5245; size and line height gallery-r8.css:32 */
+:where(.site) .browse-story p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--taupe);
+  margin-bottom: 20px;
+}
+/* browse.css:1:5333 */
+:where(.site) .browse-story .button {
+  margin-top: auto;
+  font-size: 0.75rem;
+  gap: 12px;
+  min-height: 44px;
+  padding: 11px 16px;
+}
+
+/* ---------- responsive (browse.css:2–7; revision-r11.css:93–96; revision-r9.css:64; gallery-r8.css:94–110) ----------
+ * Widest range first. Where two rules of equal weight set one property of one element, the narrower range comes
+ * later, so each range resolves as in the prototype's sheets. */
+@media (min-width: 1500px) {
+  /* browse.css:2:26 */
+  :where(.site) .browse-story {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+@media (max-width: 1050px) {
+  /* browse.css:3:26 */
+  :where(.site) .browse-stories {
+    grid-template-columns: 1fr;
+    max-width: 820px;
+  }
+  /* browse.css:3:84 */
+  :where(.site) .browse-story {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+  /* browse.css:3:140 */
+  :where(.site) .filters form {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  /* browse.css:3:250 */
+  :where(.site) .collection-grid {
+    gap: 20px;
+  }
+  /* browse.css:3:312 */
+  :where(.site) .collection-card h2 {
+    font-size: 1.7rem;
+  }
+}
+@media (max-width: 900px) {
+  /* browse.css:4:25 */
+  :where(.site) .collection-grid {
+    grid-template-columns: 1fr;
+    max-width: 32rem;
+    margin-inline: auto;
+    gap: 24px;
+  }
+  /* browse.css:4:158 */
+  :where(.site) .collection-card h2 {
+    font-size: 1.9rem;
+  }
+}
+@media (max-width: 767px) {
+  /* browse.css:5:25 */
+  :where(.site) .browse-hero__inner {
+    min-height: 250px;
+    padding-block: 36px;
+  }
+  /* browse.css:5:81 */
+  :where(.site) .browse-hero h1 {
+    font-size: 2.8rem;
+  }
+  /* browse.css:5:211 */
+  :where(.site) .browse-hero p {
+    font-size: 0.95rem;
+  }
+  /* browse.css:5:243 */
+  :where(.site) .back-link {
+    margin-bottom: 1.1rem;
+    font-size: 0.8rem;
+  }
+  /* browse.css:5:336 */
+  :where(.site) .catalogue {
+    padding-block: 28px 48px;
+  }
+  /* browse.css:5:371 — its size and margin are overridden (gallery-r8.css:25, browse.css:9:127) */
+  :where(.site) .catalogue-heading h2 {
+    gap: 12px;
+  }
+  /* browse.css:5:438 */
+  :where(.site) .filters form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 4px 14px 16px;
+  }
+  /* browse.css:5:529 */
+  :where(.site) .search-field {
+    grid-column: 1/-1;
+  }
+  /* browse.css:5:560 */
+  :where(.site) .filters summary {
+    padding: 14px;
+  }
+  /* browse.css:5:590 — its gap is overridden (gallery-r8.css:24) */
+  :where(.site) .catalogue-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The compact two-column card, 600–767 px; gallery-r8.css restores most of it at 599 px. Each rule outweighs
+     home.css's card rule, Home's own small-screen values included. browse.css:5:661 */
+  :where(.site) .catalogue-grid .art-card {
+    padding: 7px;
+    border-radius: 12px;
+  }
+  /* browse.css:5:718 */
+  :where(.site) .catalogue-grid .art-card__body {
+    padding: 14px 4px 5px;
+    gap: 8px;
+  }
+  /* browse.css:5:779 */
+  :where(.site) .catalogue-grid .art-card__body h3 {
+    font-size: 1.25rem;
+  }
+  /* browse.css:5:832 */
+  :where(.site) .catalogue-grid .art-card__label {
+    font-size: 0.52rem;
+    line-height: 1.5;
+  }
+  /* browse.css:5:898 */
+  :where(.site) .catalogue-grid .art-card__hook {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  /* browse.css:5:963 */
+  :where(.site) .catalogue-grid .art-card__price span {
+    font-size: 0.72rem;
+    margin: 0;
+  }
+  /* browse.css:5:1027 */
+  :where(.site) .catalogue-grid .art-card__view {
+    font-size: 0.72rem;
+    padding: 10px 8px;
+    gap: 4px;
+  }
+  /* browse.css:5:1101 */
+  :where(.site) .catalogue-grid .wishlist {
+    right: 2px;
+    top: 2px;
+    width: 44px;
+    height: 44px;
+  }
+  /* browse.css:5:1168 */
+  :where(.site) .browse-stories {
+    padding-block: 30px 50px;
+    gap: 20px;
+  }
+  /* browse.css:5:1217 */
+  :where(.site) .browse-story {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  /* browse.css:5:1306 */
+  :where(.site) .collection-grid {
+    padding-block: 30px 50px;
+  }
+  /* browse.css:5:1347 */
+  :where(.site) .browse-hero--detail .browse-hero__inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-block: 28px;
+  }
+  /* browse.css:5:1442 */
+  :where(.site) .browse-hero--detail img {
+    height: 260px;
+  }
+  /* M2, artwork first: the back link, the cover, then the name and intro. revision-r11.css:93 */
+  :where(.site) .browse-hero--detail .browse-detail-copy {
+    display: contents;
+  }
+  /* revision-r11.css:94 */
+  :where(.site) .browse-hero--detail .back-link {
+    grid-row: 1;
+    justify-self: start;
+    margin-bottom: 0;
+  }
+  /* revision-r11.css:95 */
+  :where(.site) .browse-hero--detail .browse-hero__inner > img {
+    grid-row: 2;
+  }
+  /* revision-r11.css:96 */
+  :where(.site) .browse-hero--detail .browse-detail-text {
+    grid-row: 3;
+  }
+}
+@media (max-width: 700px) {
+  /* revision-r9.css:64:392; the 600 picture: the page's in-document rule (build-browse.cjs:55) */
+  body :where(.site) .browse-hero--r9 {
+    background-image: var(--site-image-browse-hero-600);
+    background-position: 25% center;
+  }
+  /* revision-r9.css:64:445 */
+  body :where(.site) .browse-hero--r9 .browse-hero__inner {
+    min-height: 280px;
+  }
+}
+@media (max-width: 599px) {
+  /* gallery-r8.css:94 */
+  :where(.site) .catalogue-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  /* The one-column card: the full card again, the view keeping browse.css:5:1027's 4px gap. gallery-r8.css:95 */
+  :where(.site) .catalogue-grid .art-card {
+    padding: 0;
+    border-radius: 4px;
+  }
+  /* gallery-r8.css:96 (its unqualified selector is home.css's) */
+  :where(.site) .catalogue-grid .art-card__body {
+    padding: 22px;
+    gap: 10px;
+  }
+  /* gallery-r8.css:97 (its unqualified selector is home.css's) */
+  :where(.site) .catalogue-grid .art-card__body h3 {
+    font-size: 1.9rem;
+    line-height: 1.18;
+  }
+  /* gallery-r8.css:98 */
+  :where(.site) .catalogue-grid .art-card__label {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  /* gallery-r8.css:99 */
+  :where(.site) .catalogue-grid .art-card__hook {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  /* gallery-r8.css:100 */
+  :where(.site) .catalogue-grid .art-card__price span {
+    font-size: 13px;
+    margin: 0 0 4px;
+  }
+  /* gallery-r8.css:101 */
+  :where(.site) .catalogue-grid .art-card__view {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+  /* gallery-r8.css:102 */
+  :where(.site) .catalogue-grid .wishlist {
+    right: 10px;
+    top: 10px;
+  }
+  /* gallery-r8.css:103 */
+  :where(.site) .catalogue {
+    padding-block: 32px 56px;
+  }
+  /* gallery-r8.css:104 — the R9 hero keeps revision-r9.css's min-height */
+  :where(.site) .browse-hero__inner {
+    min-height: 230px;
+    padding-block: 36px;
+  }
+  /* gallery-r8.css:105 */
+  :where(.site) .browse-hero h1 {
+    font-size: 2.65rem;
+  }
+  /* gallery-r8.css:106 */
+  :where(.site) .browse-hero p {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  /* gallery-r8.css:108 */
+  :where(.site) .collection-card__body,
+  :where(.site) .browse-story__copy {
+    padding: 24px;
+  }
+  /* gallery-r8.css:109 */
+  :where(.site) .collection-card h2,
+  :where(.site) .browse-story h2 {
+    font-size: 2rem;
+  }
+  /* gallery-r8.css:110 */
+  :where(.site) .collection-card p,
+  :where(.site) .browse-story p {
+    font-size: 16px;
+  }
+}
+@media (max-width: 480px) {
+  /* browse.css:6:25 */
+  :where(.site) .browse-story {
+    grid-template-columns: 1fr;
+  }
+  /* browse.css:6:65 */
+  :where(.site) .browse-story__image {
+    aspect-ratio: 1;
+  }
+  /* browse.css:6:200 */
+  :where(.site) .browse-story .button {
+    font-size: 0.85rem;
+  }
+  /* browse.css:6:239 */
+  :where(.site) .browse-hero--detail img {
+    height: 230px;
+  }
+  /* browse.css:6:277 */
+  :where(.site) .collection-card .button {
+    font-size: 0.85rem;
+    align-self: stretch;
+    justify-content: center;
+  }
+}
+@media (max-width: 359px) {
+  /* browse.css:7:219 */
+  :where(.site) .filters form {
+    grid-template-columns: 1fr;
+  }
+  /* browse.css:7:259 */
+  :where(.site) .search-field {
+    grid-column: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* gallery-r8.css:157 (its art card part is home.css's) */
+  :where(.site) .collection-card,
+  :where(.site) .browse-story {
+    transition: none;
+    transform: none;
+  }
+}

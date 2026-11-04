@@ -8,7 +8,9 @@ import {
   identityOf,
   isPreviewTestTarget,
   projectRefFromUrl,
+  publicReadConfig,
   serverConfig,
+  type PublicReadEnv,
   type ServerConfig,
   type ServerIdentity,
   type ServerSupabaseEnv,
@@ -56,6 +58,7 @@ describe("projectRefFromUrl", () => {
     [`${TEST_URL}/rest/v1`],
     [`${TEST_URL}?apikey=x`],
     [`${TEST_URL}#fragment`],
+    [`${TEST_URL}:8443`],
     ["https://abc.supabase.co"],
     [`https://${TEST_REF}.supabase.co.evil.example`],
     [`https://${TEST_REF}.example.com`],
@@ -352,4 +355,211 @@ describe("isPreviewTestTarget", () => {
   ])("is false for %s", (_label, value) => {
     expect(isPreviewTestTarget(value)).toBe(false);
   });
+});
+
+describe("publicReadConfig — the server's public catalogue read (S1.4): the public pair held to the identity rule, no secret", () => {
+  const PUBLIC_READ_FIELDS = [
+    "context",
+    "expectedRef",
+    "projectRef",
+    "publishableKey",
+    "url",
+  ];
+
+  it("accepts TEST in a Preview, normalises the URL to its origin and returns the public facts only", () => {
+    expect(
+      publicReadConfig(
+        previewEnv({ NEXT_PUBLIC_SUPABASE_URL: `${TEST_URL}/` }),
+      ),
+    ).toEqual({
+      ok: true,
+      config: {
+        url: TEST_URL,
+        publishableKey: PUBLISHABLE,
+        projectRef: TEST_REF,
+        context: "preview",
+        expectedRef: TEST_REF,
+      },
+    });
+  });
+
+  it("accepts PROD in Production and expects the PROD ref", () => {
+    expect(
+      publicReadConfig(
+        previewEnv({
+          VERCEL_ENV: "production",
+          NEXT_PUBLIC_SUPABASE_URL: PROD_URL,
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      config: {
+        url: PROD_URL,
+        publishableKey: PUBLISHABLE,
+        projectRef: PROD_REF,
+        context: "production",
+        expectedRef: PROD_REF,
+      },
+    });
+  });
+
+  it.each([
+    ["a local process (no VERCEL_ENV)", undefined],
+    ["an empty VERCEL_ENV", ""],
+    ["a Vercel development context", "development"],
+  ])("accepts TEST in %s as development", (_label, vercelEnv) => {
+    const result = publicReadConfig(previewEnv({ VERCEL_ENV: vercelEnv }));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.config.context).toBe("development");
+      expect(result.config.projectRef).toBe(TEST_REF);
+      expect(result.config.expectedRef).toBe(TEST_REF);
+    }
+  });
+
+  it("never returns the secret key, even when the environment it is given carries one", () => {
+    const result = publicReadConfig(previewEnv());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(Object.keys(result.config).sort()).toEqual(PUBLIC_READ_FIELDS);
+    expect(JSON.stringify(result)).not.toContain(SECRET);
+    expect(JSON.stringify(result)).not.toContain(SECRET_KEY_PREFIX);
+  });
+
+  it("does not need the secret key: absent or malformed, the public read stays configured", () => {
+    const withoutSecret: PublicReadEnv = {
+      NEXT_PUBLIC_SUPABASE_URL: TEST_URL,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: PUBLISHABLE,
+      SUPABASE_TEST_PROJECT_REF: TEST_REF,
+      SUPABASE_PROD_PROJECT_REF: PROD_REF,
+      VERCEL_ENV: "preview",
+    };
+    expect(publicReadConfig(withoutSecret).ok).toBe(true);
+    for (const secret of [undefined, "  ", PUBLISHABLE, LEGACY_JWT]) {
+      const env = previewEnv({ SUPABASE_SECRET_KEY: secret });
+      // The privileged configuration fails on that secret; the public read does not depend on it.
+      expect(serverConfig(env).ok).toBe(false);
+      expect(publicReadConfig(env).ok).toBe(true);
+    }
+  });
+
+  it.each([
+    [
+      "an unknown deployment context",
+      previewEnv({ VERCEL_ENV: "staging" }),
+      "unknown_context",
+    ],
+    [
+      "a mis-cased deployment context",
+      previewEnv({ VERCEL_ENV: "Production" }),
+      "unknown_context",
+    ],
+    [
+      "equal refs",
+      previewEnv({ SUPABASE_PROD_PROJECT_REF: TEST_REF }),
+      "refs_not_distinct",
+    ],
+    [
+      "a Preview pointed at PROD",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: PROD_URL }),
+      "identity_mismatch",
+    ],
+    [
+      "Production pointed at TEST",
+      previewEnv({ VERCEL_ENV: "production" }),
+      "identity_mismatch",
+    ],
+    [
+      "a local process pointed at PROD",
+      previewEnv({ VERCEL_ENV: undefined, NEXT_PUBLIC_SUPABASE_URL: PROD_URL }),
+      "identity_mismatch",
+    ],
+    [
+      "a URL pointing at a third project",
+      previewEnv({
+        NEXT_PUBLIC_SUPABASE_URL: "https://zzzzzzzzzzzzzzzzzzzz.supabase.co",
+      }),
+      "identity_mismatch",
+    ],
+    [
+      "no URL",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: undefined }),
+      "not_configured",
+    ],
+    [
+      "a blank URL",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: "  " }),
+      "not_configured",
+    ],
+    [
+      "no publishable key",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: undefined }),
+      "not_configured",
+    ],
+    [
+      "a blank publishable key",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "" }),
+      "not_configured",
+    ],
+    [
+      "a URL with a path",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: `${TEST_URL}/rest/v1` }),
+      "invalid_url",
+    ],
+    [
+      "an http URL",
+      previewEnv({
+        NEXT_PUBLIC_SUPABASE_URL: `http://${TEST_REF}.supabase.co`,
+      }),
+      "invalid_url",
+    ],
+    [
+      "a URL with a query",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: `${TEST_URL}?apikey=x` }),
+      "invalid_url",
+    ],
+    [
+      "a non-Supabase URL",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_URL: "https://example.com" }),
+      "invalid_url",
+    ],
+    [
+      "a secret key behind the publishable name",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: SECRET }),
+      "invalid_key",
+    ],
+    [
+      "a legacy JWT behind the publishable name",
+      previewEnv({ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: LEGACY_JWT }),
+      "invalid_key",
+    ],
+  ])("refuses %s with %s", (_label, env, reason) => {
+    expect(publicReadConfig(env)).toEqual({ ok: false, reason });
+  });
+
+  it("refuses a URL with an explicit port (invalid_url): the API URL must be exactly https://<ref>.supabase.co", () => {
+    expect(
+      publicReadConfig(
+        previewEnv({ NEXT_PUBLIC_SUPABASE_URL: `${TEST_URL}:8443` }),
+      ),
+    ).toEqual({ ok: false, reason: "invalid_url" });
+  });
+
+  it.each(["SUPABASE_TEST_PROJECT_REF", "SUPABASE_PROD_PROJECT_REF"] as const)(
+    "reports not_configured when %s is missing, blank or malformed",
+    (name) => {
+      for (const value of [
+        undefined,
+        "",
+        "  ",
+        "abc",
+        "ABCDEFGHIJKLMNOPQRST",
+        `${TEST_REF}a`,
+      ])
+        expect(publicReadConfig(previewEnv({ [name]: value }))).toEqual({
+          ok: false,
+          reason: "not_configured",
+        });
+    },
+  );
 });

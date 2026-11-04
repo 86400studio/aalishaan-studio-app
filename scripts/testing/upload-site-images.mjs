@@ -23,9 +23,9 @@
  * ever uploaded.
  *
  * Dry run by default — every file verified and every PNG copy encoded, then `.env.local` loaded and TEST read:
- * the five identity probes and one listing per manifest entry (44 read requests for the 39 entries: 42 with the
- * secret key, 2 with the publishable key), nothing uploaded; `--apply` adds one upload per missing object (19
- * uploads after S1.3's 20, so 63 requests; 83 on an empty prefix) with the server's
+ * the five identity probes and one listing per manifest entry (56 read requests for the 51 entries: 54 with the
+ * secret key, 2 with the publishable key), nothing uploaded; `--apply` adds one upload per missing object (12
+ * uploads after the 39 of S1.3 and S1.3b, so 68 requests; 107 on an empty prefix) with the server's
  * secret key to the public bucket `catalogue-public` under `site/`. Idempotent and never
  * destructive without `--overwrite` (the catalogue tool's rule, reused: an existing object is kept; the
  * listing gives a length, not the content). PROD, an unknown target, missing credentials or mismatched refs
