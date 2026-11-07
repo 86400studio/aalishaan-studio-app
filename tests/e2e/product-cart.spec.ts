@@ -273,7 +273,11 @@ async function noOverflow(page: Page) {
   );
 }
 
-/** As tests/e2e/catalogue.spec.ts: scroll so lazy images load, then report every rendered image in main that did not decode. */
+/**
+ * As tests/e2e/catalogue.spec.ts: scroll so lazy images load, then report every rendered image in main that did not
+ * decode. A horizontal strip is swiped through as well, as a person would: a lazy thumbnail past a strip's right edge
+ * (the Lantern's last view at 390 — its strip holds more views than the other pages', lazy as on the prototype) loads only once the strip scrolls to it.
+ */
 async function brokenImages(page: Page): Promise<string[]> {
   const reachedBottom = await page.evaluate(async () => {
     const pause = () => new Promise((resolve) => setTimeout(resolve, 60));
@@ -285,6 +289,22 @@ async function brokenImages(page: Page): Promise<string[]> {
     window.scrollTo({ top: bottom, behavior: "instant" });
     await pause();
     const reached = Math.abs(window.scrollY - bottom) <= 2;
+    for (const strip of Array.from(
+      document.querySelectorAll<HTMLElement>("main *"),
+    ).filter(
+      (el) =>
+        el.scrollWidth > el.clientWidth + 1 &&
+        ["auto", "scroll"].includes(getComputedStyle(el).overflowX),
+    )) {
+      strip.scrollIntoView({ block: "center", behavior: "instant" });
+      for (let x = 0; x < strip.scrollWidth; x += strip.clientWidth) {
+        strip.scrollTo({ left: x, behavior: "instant" });
+        await pause();
+      }
+      strip.scrollTo({ left: strip.scrollWidth, behavior: "instant" });
+      await pause();
+      strip.scrollTo({ left: 0, behavior: "instant" });
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
     return reached;
   });
