@@ -25,7 +25,12 @@ vi.mock("next/cache", () => ({
 }));
 
 import * as route from "@/app/api/revalidate/catalogue/route";
-import { CATALOGUE_PAGE_PATHS } from "@/lib/catalogue/browse-model";
+import { ARTWORK_ROUTES } from "@/content/public/product";
+import {
+  ARTWORK_PAGE_PATHS,
+  CATALOGUE_PAGE_PATHS,
+  REVALIDATED_PAGE_PATHS,
+} from "@/lib/catalogue/browse-model";
 import {
   MAX_BODY_BYTES,
   MIN_SECRET_LENGTH,
@@ -38,7 +43,8 @@ import {
 /**
  * The catalogue's revalidation hook — S1.4 (src/lib/server/catalogue-revalidation.ts behind
  * `POST /api/revalidate/catalogue`): only POST; an exact bearer secret, or the same generic 404 that reads no body;
- * then the one bounded JSON target, or 400; only then the one tag and the 17 browse paths expire. No response carries
+ * then the one bounded JSON target, or 400; only then the one tag and the 40 catalogue paths expire — S1.4's 17 browse
+ * pages, S1.5's 22 artwork pages and `/product`. No response carries
  * the secret. Hermetic: the revalidators are injected (or `next/cache` is a fake) and the secret is a run-time stand-in.
  */
 
@@ -53,7 +59,10 @@ const SECRET = "Ab9_".repeat(10); // 40 characters of the b64token set
 const WRONG = "Zy8-".repeat(10); // the same length, another value
 const PAYLOAD = JSON.stringify({ target: "catalogue" });
 
-/** The 17 browse pages the hook expires (docs/TECH-ARCHITECTURE.md §3a), as literals. */
+/**
+ * The 40 catalogue pages the hook expires (docs/TECH-ARCHITECTURE.md §3a), as literals: S1.4's 17 browse pages, then
+ * S1.5's 22 artwork pages — every approved route, public or not — and `/product`.
+ */
 const EXPECTED_PATHS = [
   "/shop",
   "/collections",
@@ -72,6 +81,29 @@ const EXPECTED_PATHS = [
   "/art-styles/ghostly-armada",
   "/art-styles/marquetry-voyage",
   "/art-styles/neo-classical-fantasy",
+  "/artworks/the-bridge-of-blue-stone",
+  "/artworks/the-moon-between-two-peaks",
+  "/artworks/the-pine-that-holds-the-moon",
+  "/artworks/willow-after-rain",
+  "/artworks/bamboo-after-the-storm",
+  "/artworks/the-cup-beneath-the-plum",
+  "/artworks/the-blossom-over-the-closed-window",
+  "/artworks/the-first-warm-wall",
+  "/artworks/the-branch-above-dark-water",
+  "/artworks/the-window-after-midnight",
+  "/artworks/the-teahouse-shutters-at-spring-dawn",
+  "/artworks/the-bridge-under-falling-blossom",
+  "/artworks/the-harbour-chain-opens",
+  "/artworks/the-galley-beyond-the-breakwater",
+  "/artworks/the-lantern-that-outlasted-the-gale",
+  "/artworks/the-ship-between-two-storms",
+  "/artworks/the-last-mooring-in-the-mist",
+  "/artworks/the-ship-behind-the-fog-bell",
+  "/artworks/the-shipyard-at-low-tide",
+  "/artworks/the-clipper-in-a-grain-wind",
+  "/artworks/the-copper-citadel-at-the-sea-gate",
+  "/artworks/the-palace-above-the-dry-dock",
+  "/product",
 ];
 
 type Revalidators = {
@@ -187,7 +219,7 @@ async function expectRevalidated(
   expect(await jsonOf(response)).toEqual({
     status: "revalidated",
     target: "catalogue",
-    paths: 17,
+    paths: 40,
   });
   expect(revalidators.revalidateTag.mock.calls).toEqual([
     ["public-catalogue", { expire: 0 }],
@@ -233,12 +265,12 @@ afterEach(() => {
 });
 
 describe("POST /api/revalidate/catalogue — allowed: the exact secret, then the one target", () => {
-  it("expires the catalogue's tag once and each of the 17 browse paths once, in order, and answers 200", async () => {
+  it("expires the catalogue's tag once and each of the 40 catalogue paths once, in order, and answers 200", async () => {
     const deps = hookDeps();
     const response = await handleCatalogueRevalidation(hookRequest(), deps);
     expect(response.headers.get("content-type")).toMatch(/^application\/json/);
     await expectRevalidated(response, deps);
-    expect(CATALOGUE_PAGE_PATHS).toEqual(EXPECTED_PATHS);
+    expect(REVALIDATED_PAGE_PATHS).toEqual(EXPECTED_PATHS);
   });
 
   it.each([
@@ -292,7 +324,7 @@ describe("POST /api/revalidate/catalogue — allowed: the exact secret, then the
       expect(await jsonOf(response, secret)).toEqual({
         status: "revalidated",
         target: "catalogue",
-        paths: 17,
+        paths: 40,
       });
     }
   });
@@ -704,5 +736,43 @@ describe("the secret's name", () => {
     expect(
       readFileSync(path.join(ROOT, "next.config.ts"), "utf8"),
     ).not.toContain("CATALOGUE_REVALIDATION_SECRET");
+  });
+});
+
+describe("the fixed inventory — every page that renders the projection (S1.5)", () => {
+  const manifest = JSON.parse(
+    readFileSync(path.join(ROOT, "prototype", "site-manifest.json"), "utf8"),
+  ) as { aliases: Record<string, string> };
+
+  it("holds each path once, the 22 approved artwork routes from the route list (never the visible rows), and /product", () => {
+    expect(new Set(REVALIDATED_PAGE_PATHS).size).toBe(
+      REVALIDATED_PAGE_PATHS.length,
+    );
+    expect(REVALIDATED_PAGE_PATHS).toHaveLength(40);
+    expect(
+      REVALIDATED_PAGE_PATHS.filter((page) => page.startsWith("/artworks/")),
+    ).toEqual(ARTWORK_ROUTES.map(({ slug }) => `/artworks/${slug}`));
+    expect(REVALIDATED_PAGE_PATHS).toContain("/product");
+    // The browse list keeps its S1.4 meaning (17); the artwork list is appended after it.
+    expect(REVALIDATED_PAGE_PATHS).toEqual([
+      ...CATALOGUE_PAGE_PATHS,
+      ...ARTWORK_PAGE_PATHS,
+    ]);
+    expect(CATALOGUE_PAGE_PATHS).toHaveLength(17);
+    expect(ARTWORK_PAGE_PATHS).toHaveLength(23);
+  });
+
+  it("names exactly the prototype manifest's artwork routes and its /product entry; /cart reads no catalogue and is absent", () => {
+    const artworkAliases = Object.keys(manifest.aliases).filter((alias) =>
+      /^\/artworks\/[^/]+$/.test(alias),
+    );
+    expect(
+      REVALIDATED_PAGE_PATHS.filter((page) => page.startsWith("/artworks/")),
+    ).toEqual(artworkAliases);
+    expect(manifest.aliases["/product"]).toBe("product/index.html");
+    expect(REVALIDATED_PAGE_PATHS).not.toContain("/cart");
+    // No caller-chosen path: the hook's answer counts the fixed inventory only.
+    for (const page of REVALIDATED_PAGE_PATHS)
+      expect(page).toMatch(/^\/[a-z0-9-]+(\/[a-z0-9-]+)?$/);
   });
 });

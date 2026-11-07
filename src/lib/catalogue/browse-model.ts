@@ -5,6 +5,7 @@ import {
   type CollectionRoute,
   type StyleRoute,
 } from "@/content/public/browse";
+import { ARTWORK_ROUTES, LANTERN } from "@/content/public/product";
 import { formatRupees } from "@/lib/money";
 import type { FinishCode, PublicCatalogueRow } from "@/lib/schemas/catalogue";
 import { catalogueImage } from "@/lib/site-images";
@@ -17,13 +18,32 @@ import type { FilterableArtwork, FilterOptions, SelectKey } from "./filters";
  * row, a price in paise or a column the card does not show.
  */
 
-/** Every path the projection renders: what the revalidation hook refreshes (src/lib/server/catalogue-revalidation.ts). */
+/** The 17 browse paths of S1.4: Shop, the Collections hub and its 3 pages, the Art Styles hub and its 11 pages. */
 export const CATALOGUE_PAGE_PATHS: readonly string[] = [
   "/shop",
   "/collections",
   ...COLLECTION_ROUTES.map(({ slug }) => `/collections/${slug}`),
   "/art-styles",
   ...STYLE_ROUTES.map(({ slug }) => `/art-styles/${slug}`),
+];
+
+/**
+ * S1.5's artwork paths: the 22 artwork pages, then `/product` (the Lantern compatibility entry). They come from the
+ * approved route list (src/content/public/product.ts), never from the rows the projection holds now, so the page of an
+ * artwork that was just hidden or retired is refreshed too (the S1.5 record → H.2 "Revalidation").
+ */
+export const ARTWORK_PAGE_PATHS: readonly string[] = [
+  ...ARTWORK_ROUTES.map(({ slug }) => `/artworks/${slug}`),
+  LANTERN.compatibilityPath,
+];
+
+/**
+ * Every path the projection renders: what the revalidation hook refreshes (src/lib/server/catalogue-revalidation.ts) —
+ * the 17 browse pages, then the 23 artwork paths (40). `/cart` reads no catalogue and is not here.
+ */
+export const REVALIDATED_PAGE_PATHS: readonly string[] = [
+  ...CATALOGUE_PAGE_PATHS,
+  ...ARTWORK_PAGE_PATHS,
 ];
 
 /** The approved collection route for a slug, or undefined (the page's guard; routing already 404s any other slug). */

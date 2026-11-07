@@ -7,9 +7,12 @@ import {
 } from "../../src/lib/schemas/catalogue";
 import {
   CATALOGUE_CLIENT_OPTIONS,
+  FRESH_CATALOGUE_CLIENT_OPTIONS,
   readPublicCatalogue,
+  readPublicCatalogueFresh,
   type CatalogueReaderDependencies,
 } from "../../src/lib/server/catalogue";
+import { validateBag } from "../../src/lib/server/bag";
 import { createBrowserSupabaseClient } from "../../src/lib/supabase/browser";
 import { buildSeedPlan } from "../../scripts/testing/lib/catalogue.mjs";
 import { resolveTestTarget } from "../../scripts/testing/lib/supabase-target.mjs";
@@ -24,7 +27,10 @@ vi.mock("server-only", () => ({}));
  * with privileged post-checks that nothing changed; a Hidden artwork leaves the projection and returns.
  * From S1.4: so does an artwork in each other non-Active status (Draft, In review, Retired), and the storefront's
  * own reader (src/lib/server/catalogue.ts — the publishable key, session-less, identity-checked) reads the 22 rows
- * with none left out, and leaves a Draft artwork out. Each status change is restored at once, and by afterAll.
+ * with none left out, and leaves a Draft artwork out. From S1.5: the bag's fresh validation (src/lib/server/bag.ts
+ * validateBag) answers a Hidden, Draft or Retired artwork's variant as removed, never priced, and keeps a variant whose
+ * availability is 'unavailable' without counting it in the subtotal. Each status or availability change is restored at
+ * once, and by afterAll.
  * The suite never skips: a missing table or seed fails with a plain message.
  */
 
@@ -40,6 +46,13 @@ let privileged: SupabaseClient;
 let anon: SupabaseClient;
 const plan = buildSeedPlan();
 const PROBE_SLUG = plan.artworks[plan.artworks.length - 1].slug;
+/** S1.5: the probe artwork's black variant, and its seeded availability (restored by afterAll). */
+const PROBE_VARIANT = `${PROBE_SLUG}:black`;
+const PROBE_VARIANT_AVAILABILITY: string = (() => {
+  const seeded = plan.variants.find((v) => v.variant_code === PROBE_VARIANT);
+  if (!seeded) throw new Error(`${PROBE_VARIANT} is not in the seed plan`);
+  return seeded.availability;
+})();
 
 async function privilegedArtwork(slug: string) {
   const { data, error } = await privileged
@@ -142,6 +155,13 @@ afterAll(async () => {
     .eq("slug", PROBE_SLUG)
     .select("slug");
   expect(restore.error).toBeNull();
+  // And the probe variant's availability (S1.5), to the seeded value.
+  const variant = await privileged
+    .from("variants")
+    .update({ availability: PROBE_VARIANT_AVAILABILITY })
+    .eq("variant_code", PROBE_VARIANT)
+    .select("variant_code");
+  expect(variant.error).toBeNull();
 });
 
 describe("public_catalogue through the publishable key", () => {
@@ -419,5 +439,103 @@ describe("the storefront's catalogue reader on TEST (S1.4)", () => {
     expect(without.rows).toHaveLength(21);
     const back = await readPublicCatalogue(deps);
     expect(back.status === "ok" ? back.rows.length : -1).toBe(22);
+  });
+});
+
+describe("the bag's fresh validation on TEST follows eligibility (S1.5)", () => {
+  /** The fresh reader exactly as POST /api/bag builds it, with this process's TEST identity. */
+  function freshRead() {
+    const target = resolveTestTarget(process.env);
+    if (!target.ok) throw new Error(target.reasons.join("; "));
+    const env = {
+      NEXT_PUBLIC_SUPABASE_URL: target.target.url,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: target.target.publishableKey,
+      SUPABASE_TEST_PROJECT_REF: target.target.testRef,
+      SUPABASE_PROD_PROJECT_REF: target.target.prodRef,
+    };
+    const deps: CatalogueReaderDependencies = {
+      env: () => env,
+      createPublicClient: () =>
+        createBrowserSupabaseClient(env, FRESH_CATALOGUE_CLIENT_OPTIONS),
+      report: () => undefined,
+    };
+    return () => readPublicCatalogueFresh(deps);
+  }
+  const ITEMS = [
+    { variant_code: `${PROBE_SLUG}:white`, quantity: 1 },
+    { variant_code: PROBE_VARIANT, quantity: 2 },
+  ];
+
+  it.each(["Hidden", "Draft", "Retired"])(
+    "a %s artwork's variants are answered as removed, never priced — and priced again once Active",
+    async (status) => {
+      const read = freshRead();
+      const change = await privileged
+        .from("artworks")
+        .update({ status })
+        .eq("slug", PROBE_SLUG)
+        .select("slug");
+      expect(change.error).toBeNull();
+      expect(change.data).toHaveLength(1);
+      const without = await validateBag(ITEMS, read);
+      const restore = await privileged
+        .from("artworks")
+        .update({ status: "Active" })
+        .eq("slug", PROBE_SLUG)
+        .select("slug");
+      expect(restore.error).toBeNull();
+      expect(without.status).toBe("ok");
+      if (without.status !== "ok") return;
+      expect(without.items).toEqual([]);
+      expect(without.removed).toEqual(
+        ITEMS.map(({ variant_code }) => ({
+          variant_code,
+          reason: "not_found",
+        })),
+      );
+      expect(without.subtotal_paise).toBe(BigInt(0));
+      const back = await validateBag(ITEMS, read);
+      expect(back.status === "ok" ? back.items.length : -1).toBe(2);
+      expect(back.status === "ok" ? back.removed : null).toEqual([]);
+    },
+  );
+
+  it("a variant whose availability is 'unavailable' is kept, unavailable and out of the subtotal — and counted again once restored", async () => {
+    const read = freshRead();
+    const change = await privileged
+      .from("variants")
+      .update({ availability: "unavailable" })
+      .eq("variant_code", PROBE_VARIANT)
+      .select("variant_code");
+    expect(change.error).toBeNull();
+    expect(change.data).toHaveLength(1);
+    const result = await validateBag(ITEMS, read);
+    const restore = await privileged
+      .from("variants")
+      .update({ availability: PROBE_VARIANT_AVAILABILITY })
+      .eq("variant_code", PROBE_VARIANT)
+      .select("variant_code");
+    expect(restore.error).toBeNull();
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    expect(result.removed).toEqual([]);
+    const [white, black] = result.items;
+    expect(white).toMatchObject({
+      variant_code: ITEMS[0].variant_code,
+      available: true,
+    });
+    expect(black).toMatchObject({
+      variant_code: PROBE_VARIANT,
+      available: false,
+      quantity: 2,
+    });
+    expect(result.subtotal_paise).toBe(white.line_total_paise);
+    const back = await validateBag(ITEMS, read);
+    expect(back.status).toBe("ok");
+    if (back.status !== "ok") return;
+    expect(back.items.every((item) => item.available)).toBe(true);
+    expect(back.subtotal_paise).toBe(
+      back.items[0].line_total_paise + back.items[1].line_total_paise,
+    );
   });
 });

@@ -1,0 +1,1501 @@
+/*
+ * The artwork pages — S1.5: the 22 `/artworks/<slug>` pages and `/product` (docs/DESIGN.md §3, §4; the "benchmark
+ * page" of DESIGN §7). The frozen page links browse-home → home-r2 → browse → product/r3 → gallery-r8 → revision-r9 →
+ * revision-r11 (prototype/pages/artworks/<slug>/index.html); the shell, base, button, eyebrow, text-link, art card,
+ * footer and R11 FAQ card rules of those sheets already come from storefront.css and home.css, and the catalogue
+ * grid's from browse.css, which the page files import first. This sheet holds the product page's own rules — every
+ * `pd-*` and `.product-page` rule of r3.css, gallery-r8.css, revision-r9.css and revision-r11.css that the frozen
+ * markup uses — in the prototype's own order (r3 → r8 → r9 → r11, each file's base then its media queries), so where
+ * two of them weigh the same the later wins as it does there. Every rule cites its source line.
+ *
+ * Scoped as storefront.css is: `:where(.site)` adds no specificity, so each ported selector weighs exactly what the
+ * prototype's selector weighs, and a prototype `body …` qualifier is ported as `body :where(.site) …`. Every selector
+ * names a class only the artwork page draws (or `.product-page`), so the sheet cannot reach another page when it stays
+ * loaded after a client-side navigation; `html { scroll-padding-top }` is scoped to a document holding the page.
+ *
+ * Not ported:
+ *  - the R3 intermediate layout's rules, which the final R5 / R12 markup never draws (build-products.cjs:69–129
+ *    rewritten by :131–166): `.back-link--ink` (r3.css:16–17), `.pd-top` (:20, :207; gallery-r8.css:118),
+ *    `.pd-eyebrow` (:36–38), `.pd-price span` (:43), `.pd-frames legend span` (:46), `.pd-frame small` (:51),
+ *    `.pd-launch` (:56), `.pd-facts` (:57–61, :77–81, :87; gallery-r8.css:44), `.pd-jump` (:62–63),
+ *    `.pd-details-title` (:76) and `.pd-delivery` (:82–84);
+ *  - rules a later sheet overrides on every element they match: r3's FAQ list (r3.css:144–151 → revision-r9.css:25–30
+ *    → revision-r11.css:23–30, the R11 card of storefront.css), r9's FAQ card (revision-r9.css:25–30, outweighed by
+ *    the R11 card), r3's wall layout (r3.css:107, :109, :212–214 → `body .pd-wall__grid`, revision-r9.css:32–38),
+ *    r3's related gap (r3.css:154 → gallery-r8.css:24, browse.css) and the `.pd-add` radius and height (r3.css:55 →
+ *    gallery-r8.css:10, storefront.css's `.button`);
+ *  - the delivery-check states the S1.5 form never shows (`unserviceable`, `error`, the result's `<small>` —
+ *    r3.css:251–253; gallery-r8.css:47): the form shows only the invalid-PIN line and the estimate-pending line
+ *    (src/components/commerce/delivery-check.tsx);
+ *  - `.pd-checkout` (revision-r9.css:31): no "Continue to Checkout" link before S1.6 (H.2 "Checkout handoff");
+ *  - the drawer's bag rows (`.pd-bag-item`, `.pd-bag-empty`, `.pd-bag-note`, r3.css:181–187; gallery-r8.css:83),
+ *    which belong to the shared cart drawer (storefront.css), not this page.
+ *
+ * The overlays — the add notice, the phone purchase bar, the lightbox — and the no-JavaScript line render inside
+ * `main.pd` here; the prototype draws them after the footer, out of `.pd`'s reach. The last block undoes `.pd`'s
+ * descendant rules for them.
+ */
+
+/* ---------- page (r3.css:2–15, :189) ---------- */
+/* r3.css:2 */
+:where(.site) .product-page {
+  background: #fff;
+  color: var(--ink);
+}
+/* r3.css:3 — clip, not hidden: no scroll container, so the buy column stays sticky */
+:where(.site) .pd {
+  overflow: clip;
+}
+/* r3.css:4 */
+:where(.site) .pd h1,
+:where(.site) .pd h2,
+:where(.site) .pd h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+/* r3.css:5 */
+:where(.site) .pd p {
+  line-height: 1.65;
+}
+/* r3.css:6 */
+:where(.site) .pd figure {
+  margin: 0;
+}
+/* r3.css:7 */
+:where(.site) .pd button {
+  font: inherit;
+  cursor: pointer;
+}
+/* r3.css:8 — the storefront's crimson ring (D-15), 3 px from the control on this page */
+:where(.site) .pd :focus-visible {
+  outline: 2px solid var(--crimson);
+  outline-offset: 3px;
+}
+/* r3.css:9 */
+:where(.site) .pd-section {
+  padding-block: clamp(3.25rem, 6vw, 5.5rem);
+}
+/* r3.css:10 */
+:where(.site) .pd-section--ivory {
+  background: var(--ivory);
+}
+/* r3.css:11 */
+:where(.site) .pd-section__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+/* r3.css:12 */
+:where(.site) .pd-section__head h2 {
+  font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+  margin-top: 0.5rem;
+  line-height: 1.15;
+  max-width: 16em;
+  text-wrap: balance;
+}
+/* r3.css:13 */
+:where(.site) .pd-section__head p {
+  color: var(--taupe);
+  max-width: 26rem;
+  font-size: 0.9375rem;
+}
+/* r3.css:14 */
+:where(.site) .pd-small {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+/* r3.css:15 — also the size guide's comparison button */
+:where(.site) .pd .text-link {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(181, 31, 42, 0.3);
+  padding: 0 0 1px;
+  cursor: pointer;
+}
+/* r3.css:189 — in-page anchors clear the sticky header */
+html:has(:where(.site) .product-page) {
+  scroll-padding-top: 6.5rem;
+}
+
+/* ---------- the purchase hero (r3.css:21–55, :66–75) ---------- */
+/* r3.css:21 */
+:where(.site) .pd-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(2rem, 4vw, 4.5rem);
+  align-items: start;
+  padding-block: 1.35rem 3.75rem;
+}
+/* r3.css:22 */
+:where(.site) .pd-gallery {
+  min-width: 0;
+}
+/* r3.css:23 */
+:where(.site) .pd-stage {
+  border: 1px solid var(--line-soft);
+  border-radius: 0.85rem;
+  background: #fff;
+  overflow: hidden;
+}
+/* r3.css:24 */
+:where(.site) .pd-stage__button {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--stage-ratio, 4/3);
+  padding: 0;
+  border: 0;
+  background: #fff;
+}
+/* r3.css:25 */
+:where(.site) .pd-stage__button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 3.5%;
+  transition: transform 0.4s var(--ease);
+}
+/* r3.css:26 */
+:where(.site) .pd-stage__button[data-fit="cover"] img {
+  object-fit: cover;
+  padding: 0;
+}
+/* r3.css:27 */
+:where(.site) .pd-stage__button:hover img {
+  transform: scale(1.015);
+}
+/* r3.css:28 */
+:where(.site) .pd-zoom-hint {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 253, 252, 0.94);
+  border: 1px solid var(--line-soft);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+/* r3.css:29 */
+:where(.site) .pd-thumbs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+/* r3.css:30 */
+:where(.site) .pd-thumbs button {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.35rem 0.35rem 0.5rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.6rem;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--taupe);
+  text-align: center;
+  transition:
+    border-color var(--dur),
+    color var(--dur);
+}
+/* r3.css:31 */
+:where(.site) .pd-thumbs img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 0.35rem;
+}
+/* r3.css:32 */
+:where(.site) .pd-thumbs button[data-fit="cover"] img {
+  object-fit: cover;
+}
+/* r3.css:33 */
+:where(.site) .pd-thumbs button:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+/* r3.css:34 */
+:where(.site) .pd-thumbs button[aria-selected="true"] {
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+/* r3.css:35 */
+:where(.site) .pd-buy {
+  position: sticky;
+  top: calc(var(--nav-height) + 2 * var(--nav-top) + 1rem);
+}
+/* r3.css:39 */
+:where(.site) .pd-buy h1 {
+  font-size: clamp(2.1rem, 3.1vw, 2.9rem);
+  line-height: 1.08;
+  margin: 0.55rem 0 0.7rem;
+  text-wrap: balance;
+}
+/* r3.css:40 */
+:where(.site) .pd-hook {
+  font-size: 1.0625rem;
+  color: var(--ink-soft);
+  max-width: 30rem;
+}
+/* r3.css:41 */
+:where(.site) .pd-price {
+  display: grid;
+  gap: 0.15rem;
+  margin: 1.25rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+/* r3.css:42 */
+:where(.site) .pd-price strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.55rem;
+  line-height: 1.2;
+}
+/* r3.css:44 */
+:where(.site) .pd-frames {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.15rem;
+  min-width: 0;
+}
+/* r3.css:45 */
+:where(.site) .pd-frames legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+/* r3.css:47 */
+:where(.site) .pd-frames__options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+/* r3.css:48 */
+:where(.site) .pd-frame {
+  position: relative;
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  padding: 0.6rem 0.5rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--dur),
+    box-shadow var(--dur);
+}
+/* r3.css:49 — the radio covers its card */
+:where(.site) .pd-frame input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+/* r3.css:50 */
+:where(.site) .pd-frame img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+/* r3.css:52 */
+:where(.site) .pd-frame:hover {
+  border-color: var(--line-strong);
+}
+/* r3.css:53 */
+:where(.site) .pd-frame.is-selected {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+/* r3.css:54 */
+:where(.site) .pd-frame:focus-within {
+  outline: 2px solid var(--crimson);
+  outline-offset: 3px;
+}
+/* r3.css:55 — its radius and height are storefront.css's `.button` (gallery-r8.css:10 comes after r3.css) */
+:where(.site) .pd-add {
+  width: 100%;
+  font-size: 0.95rem;
+}
+/* r3.css:66 — the R5 purchase layout */
+:where(.site) .pd-hero--purchase {
+  padding-top: 1.75rem;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+}
+/* r3.css:67 */
+:where(.site) .pd-hero--purchase .pd-stage,
+:where(.site) .pd-hero--purchase .pd-stage__button,
+:where(.site) .pd-hero--purchase .pd-gallery {
+  background: #fff;
+}
+/* r3.css:68 */
+:where(.site) .pd-hero--purchase .pd-buy h1 {
+  margin-top: 0;
+}
+/* r3.css:69 */
+:where(.site) .pd-hero--purchase .pd-price {
+  border-top: 0;
+  padding: 0 0 1rem;
+  margin: 1rem 0;
+}
+/* r3.css:70 */
+:where(.site) .pd-hero--purchase .pd-price strong {
+  font-size: 2.25rem;
+}
+/* r3.css:71 */
+:where(.site) .pd-hero--purchase .pd-frames {
+  margin-bottom: 0.7rem;
+}
+/* r3.css:72 */
+:where(.site) .pd-hero--purchase .pd-frame img {
+  width: 4.25rem;
+  height: 4.25rem;
+  object-fit: cover;
+  aspect-ratio: 1;
+  border-radius: 0.2rem;
+}
+/* r3.css:73 */
+:where(.site) .pd-hero--purchase .pd-frame-price {
+  font-size: 0.75rem;
+  color: var(--taupe);
+}
+/* r3.css:74 */
+:where(.site) .pd-hero--purchase .pd-recommendation {
+  font-size: 0.8125rem;
+  margin-bottom: 1rem;
+  color: var(--ink-soft);
+}
+/* r3.css:75 */
+:where(.site) .pd-hero--purchase .pd-reassurance {
+  font-size: 0.875rem;
+  margin: 0.75rem 0 1.25rem;
+}
+@media (max-width: 900px) {
+  /* r3.css:86 */
+  :where(.site) .pd-hero--purchase {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- the story and the style aside (r3.css:91–104) ---------- */
+/* r3.css:91 */
+:where(.site) .pd-story__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+}
+/* r3.css:92 */
+:where(.site) .pd-story__copy h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.15;
+  margin: 0.6rem 0 1.25rem;
+  max-width: 18em;
+  text-wrap: balance;
+}
+/* r3.css:93 */
+:where(.site) .pd-story__copy p {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  max-width: 40rem;
+  margin-bottom: 1rem;
+}
+/* r3.css:94 */
+:where(.site) .pd-style {
+  background: #fff;
+  border: 1px solid var(--line-soft);
+  border-radius: 1rem;
+  padding: clamp(1.4rem, 2.2vw, 1.9rem);
+}
+/* r3.css:95 */
+:where(.site) .pd-style h3 {
+  font-size: 1.65rem;
+  line-height: 1.15;
+  margin: 0.5rem 0 0.6rem;
+}
+/* r3.css:96 — it also outweighs `.pd-print-note`'s size and colour */
+:where(.site) .pd-style > p {
+  font-size: 0.9375rem;
+  color: var(--taupe);
+}
+/* r3.css:97 */
+:where(.site) .pd-print-note {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+/* r3.css:98 */
+:where(.site) .pd-palette {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+}
+/* r3.css:99 */
+:where(.site) .pd-palette i {
+  display: block;
+  height: 2.6rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(25, 24, 19, 0.08);
+}
+/* r3.css:100 */
+:where(.site) .pd-palette span {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--taupe);
+}
+/* r3.css:101 */
+:where(.site) .pd-meta {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.875rem;
+}
+/* r3.css:102 */
+:where(.site) .pd-meta div {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+/* r3.css:103 */
+:where(.site) .pd-meta dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 0.15rem;
+}
+/* r3.css:104 */
+:where(.site) .pd-meta dd {
+  margin: 0;
+}
+
+/* ---------- the moodboard, "A closer look" (r3.css:108–114; its grid is revision-r9.css's, below) ---------- */
+/* r3.css:108 */
+:where(.site) .pd-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid var(--line-soft);
+  background: #fff;
+}
+/* r3.css:110 */
+:where(.site) .pd-tile button {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: #fff;
+}
+/* r3.css:111 */
+:where(.site) .pd-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s var(--ease);
+}
+/* r3.css:112 */
+:where(.site) .pd-tile[data-fit="contain"] img {
+  object-fit: contain;
+  padding: 4%;
+}
+/* r3.css:113 */
+:where(.site) .pd-tile:hover img {
+  transform: scale(1.025);
+}
+/* r3.css:114 */
+:where(.site) .pd-tile figcaption {
+  position: absolute;
+  left: 0.7rem;
+  bottom: 0.7rem;
+  max-width: calc(100% - 1.4rem);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 253, 252, 0.94);
+  border: 1px solid var(--line-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- the size guide (r3.css:117–128) ---------- */
+/* r3.css:117 */
+:where(.site) .pd-space__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: center;
+}
+/* r3.css:118 */
+:where(.site) .pd-space__visual img {
+  width: 100%;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  border-radius: 0.85rem;
+  background: #efebe3;
+}
+/* r3.css:119 — the Lantern's room photo keeps its own shape */
+:where(.site) .pd-space__visual--room img {
+  aspect-ratio: auto;
+}
+/* r3.css:120 */
+:where(.site) .pd-space__visual figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+/* r3.css:121 */
+:where(.site) .pd-space__copy h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.12;
+  margin: 0.6rem 0 1rem;
+  text-wrap: balance;
+}
+/* r3.css:122 */
+:where(.site) .pd-space__copy > p {
+  color: var(--ink-soft);
+  max-width: 30rem;
+}
+/* r3.css:123 */
+:where(.site) .pd-size {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1.35rem 0 1rem;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+/* r3.css:124 */
+:where(.site) .pd-size strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 2.9rem;
+  line-height: 1;
+}
+/* r3.css:125 */
+:where(.site) .pd-size div {
+  display: grid;
+  gap: 0.2rem;
+}
+/* r3.css:126 */
+:where(.site) .pd-size span {
+  font-size: 1.125rem;
+}
+/* r3.css:127 */
+:where(.site) .pd-size small {
+  font-size: 0.8125rem;
+  color: var(--taupe);
+}
+/* r3.css:128 */
+:where(.site) .pd-space__copy .text-link {
+  margin-top: 1rem;
+}
+
+/* ---------- What you'll receive (r3.css:131–138) ---------- */
+/* r3.css:131 */
+:where(.site) .pd-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+/* r3.css:132 */
+:where(.site) .pd-spec {
+  overflow: hidden;
+  border-radius: 0.85rem;
+  border: 1px solid var(--line-soft);
+  background: var(--ivory);
+}
+/* r3.css:133 */
+:where(.site) .pd-spec img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #fff;
+}
+/* r3.css:134 — the paper card's lightbox button */
+:where(.site) .pd-spec button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: #fff;
+}
+/* r3.css:135 */
+:where(.site) .pd-spec figcaption {
+  padding: 1rem 1.1rem 1.2rem;
+}
+/* r3.css:136 */
+:where(.site) .pd-spec h3 {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin-bottom: 0.35rem;
+}
+/* r3.css:137 */
+:where(.site) .pd-spec p {
+  font-size: 0.875rem;
+  color: var(--taupe);
+}
+/* r3.css:138 */
+:where(.site) .pd-arrives .pd-small {
+  margin-top: 1.1rem;
+}
+
+/* ---------- FAQs (r3.css:141–143; the cards are storefront.css's R11 card) ---------- */
+/* r3.css:141 — its columns and gap are revision-r11.css:24's, below */
+:where(.site) .pd-help__grid {
+  display: grid;
+}
+/* r3.css:142 */
+:where(.site) .pd-help__grid h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.12;
+  margin: 0.6rem 0 0.9rem;
+  text-wrap: balance;
+}
+/* r3.css:143 */
+:where(.site) .pd-help__grid > div > p {
+  color: var(--taupe);
+  margin-bottom: 1.25rem;
+}
+
+/* ---------- More from this collection (r3.css:154; the grid and cards are browse.css's and home.css's) ---------- */
+/* r3.css:154 — its gap is gallery-r8.css:24's (browse.css) */
+:where(.site) .pd-related__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- overlays: the phone purchase bar, the add notice, the lightbox (r3.css:157–180, :188) ---------- */
+/* r3.css:157 */
+:where(.site) .pd-sticky {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 65;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+  background: rgba(255, 253, 252, 0.97);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 20px rgba(25, 24, 19, 0.08);
+}
+/* r3.css:158 */
+:where(.site) .pd-sticky[data-visible="true"] {
+  display: flex;
+}
+/* r3.css:159 */
+:where(.site) .pd-sticky div {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+/* r3.css:160 */
+:where(.site) .pd-sticky strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* r3.css:161 */
+:where(.site) .pd-sticky small {
+  font-size: 0.75rem;
+  color: var(--taupe);
+}
+/* r3.css:162 — outweighs storefront.css's `.button` */
+:where(.site) .pd-sticky .button {
+  flex: none;
+  min-height: 2.75rem;
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
+  padding-inline: 1.1rem;
+}
+/* r3.css:163 — never over an open drawer or dialog (a drawer carries `data-open` only while it is open) */
+body:has(.drawer[data-open]) :where(.site) .pd-sticky,
+body:has(dialog[open]) :where(.site) .pd-sticky {
+  display: none;
+}
+/* r3.css:164 — the notice rises above the bar */
+body:has(.pd-sticky[data-visible="true"]) :where(.site) .pd-notice {
+  bottom: 5.75rem;
+}
+/* r3.css:165 */
+:where(.site) .pd-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 120;
+  transform: translate(-50%, 1.5rem);
+  max-width: calc(100% - 2rem);
+  padding: 0.8rem 1.15rem;
+  border-radius: 0.6rem;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    visibility var(--dur);
+}
+/* r3.css:166 */
+:where(.site) .pd-notice[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+/* r3.css:167 */
+:where(.site) .pd-lightbox {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+/* r3.css:168 */
+:where(.site) .pd-lightbox::backdrop {
+  background: rgba(16, 15, 12, 0.92);
+}
+/* r3.css:169 */
+:where(.site) .pd-lightbox__inner {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+/* r3.css:170 */
+:where(.site) .pd-lightbox__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.875rem;
+}
+/* r3.css:171 */
+:where(.site) .pd-lightbox__bar p {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+/* r3.css:172 */
+:where(.site) .pd-lightbox__close {
+  flex: none;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+/* r3.css:173 */
+:where(.site) .pd-lightbox__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+/* r3.css:174 */
+:where(.site) .pd-lightbox figure {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0 4.5rem 1.75rem;
+}
+/* r3.css:175 */
+:where(.site) .pd-lightbox img {
+  max-width: 100%;
+  max-height: calc(100vh - 6.5rem);
+  object-fit: contain;
+  border-radius: 0.4rem;
+  background: #fff;
+}
+/* r3.css:176 */
+:where(.site) .pd-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+/* r3.css:177 */
+:where(.site) .pd-lightbox__nav:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+/* r3.css:178 */
+:where(.site) .pd-lightbox__nav[hidden] {
+  display: none;
+}
+/* r3.css:179 */
+:where(.site) .pd-lightbox__nav--prev {
+  left: 1rem;
+}
+/* r3.css:180 */
+:where(.site) .pd-lightbox__nav--next {
+  right: 1rem;
+}
+/* r3.css:188 */
+:where(.site) .pd-noscript {
+  padding: 1rem var(--gutter);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--taupe);
+}
+
+/* ---------- r3.css responsive (r3.css:192–238) ---------- */
+@media (max-width: 1100px) {
+  /* r3.css:193 */
+  :where(.site) .pd-hero {
+    gap: 2rem;
+  }
+  /* r3.css:194 */
+  :where(.site) .pd-palette {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* r3.css:195 */
+  :where(.site) .pd-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  /* r3.css:198 */
+  :where(.site) .pd-hero {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding-bottom: 3rem;
+  }
+  /* r3.css:199 */
+  :where(.site) .pd-buy {
+    position: static;
+  }
+  /* r3.css:200 */
+  :where(.site) .pd-story__grid,
+  :where(.site) .pd-space__grid,
+  :where(.site) .pd-help__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  /* r3.css:201 */
+  :where(.site) .pd-section__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  /* r3.css:202 */
+  :where(.site) .pd-palette {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  /* r3.css:203 */
+  :where(.site) .pd-related__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* r3.css:204 — room for the phone purchase bar */
+  :where(.site) .product-page .site-footer {
+    margin-bottom: 5.5rem;
+  }
+}
+@media (max-width: 767px) {
+  /* r3.css:208 */
+  :where(.site) .pd-thumbs {
+    gap: 0.4rem;
+  }
+  /* r3.css:209 */
+  :where(.site) .pd-thumbs button {
+    font-size: 0.66rem;
+    padding: 0.25rem 0.25rem 0.4rem;
+    gap: 0.3rem;
+  }
+  /* r3.css:210 */
+  :where(.site) .pd-buy h1 {
+    font-size: 2.1rem;
+  }
+  /* r3.css:211 */
+  :where(.site) .pd-hook {
+    font-size: 1rem;
+  }
+  /* r3.css:215 — the large tile's, and every caption's from 701 to 767 px (revision-r9.css takes the rest) */
+  :where(.site) .pd-tile figcaption {
+    left: 0.5rem;
+    bottom: 0.5rem;
+    font-size: 0.68rem;
+    padding: 0.3rem 0.55rem;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  /* r3.css:216 */
+  :where(.site) .pd-size strong {
+    font-size: 2.4rem;
+  }
+  /* r3.css:217 */
+  :where(.site) .pd-spec figcaption {
+    padding: 0.85rem 0.9rem 1rem;
+  }
+  /* r3.css:218 */
+  :where(.site) .pd-spec h3 {
+    font-size: 1.1rem;
+  }
+  /* r3.css:221 */
+  :where(.site) .pd-lightbox figure {
+    padding: 0 0.75rem 3.75rem;
+  }
+  /* r3.css:222 */
+  :where(.site) .pd-lightbox img {
+    max-height: calc(100vh - 8rem);
+  }
+  /* r3.css:223 */
+  :where(.site) .pd-lightbox__nav {
+    top: auto;
+    bottom: 0.9rem;
+    transform: none;
+  }
+  /* r3.css:224 */
+  :where(.site) .pd-lightbox__nav--prev {
+    left: 0.9rem;
+  }
+  /* r3.css:225 */
+  :where(.site) .pd-lightbox__nav--next {
+    right: 0.9rem;
+  }
+}
+@media (max-width: 480px) {
+  /* r3.css:228 */
+  :where(.site) .pd-frames__options {
+    gap: 0.45rem;
+  }
+  /* r3.css:230 */
+  :where(.site) .pd-meta div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+  /* r3.css:231 */
+  :where(.site) .pd-spec-grid {
+    grid-template-columns: 1fr;
+  }
+  /* r3.css:232 — the card becomes a row; its 96 px column is gallery-r8.css:130's */
+  :where(.site) .pd-spec {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+  }
+  /* r3.css:233 */
+  :where(.site) .pd-spec img,
+  :where(.site) .pd-spec button {
+    height: 100%;
+  }
+  /* r3.css:234 */
+  :where(.site) .pd-spec img {
+    aspect-ratio: auto;
+    min-height: 7rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* r3.css:237 */
+  :where(.site) .pd * {
+    transition: none !important;
+  }
+}
+
+/* ---------- the delivery check and R12 (r3.css:241–262) ---------- */
+/* r3.css:241 */
+:where(.site) .pd-delivery-check {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.5rem;
+  background: var(--ivory);
+}
+/* r3.css:242 */
+:where(.site) .pd-delivery-check label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+/* r3.css:243 */
+:where(.site) .pd-delivery-check__row {
+  display: flex;
+  gap: 0.5rem;
+}
+/* r3.css:244 */
+:where(.site) .pd-delivery-check input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  background: #fff;
+  color: var(--ink);
+}
+/* r3.css:245 */
+:where(.site) .pd-delivery-check input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* r3.css:246 */
+:where(.site) .pd-delivery-check input[aria-invalid="true"] {
+  border-color: var(--crimson);
+}
+/* r3.css:247 */
+:where(.site) .pd-delivery-check button {
+  flex: none;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.4rem;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* r3.css:248 */
+:where(.site) .pd-delivery-check button:hover {
+  background: #000;
+}
+/* r3.css:249 */
+:where(.site) .pd-delivery-check__result {
+  margin: 0.6rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+/* r3.css:250 */
+:where(.site) .pd-delivery-check__result:empty {
+  display: none;
+}
+/* r3.css:252 — the invalid PIN; the estimate-pending line keeps the ink colour */
+:where(.site) .pd-delivery-check__result[data-status="invalid"] {
+  color: var(--crimson);
+}
+/* r3.css:254 */
+:where(.site) .pd-delivery-check__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: var(--taupe);
+}
+/* r3.css:255 — a result replaces the hint */
+:where(.site)
+  .pd-delivery-check__result:not(:empty)
+  + .pd-delivery-check__hint {
+  display: none;
+}
+/* r3.css:257 — R12's section nav, two columns */
+:where(.site) .product-page .pd-section-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+}
+/* r3.css:258 */
+:where(.site) .product-page .pd-section-nav .button {
+  white-space: normal;
+  text-align: center;
+  min-height: 48px;
+  padding: 12px 10px;
+  font-size: 14px;
+}
+/* r3.css:259 */
+:where(.site) .product-page #in-your-space,
+:where(.site) .product-page #what-you-receive,
+:where(.site) .product-page #artwork-story,
+:where(.site) .product-page #pd-help {
+  scroll-margin-top: 110px;
+}
+/* r3.css:260 */
+:where(.site) .product-page .pd-faq-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 24px;
+}
+/* r3.css:261 */
+:where(.site) .product-page .pd-story-lead {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.3;
+}
+/* r3.css:262 */
+:where(.site) .product-page .pd-faq a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- gallery-r8.css (the R8 refinement, after r3.css) ---------- */
+/* gallery-r8.css:36 */
+:where(.site) .pd-stage,
+:where(.site) .pd-tile,
+:where(.site) .pd-spec,
+:where(.site) .pd-style,
+:where(.site) .pd-frame {
+  border-radius: 4px;
+}
+/* gallery-r8.css:37 */
+:where(.site) .pd-stage {
+  border-color: #eeeae4;
+}
+/* gallery-r8.css:38 */
+:where(.site) .pd-stage__button img {
+  padding: 1.5%;
+}
+/* gallery-r8.css:39 */
+:where(.site) .pd-thumbs button {
+  border-radius: 4px;
+  font-size: 12px;
+  min-width: 0;
+}
+/* gallery-r8.css:40 */
+:where(.site) .pd-buy h1 {
+  line-height: 1.15;
+}
+/* gallery-r8.css:41 */
+:where(.site) .pd-hero--purchase .pd-price strong {
+  font-size: 2rem;
+}
+/* gallery-r8.css:42 */
+:where(.site) .pd-hero--purchase .pd-frame-price {
+  font-size: 13px;
+}
+/* gallery-r8.css:43 — `.pd p` (1.65) outweighs it on the two paragraphs */
+:where(.site) .pd-frames legend,
+:where(.site) .pd-recommendation,
+:where(.site) .pd-reassurance {
+  line-height: 1.6;
+}
+/* gallery-r8.css:45 */
+:where(.site) .pd-delivery-check {
+  background: #faf9f6;
+  border-radius: 4px;
+  padding: 16px;
+}
+/* gallery-r8.css:46 */
+:where(.site) .pd-delivery-check input {
+  font-size: 16px;
+}
+/* gallery-r8.css:47 */
+:where(.site) .pd-delivery-check__hint {
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* gallery-r8.css:48 */
+:where(.site) .pd-sticky {
+  background: #fff;
+  box-shadow: 0 -2px 16px #19181308;
+}
+/* gallery-r8.css:49 */
+:where(.site) .pd-sticky small {
+  font-size: 14px;
+}
+/* gallery-r8.css:50 */
+:where(.site) .pd-spec p,
+:where(.site) .pd-small,
+:where(.site) .pd-print-note {
+  font-size: 14px;
+  line-height: 1.65;
+}
+/* gallery-r8.css:51 */
+:where(.site) .pd-palette span {
+  font-size: 12px;
+}
+/* gallery-r8.css:52 */
+:where(.site) .pd-meta dt {
+  color: #68635d;
+  font-size: 12px;
+}
+/* gallery-r8.css:53 */
+:where(.site) .pd-section--ivory {
+  background: #faf9f6;
+}
+@media (max-width: 900px) {
+  /* gallery-r8.css:85 — the thumbnails become a scrolling row */
+  :where(.site) .pd-thumbs {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 2px 2px 10px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  /* gallery-r8.css:86 */
+  :where(.site) .pd-thumbs button {
+    flex: 0 0 76px;
+    scroll-snap-align: start;
+    padding: 5px;
+    font-size: 12px;
+  }
+  /* gallery-r8.css:87 */
+  :where(.site) .pd-hero--purchase {
+    gap: 24px;
+  }
+  /* gallery-r8.css:88 */
+  :where(.site) .pd-buy {
+    position: static;
+  }
+  /* gallery-r8.css:89 */
+  :where(.site) .pd-buy h1 {
+    font-size: 2.4rem;
+  }
+  /* gallery-r8.css:90 */
+  :where(.site) .pd-related__grid {
+    gap: 24px;
+  }
+}
+@media (max-width: 599px) {
+  /* gallery-r8.css:94 */
+  :where(.site) .pd-related__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  /* gallery-r8.css:119 */
+  :where(.site) .pd-hero--purchase {
+    padding-top: 20px;
+  }
+  /* gallery-r8.css:120 */
+  :where(.site) .pd-buy h1 {
+    font-size: 2.2rem;
+  }
+  /* gallery-r8.css:121 */
+  :where(.site) .pd-frame {
+    font-size: 13px;
+    padding: 10px 4px;
+  }
+  /* gallery-r8.css:122 */
+  :where(.site) .pd-hero--purchase .pd-frame img {
+    width: 56px;
+    height: 56px;
+  }
+  /* gallery-r8.css:123 */
+  :where(.site) .pd-hero--purchase .pd-frame-price {
+    font-size: 12px;
+  }
+  /* gallery-r8.css:124 */
+  :where(.site) .pd-frames legend {
+    font-size: 14px;
+  }
+  /* gallery-r8.css:125 */
+  :where(.site) .pd-add {
+    min-height: 54px;
+  }
+  /* gallery-r8.css:126 */
+  :where(.site) .pd-section {
+    padding-block: 48px;
+  }
+  /* gallery-r8.css:127 */
+  :where(.site) .pd-story__copy p {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  /* gallery-r8.css:128 — the stage is square on a phone */
+  :where(.site) .pd-stage__button {
+    aspect-ratio: 1;
+  }
+  /* gallery-r8.css:129 */
+  :where(.site) .pd-palette {
+    gap: 8px;
+  }
+  /* gallery-r8.css:131 */
+  :where(.site) .pd-spec p {
+    font-size: 14px;
+  }
+  /* gallery-r8.css:132 */
+  :where(.site) .pd-sticky {
+    padding-inline: 18px;
+    gap: 12px;
+  }
+  /* gallery-r8.css:133 */
+  :where(.site) .pd-sticky .button {
+    min-height: 48px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* gallery-r8.css:157 — the stage's hover scale (r3.css:27) outweighs it and stays, without its transition */
+  :where(.site) .pd-stage__button img {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---------- revision-r9.css (the moodboard's layout, at every width) ---------- */
+/* revision-r9.css:32 — three columns everywhere: r3.css's two-column phone wall never applies */
+body :where(.site) .pd-wall__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: auto auto auto;
+  gap: 20px;
+}
+/* revision-r9.css:33 */
+body :where(.site) .pd-wall__grid .pd-tile--large {
+  grid-column: 1/3;
+  grid-row: 1/3;
+}
+/* revision-r9.css:34 */
+body :where(.site) .pd-wall__grid .pd-tile:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+/* revision-r9.css:35 */
+body :where(.site) .pd-wall__grid .pd-tile:nth-child(3) {
+  grid-column: 3;
+  grid-row: 2;
+}
+/* revision-r9.css:36 */
+body :where(.site) .pd-wall__grid .pd-tile:nth-child(n + 4) {
+  grid-row: 3;
+  grid-column: auto;
+}
+/* revision-r9.css:37 */
+body :where(.site) .pd-wall__grid .pd-tile:nth-child(n + 4) button {
+  aspect-ratio: 1;
+}
+/* revision-r9.css:38 */
+body :where(.site) .pd-wall__grid .pd-tile--large button {
+  min-height: 100%;
+  aspect-ratio: auto;
+}
+@media (max-width: 700px) {
+  /* revision-r9.css:64 */
+  body :where(.site) .pd-wall__grid {
+    gap: 10px;
+  }
+  /* revision-r9.css:64 */
+  body :where(.site) .pd-wall__grid figcaption {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  /* revision-r9.css:64 */
+  body :where(.site) .pd-wall__grid .pd-tile button {
+    min-height: 0;
+  }
+  /* revision-r9.css:67 — the small tiles' captions become strips below the picture */
+  body :where(.site) .pd-wall__grid .pd-tile:not(.pd-tile--large) figcaption {
+    position: static;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    padding: 6px;
+    font-size: 10px;
+    line-height: 1.4;
+    background: white;
+  }
+}
+
+/* ---------- revision-r11.css (the FAQ columns; the sticky bar's safe area) ---------- */
+/* revision-r11.css:23 */
+body :where(.site) .pd-help .pd-faq {
+  border: 0;
+}
+/* revision-r11.css:24 */
+body :where(.site) .pd-help__grid {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  /* revision-r11.css:41 */
+  body :where(.site) .pd-help__grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  /* revision-r11.css:109 */
+  :where(.site) .pd-sticky {
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- an approved artwork the page cannot show (src/components/product/product-page.tsx) ----------
+ * The catalogue's empty / unavailable block of browse.css (`.catalogue`, `.empty-results`), whose heading is an h3 in
+ * the catalogue section; here it is the page's one h1, drawn at that same h3 size (storefront.css) rather than the
+ * display size. */
+:where(.site) .artwork-unavailable h1 {
+  font-size: var(--text-h3);
+  line-height: 1.2;
+}
+
+/* ---------- the overlays inside `main.pd` ----------
+ * The prototype draws the notice, the bar, the lightbox and the no-JavaScript line after the footer, where `.pd`'s
+ * descendant rules (r3.css:5–8) do not reach them; here they render inside `main.pd`, so those rules are undone for
+ * them (r3.css:7's `.pd button { font: inherit }` outweighs the overlay buttons' own type, restated below): the lightbox figure keeps the browser's own margin, its caption and the no-JavaScript line the
+ * shell's line height, and their controls the storefront's 4 px ring offset (gallery-r8.css:6). */
+:where(.site) .pd .pd-lightbox figure {
+  margin: revert;
+}
+:where(.site) .pd .pd-lightbox p,
+:where(.site) .pd .pd-noscript {
+  line-height: inherit;
+}
+:where(.site) .pd .pd-lightbox :focus-visible,
+:where(.site) .pd .pd-sticky :focus-visible {
+  outline-offset: 4px;
+}
+/* r3.css:7 undone: the type the overlay buttons have after the footer (r3.css:172, :176; browse-home.css:78) */
+:where(.site) .pd .pd-lightbox__nav {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+:where(.site) .pd .pd-lightbox__close {
+  font-weight: 600;
+}
+:where(.site) .pd .pd-sticky .button {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}

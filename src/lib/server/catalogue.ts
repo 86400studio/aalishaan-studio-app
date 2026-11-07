@@ -33,6 +33,8 @@ import { readServerSupabaseEnv } from "./supabase";
  * - Each request is tagged `public-catalogue` for the data cache and bounded in time; the pages are ISR, regenerated
  *   after `CATALOGUE_REVALIDATE_SECONDS` or when the authenticated hook expires the tag and their paths
  *   (src/lib/server/catalogue-revalidation.ts). No filter value reaches this read: filtering is browser state.
+ * - Bag validation (S1.5, `readPublicCatalogueFresh`) reads the same projection with the same identity check and row
+ *   validation through a second client whose requests are uncached and untagged — never an ISR price.
  * - Rows are validated one by one against the projection's mirror and the S1.1 contract (the three finishes once
  *   each, the fifteen image objects at their own paths); an invalid row is left out with a sanitised diagnostic and
  *   the valid rows stay usable (the S1.1 record → Known limits: an incomplete Active artwork).
@@ -126,6 +128,47 @@ export function defaultCatalogueReaderDependencies(): CatalogueReaderDependencie
         CATALOGUE_CLIENT_OPTIONS,
       ),
     report: (message) => console.error(message),
+  };
+}
+
+/**
+ * The fresh read of bag validation — S1.5 (`POST /api/bag`, src/lib/server/bag.ts; docs/sprint-prompts/
+ * S1.5-artwork-bag-cart.md §H.2): the same projection, identity check and row validation as the browse read, but
+ * each request bypasses the data cache (`cache: "no-store"`) and carries no tag or ISR window, so a validation never
+ * answers from a cached response or an hourly price. A caller's own data-cache options are dropped, never kept.
+ */
+export function freshCatalogueRequestInit(init?: RequestInit): RequestInit {
+  const options: RequestInit = { ...init };
+  delete (options as RequestInit & { next?: unknown }).next;
+  return { ...options, cache: "no-store" };
+}
+
+function freshCatalogueFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetch(input, freshCatalogueRequestInit(init));
+}
+
+/** The public client of the fresh read: session-less like the browse read, every request uncached. */
+export const FRESH_CATALOGUE_CLIENT_OPTIONS: BrowserClientOptions = {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+  global: { fetch: freshCatalogueFetch },
+};
+
+/** The browse read's dependencies with the fresh read's client: the same identity facts, never the secret key. */
+export function defaultFreshCatalogueReaderDependencies(): CatalogueReaderDependencies {
+  return {
+    ...defaultCatalogueReaderDependencies(),
+    createPublicClient: () =>
+      createBrowserSupabaseClient(
+        readPublicSupabaseEnv(),
+        FRESH_CATALOGUE_CLIENT_OPTIONS,
+      ),
   };
 }
 
@@ -233,6 +276,17 @@ export async function readPublicCatalogue(
   } catch {
     return { status: "unavailable", reason: "query_failed" };
   }
+}
+
+/**
+ * `readPublicCatalogue` through the fresh read's client: one bounded, uncached read of the projection, classified the
+ * same way (an empty projection is ok with no rows; unavailable is never an empty catalogue). Never throws, never
+ * renders: bag validation answers 503 for an unavailable read (src/lib/server/bag.ts).
+ */
+export function readPublicCatalogueFresh(
+  deps: CatalogueReaderDependencies = defaultFreshCatalogueReaderDependencies(),
+): Promise<CatalogueRead> {
+  return readPublicCatalogue(deps);
 }
 
 /**

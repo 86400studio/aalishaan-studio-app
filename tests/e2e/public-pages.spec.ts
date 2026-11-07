@@ -7,7 +7,9 @@ import { expect, test } from "./harness/fixtures";
  * links lead off it; the
  * policy tabs; the three disabled forms accept nothing and send nothing; the header arrangement and the
  * drawers (focus, inert, Escape, focus return); the About search and the FAQ filter as the prototype counts;
- * the Track hint; the Home handoff's mode; and the wishlist heart writes only the browser's own storage. No
+ * the Track hint; the Home handoff's mode; and the wishlist heart writes only the browser's own storage. S1.5 adds
+ * the shared-consumer cases: the empty bag keeps the drawer's S1.3 state, the 404's Saved-artworks link opens at its
+ * #artworks fragment (docs/PROJECT-STATUS.md §10 #26 (c)), and Home's featured card leads to its artwork page. No
  * server write happens anywhere in this file; the only state touched is this browser context's localStorage.
  * Every test runs on both projects (the required-projects reporter counts a skip as a failure).
  */
@@ -252,6 +254,50 @@ test.describe("S1.3 — routes, redirects and the 404", () => {
     ).toBeGreaterThanOrEqual(headerBottom);
   });
 
+  test("the 404's cart drawer Saved artworks opens Shop's Saved view at #artworks (S1.5, §10 #26 (c))", async ({
+    page,
+  }) => {
+    // The 404 loads the destination as a new document (src/components/shell/reload-on-path-change.tsx); a new load
+    // scrolls to the fragment, where a reload would restore the 404's own scroll position at the top.
+    await page.goto("/s1-3-no-such-page");
+    const opener = page.getByRole("button", { name: /^Open cart/ });
+    await page.waitForFunction(() => {
+      const button = document.querySelector(
+        'header.site-header button[aria-controls="cart-drawer"]',
+      );
+      return (
+        button !== null &&
+        Object.keys(button).some((key) => key.startsWith("__reactProps"))
+      );
+    });
+    await opener.click();
+    const drawer = page.locator("#cart-drawer");
+    await expect(drawer).toHaveAttribute("data-open", "true");
+    const loaded = page.waitForEvent("load");
+    await drawer
+      .getByRole("link", { name: "Saved artworks", exact: true })
+      .click();
+    await loaded;
+    await expect(page).toHaveURL(/\/shop\?saved=1#artworks$/);
+    await expect(page.locator("[data-catalogue-label]")).toHaveText(
+      "Saved artworks",
+    );
+    await expect(page.locator("#artworks")).toBeInViewport();
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY), "scrolled to #artworks")
+      .toBeGreaterThan(0);
+    await expect(drawer).not.toHaveAttribute("data-open", "true");
+    // One history entry for the destination: Back returns to the 404.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/s1-3-no-such-page$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "A little off the beaten path.",
+      }),
+    ).toBeVisible();
+  });
+
   test("the policy tabs: two groups in the prototype's order, the current page marked, none on Shipping", async ({
     page,
   }) => {
@@ -475,6 +521,14 @@ test.describe("S1.3 — the shell, the search, the filter, the handoff and the h
     const drawer = page.locator("#cart-drawer");
     await expect(drawer).toHaveAttribute("data-open", "true");
     await expect(drawer.getByText("Your cart is quiet.")).toBeVisible();
+    // S1.5: an empty bag keeps this state — no rows, no checkout control, no "Edit your bag".
+    await expect(drawer.locator("article.bag-row")).toHaveCount(0);
+    await expect(
+      drawer.getByRole("button", { name: "Continue to checkout" }),
+    ).toHaveCount(0);
+    await expect(
+      drawer.getByRole("link", { name: "Edit your bag" }),
+    ).toHaveCount(0);
     await page
       .locator(".backdrop")
       .click({ position: { x: 10, y: 10 }, force: true });
@@ -601,6 +655,25 @@ test.describe("S1.3 — the shell, the search, the filter, the handoff and the h
     await expect(
       card.getByRole("link", { name: "View Artwork" }),
     ).toHaveAttribute("href", "/artworks/the-ship-between-two-storms");
+    // S1.5: the link now leads to the artwork's page.
+    const link = card.getByRole("link", { name: "View Artwork" });
+    await page.waitForFunction(
+      (href) =>
+        Array.from(document.querySelectorAll(`a[href="${href}"]`)).some(
+          (anchor) =>
+            Object.keys(anchor).some((key) => key.startsWith("__reactProps")),
+        ),
+      "/artworks/the-ship-between-two-storms",
+    );
+    await link.scrollIntoViewIfNeeded();
+    await link.click();
+    await expect(page).toHaveURL(/\/artworks\/the-ship-between-two-storms$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "The Ship Between Two Storms",
+      }),
+    ).toBeVisible();
   });
 
   test("the wishlist heart writes the prototype's key in this browser only and announces", async ({
