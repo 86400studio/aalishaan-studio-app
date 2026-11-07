@@ -242,7 +242,8 @@ export const HOME_FAQ = {
     },
     {
       q: "How long does delivery take?",
-      a: "Each piece is printed and framed after you order, then delivered across India. Check your PIN code for a sample estimate. Confirmed production times, delivery estimates and charges will be shown before live orders open.",
+      /** D-49 — NS-36, the owner-approved replacement of the E8 sentence (2026-11-07). */
+      a: "Each piece is printed and framed after you order, then delivered across India. Confirmed production times, delivery estimates and charges will be shown before live orders open.",
     },
   ],
 } as const;

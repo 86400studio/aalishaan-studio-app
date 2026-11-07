@@ -35,10 +35,14 @@ import {
   catalogueForRender,
   catalogueRequestInit,
   defaultCatalogueReaderDependencies,
+  defaultFreshCatalogueReaderDependencies,
+  FRESH_CATALOGUE_CLIENT_OPTIONS,
+  freshCatalogueRequestInit,
   getPublicCatalogue,
   isBuildPhase,
   isVercelDeployment,
   readPublicCatalogue,
+  readPublicCatalogueFresh,
   validateCatalogueRows,
   type CatalogueRead,
   type CatalogueUnavailableReason,
@@ -856,6 +860,151 @@ describe("the tagged, session-less public client", () => {
   });
 });
 
+describe("the fresh read of bag validation (S1.5) — the same projection and checks, uncached and untagged", () => {
+  it("freshCatalogueRequestInit keeps the request's method, headers, body and signal, adds no-store and drops any data-cache option", () => {
+    const signal = new AbortController().signal;
+    const headers = { apikey: PUBLISHABLE };
+    const init: RequestInit = { method: "GET", headers, signal };
+    expect(freshCatalogueRequestInit(init)).toEqual({
+      method: "GET",
+      headers,
+      signal,
+      cache: "no-store",
+    });
+    expect(freshCatalogueRequestInit()).toEqual({ cache: "no-store" });
+    const tagged = freshCatalogueRequestInit({
+      next: { tags: [CATALOGUE_TAG], revalidate: 3600 },
+      cache: "force-cache",
+    } as RequestInit);
+    expect(tagged).toEqual({ cache: "no-store" });
+    expect(tagged).not.toHaveProperty("next");
+    // The browse read's options are untouched by the fresh read.
+    expect(catalogueRequestInit()).toEqual({
+      next: { tags: [CATALOGUE_TAG], revalidate: CATALOGUE_REVALIDATE_SECONDS },
+    });
+  });
+
+  it("FRESH_CATALOGUE_CLIENT_OPTIONS is session-less and its fetch hands each request on uncached, with no tag or ISR window", async () => {
+    expect(FRESH_CATALOGUE_CLIENT_OPTIONS).toEqual({
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+      global: { fetch: expect.any(Function) },
+    });
+    expect(FRESH_CATALOGUE_CLIENT_OPTIONS).not.toBe(CATALOGUE_CLIENT_OPTIONS);
+    const response = new Response("[]", { status: 200 });
+    const globalFetch = vi.fn(async () => response);
+    vi.stubGlobal("fetch", globalFetch);
+    const fetchOption = FRESH_CATALOGUE_CLIENT_OPTIONS.global?.fetch;
+    if (!fetchOption) throw new Error("the client options carry no fetch");
+    const url = `${TEST_URL}/rest/v1/public_catalogue?select=slug`;
+    const init: RequestInit = {
+      method: "GET",
+      headers: { apikey: PUBLISHABLE },
+    };
+    expect(await fetchOption(url, init)).toBe(response);
+    expect(globalFetch).toHaveBeenCalledWith(url, {
+      ...init,
+      cache: "no-store",
+    });
+    const [, sent] = globalFetch.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(sent).not.toHaveProperty("next");
+  });
+
+  it("defaultFreshCatalogueReaderDependencies keeps the five identity names and builds the public client with the fresh options", () => {
+    stubPreviewEnvironment();
+    const deps = defaultFreshCatalogueReaderDependencies();
+    const env = deps.env();
+    expect(env).toEqual(previewEnv());
+    expect(env).not.toHaveProperty("SUPABASE_SECRET_KEY");
+    expect(deps.createPublicClient()).toEqual({
+      ok: true,
+      projectRef: TEST_REF,
+      client: { kind: "fake-client" },
+    });
+    const [url, key, options] = sdk.createClient.mock.calls[0] as unknown[];
+    expect(url).toBe(TEST_URL);
+    expect(key).toBe(PUBLISHABLE);
+    expect(options).toBe(FRESH_CATALOGUE_CLIENT_OPTIONS);
+  });
+
+  it("readPublicCatalogueFresh() reads through the fresh client and classifies like the browse read", async () => {
+    stubPreviewEnvironment();
+    const { client, calls } = fakeClient({ data: [sampleRow()], error: null });
+    sdk.createClient.mockReturnValueOnce(client);
+    expect(await readPublicCatalogueFresh()).toEqual({
+      status: "ok",
+      rows: [parsed(sampleRow())],
+      omitted: 0,
+    });
+    expect(sdk.createClient).toHaveBeenCalledWith(
+      TEST_URL,
+      PUBLISHABLE,
+      FRESH_CATALOGUE_CLIENT_OPTIONS,
+    );
+    expect(calls.map((call) => call.method)).toEqual([
+      "from",
+      "select",
+      "abortSignal",
+    ]);
+  });
+
+  it("readPublicCatalogueFresh keeps the identity check: a client on PROD in a Preview is identity_mismatch, and no query runs", async () => {
+    const { deps, calls } = readerDeps(
+      { data: [sampleRow()], error: null },
+      {
+        created: {
+          ok: true,
+          client: fakeClient({ data: [], error: null }).client,
+          projectRef: PROD_REF,
+        },
+      },
+    );
+    expect(await readPublicCatalogueFresh(deps)).toEqual({
+      status: "unavailable",
+      reason: "identity_mismatch",
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it("readPublicCatalogueFresh: an empty projection is ok with no rows; a failed query is unavailable; invalid rows are left out", async () => {
+    expect(
+      await readPublicCatalogueFresh(
+        readerDeps({ data: [], error: null }).deps,
+      ),
+    ).toEqual({ status: "ok", rows: [], omitted: 0 });
+    expect(
+      await readPublicCatalogueFresh(
+        readerDeps({ data: null, error: { message: "boom" } }).deps,
+      ),
+    ).toEqual({ status: "unavailable", reason: "query_failed" });
+    const { deps } = readerDeps({
+      data: [sampleRow(), { ...OTHER_ROW(), title: "" }],
+      error: null,
+    });
+    expect(await readPublicCatalogueFresh(deps)).toEqual({
+      status: "ok",
+      rows: [parsed(sampleRow())],
+      omitted: 1,
+    });
+    expect(deps.report).toHaveBeenCalledTimes(1);
+  });
+
+  it("readPublicCatalogueFresh() from an empty environment is not_configured and builds no client", async () => {
+    stubEmptyEnvironment();
+    expect(await readPublicCatalogueFresh()).toEqual({
+      status: "unavailable",
+      reason: "not_configured",
+    });
+    expect(sdk.createClient).not.toHaveBeenCalled();
+  });
+});
+
 describe("catalogueForRender — unavailable renders only while building outside Vercel unconfigured; otherwise it throws", () => {
   async function rejection(promise: Promise<unknown>): Promise<unknown> {
     return promise.then(
@@ -1121,13 +1270,16 @@ describe("the five browse pages — ISR at the catalogue's window, nothing read 
     "src/app/(public)/collections/[slug]/page.tsx",
     "src/app/(public)/art-styles/page.tsx",
     "src/app/(public)/art-styles/[slug]/page.tsx",
+    // S1.5: the artwork pages and the Lantern compatibility entry follow the same ISR source rules.
+    "src/app/(public)/artworks/[slug]/page.tsx",
+    "src/app/(public)/product/page.tsx",
   ];
   const DETAIL_PAGES = PAGES.filter((page) => page.includes("[slug]"));
   const source = (page: string) =>
     readFileSync(path.join(ROOT, page), "utf8").replace(/\r\n/g, "\n");
 
-  it("covers the two detail pages", () => {
-    expect(DETAIL_PAGES).toHaveLength(2);
+  it("covers the three detail pages", () => {
+    expect(DETAIL_PAGES).toHaveLength(3);
   });
 
   it.each(PAGES)(

@@ -76,7 +76,20 @@ export type SiteImageKey =
   | "gen-03-back-of-frame-and-hanging-system"
   | "gen-04-print-closeup"
   | "size-comparison-a2"
-  | "before-you-buy";
+  | "before-you-buy"
+  | "sizeguide-living-room-portrait"
+  | "sizeguide-bedroom-portrait"
+  | "sizeguide-study-office-portrait"
+  | "sizeguide-study-office-landscape"
+  | "sizeguide-bedroom-landscape"
+  | "sizeguide-dining-room-landscape"
+  | "gen-01-craft-detail-black-frame"
+  | "gen-01-craft-detail-white-frame"
+  | "product-page-faq"
+  | "lantern-artwork-master"
+  | "lantern-room-black"
+  | "lantern-room-white"
+  | "lantern-room-antique-gold";
 
 /**
  * The sizes each key is stored at (the prototype's size labels: the responsive copies at 600 / 1200 / 1600,
@@ -88,7 +101,16 @@ export type SiteImageKey =
  * at 600 / 1600 — its responsive copies, the 600 at 700 px and below, the 1600 above; their 1200 copies go
  * unused and are not stored —, and the three collection covers at 480 / 1200 — its web copies, scaled on the
  * longer side by prototype/scripts/prepare-artwork-web.cjs; The Age of Sail's is the picture of
- * `card-2-collection`, stored from its own copies). Mirrors the manifest.
+ * `card-2-collection`, stored from its own copies; from S1.5, the artwork pages' reference pictures Storage did
+ * not hold — the six A2 size-guide sheets (assets/product-references/sizeguide-*.webp, 1120 × 1400, as they are),
+ * the black and white craft details (the prototype's 1254 px product-reference copies as they are, and — the D-51
+ * precedent, for the 68 / 56 px frame swatches — 160 / 320 / 480 px delivery copies encoded from the swatch PNGs
+ * `assets/site/frame 2.png` / `frame 3.png`, the same pictures by SHA-256 as the GEN 01 Black / White craft
+ * originals, as the gold key's are from its PNG), the FAQ illustration (`assets/site/Product Page FAQ.png`, encoded
+ * at its native 1672 px — the prototype draws it as an `<img>` at that intrinsic size) and the Lantern's artwork
+ * master and three room photos (assets/product/the-lantern-that-outlasted-the-gale/, as they are). The gold craft
+ * detail, the glazing, the back of the frame and the A2 comparison reuse the S1.3 keys — the same source pictures).
+ * Mirrors the manifest.
  */
 export const SITE_IMAGE_SIZES: Readonly<
   Record<SiteImageKey, readonly string[]>
@@ -112,6 +134,19 @@ export const SITE_IMAGE_SIZES: Readonly<
   "gen-04-print-closeup": ["160", "320", "480", "1254"],
   "size-comparison-a2": ["2048"],
   "before-you-buy": ["native"],
+  "sizeguide-living-room-portrait": ["1120"],
+  "sizeguide-bedroom-portrait": ["1120"],
+  "sizeguide-study-office-portrait": ["1120"],
+  "sizeguide-study-office-landscape": ["1120"],
+  "sizeguide-bedroom-landscape": ["1120"],
+  "sizeguide-dining-room-landscape": ["1120"],
+  "gen-01-craft-detail-black-frame": ["160", "320", "480", "1254"],
+  "gen-01-craft-detail-white-frame": ["160", "320", "480", "1254"],
+  "product-page-faq": ["1672"],
+  "lantern-artwork-master": ["1499"],
+  "lantern-room-black": ["1122"],
+  "lantern-room-white": ["1122"],
+  "lantern-room-antique-gold": ["1122"],
 };
 
 export function siteImagePath(key: SiteImageKey, size: string): string {

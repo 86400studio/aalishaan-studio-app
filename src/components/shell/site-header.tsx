@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { useBag } from "@/components/commerce/bag-provider";
 import { BRAND, HEADER, PRIMARY_NAV } from "@/content/public/shell";
 
 import { DrawerTrigger } from "./overlays";
@@ -13,8 +14,14 @@ import { DrawerTrigger } from "./overlays";
  * (`.browse-page`, by CSS). Desktop: logo left, the four plain links centred, cart and the outlined "Track
  * order" right. ≤ 900 px (signed off, D-PRE-04): menu left, logo centred, cart right, Track inside the menu.
  * On Home the logo is the in-page link to the top (prototype/index.html:512), elsewhere the way home.
+ *
+ * S1.5: the cart button's badge and label count the bag's units, not its rows (prototype/shared/bag.js:14:
+ * "Open cart, {count} items", the badge always shown, "0" included), from the one bag store
+ * (src/components/commerce/bag-provider.tsx). The server render and the hydrating render show 0; the stored bag is
+ * read after hydration, so the count never mismatches.
  */
 export function SiteHeader({ home = false }: { home?: boolean }) {
+  const { itemCount } = useBag();
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
     const update = () => setStuck(window.scrollY > 24);
@@ -71,7 +78,7 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
           <DrawerTrigger
             drawer="cart-drawer"
             className="icon-button"
-            label={HEADER.cartOpen(0)}
+            label={HEADER.cartOpen(itemCount)}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3.5 5h2l1.7 9.3a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 2-1.7L20.5 8H6.1" />
@@ -79,7 +86,7 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
               <circle cx="17.5" cy="19" r="1" />
             </svg>
             <span className="cart-count" aria-hidden="true">
-              0
+              {itemCount}
             </span>
           </DrawerTrigger>
           <Link className="nav-cta" href={HEADER.trackHref} prefetch={false}>

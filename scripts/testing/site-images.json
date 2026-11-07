@@ -513,6 +513,196 @@
       "source_path": "assets/site/Before you buy.png",
       "sha256": "05379b53a1103dabdf9f75e61c048107173212d2d7faeec8dc19d6c55e40ed64",
       "encode": true
+    },
+    {
+      "name": "sizeguide-living-room-portrait",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-living-room-portrait-1120.webp",
+      "source_path": "assets/product-references/sizeguide-living-room-portrait.webp",
+      "sha256": "25517e9cd695cd381734946f5b4343ee4d6eda2b80d6891b95799d2194ee6233",
+      "encode": false
+    },
+    {
+      "name": "sizeguide-bedroom-portrait",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-bedroom-portrait-1120.webp",
+      "source_path": "assets/product-references/sizeguide-bedroom-portrait.webp",
+      "sha256": "332660542c7ecbc37acbb2b6bd01a0f3f0ee20000d3792571bf74c1979dc6704",
+      "encode": false
+    },
+    {
+      "name": "sizeguide-study-office-portrait",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-study-office-portrait-1120.webp",
+      "source_path": "assets/product-references/sizeguide-study-office-portrait.webp",
+      "sha256": "ec1d8ab283ceed21d88c3918c1ce0b7b9fba7967cc5a1ff7e2888d1fca7c519d",
+      "encode": false
+    },
+    {
+      "name": "sizeguide-study-office-landscape",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-study-office-landscape-1120.webp",
+      "source_path": "assets/product-references/sizeguide-study-office-landscape.webp",
+      "sha256": "850e0e7abbf4a378d4aa5f413c838b65c458e325ee442f1d0d21132346a96d9b",
+      "encode": false
+    },
+    {
+      "name": "sizeguide-bedroom-landscape",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-bedroom-landscape-1120.webp",
+      "source_path": "assets/product-references/sizeguide-bedroom-landscape.webp",
+      "sha256": "a178b5d881e0ce3cb100e41fcb7f2d199d99b497646c3696039e35cf4c9ec13a",
+      "encode": false
+    },
+    {
+      "name": "sizeguide-dining-room-landscape",
+      "size": "1120",
+      "width": 1120,
+      "height": 1400,
+      "object_path": "site/sizeguide-dining-room-landscape-1120.webp",
+      "source_path": "assets/product-references/sizeguide-dining-room-landscape.webp",
+      "sha256": "abe1cebc6cc98fbc7e8426afeb48323c312c6d3d8fc78540eda054cbc0f552a5",
+      "encode": false
+    },
+    {
+      "name": "gen-01-craft-detail-black-frame",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-01-craft-detail-black-frame-160.webp",
+      "source_path": "assets/site/frame 2.png",
+      "sha256": "c5c9e797cf948f0b5a0799386cf42e1f823ad2becb5cda79bad6fa136991ec1c",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-black-frame",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-01-craft-detail-black-frame-320.webp",
+      "source_path": "assets/site/frame 2.png",
+      "sha256": "c5c9e797cf948f0b5a0799386cf42e1f823ad2becb5cda79bad6fa136991ec1c",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-black-frame",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-01-craft-detail-black-frame-480.webp",
+      "source_path": "assets/site/frame 2.png",
+      "sha256": "c5c9e797cf948f0b5a0799386cf42e1f823ad2becb5cda79bad6fa136991ec1c",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-black-frame",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-01-craft-detail-black-frame-1254.webp",
+      "source_path": "assets/product-references/gen-01-craft-detail-black-frame.webp",
+      "sha256": "b12899aaaae14c7738534ab495ae89e4f0462b4a9f356005f2e96708bb3433bf",
+      "encode": false
+    },
+    {
+      "name": "gen-01-craft-detail-white-frame",
+      "size": "160",
+      "width": 160,
+      "height": 160,
+      "object_path": "site/gen-01-craft-detail-white-frame-160.webp",
+      "source_path": "assets/site/frame 3.png",
+      "sha256": "3f53d0ea02a84f7105d8761ae105e9a350d97923277b45c18e16d38e1c6b56ad",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-white-frame",
+      "size": "320",
+      "width": 320,
+      "height": 320,
+      "object_path": "site/gen-01-craft-detail-white-frame-320.webp",
+      "source_path": "assets/site/frame 3.png",
+      "sha256": "3f53d0ea02a84f7105d8761ae105e9a350d97923277b45c18e16d38e1c6b56ad",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-white-frame",
+      "size": "480",
+      "width": 480,
+      "height": 480,
+      "object_path": "site/gen-01-craft-detail-white-frame-480.webp",
+      "source_path": "assets/site/frame 3.png",
+      "sha256": "3f53d0ea02a84f7105d8761ae105e9a350d97923277b45c18e16d38e1c6b56ad",
+      "encode": true
+    },
+    {
+      "name": "gen-01-craft-detail-white-frame",
+      "size": "1254",
+      "width": 1254,
+      "height": 1254,
+      "object_path": "site/gen-01-craft-detail-white-frame-1254.webp",
+      "source_path": "assets/product-references/gen-01-craft-detail-white-frame.webp",
+      "sha256": "cef8239bfb42f15cdfe01ac1270579b9fc2f772dafbe8d2ba8b335edd938104e",
+      "encode": false
+    },
+    {
+      "name": "product-page-faq",
+      "size": "1672",
+      "width": 1672,
+      "height": 941,
+      "object_path": "site/product-page-faq-1672.webp",
+      "source_path": "assets/site/Product Page FAQ.png",
+      "sha256": "f3bdbc187ed1b20d6ed3f7f5c0ade2024fedf81f14dbbbe56730ba248dd360cb",
+      "encode": true
+    },
+    {
+      "name": "lantern-artwork-master",
+      "size": "1499",
+      "width": 1499,
+      "height": 1049,
+      "object_path": "site/lantern-artwork-master-1499.webp",
+      "source_path": "assets/product/the-lantern-that-outlasted-the-gale/14-f-artwork-master.webp",
+      "sha256": "18fab5028c0d4ae49a74f71ee469d85467afe8adea174ac952c01d34179a563e",
+      "encode": false
+    },
+    {
+      "name": "lantern-room-black",
+      "size": "1122",
+      "width": 1122,
+      "height": 1402,
+      "object_path": "site/lantern-room-black-1122.webp",
+      "source_path": "assets/product/the-lantern-that-outlasted-the-gale/14-f-black-room.webp",
+      "sha256": "5a3af5ce62ddccf8dd40677a29810df647283a2c0ea15b5341e57f68bf6369c9",
+      "encode": false
+    },
+    {
+      "name": "lantern-room-white",
+      "size": "1122",
+      "width": 1122,
+      "height": 1402,
+      "object_path": "site/lantern-room-white-1122.webp",
+      "source_path": "assets/product/the-lantern-that-outlasted-the-gale/14-f-white-room.webp",
+      "sha256": "d8f30638af93f1e15eb43711b00d8f452c1baede2d442deb82f366bbf1fed9b5",
+      "encode": false
+    },
+    {
+      "name": "lantern-room-antique-gold",
+      "size": "1122",
+      "width": 1122,
+      "height": 1402,
+      "object_path": "site/lantern-room-antique-gold-1122.webp",
+      "source_path": "assets/product/the-lantern-that-outlasted-the-gale/14-f-antique-gold-room.webp",
+      "sha256": "4e1b0223f38083b9ccf3681d8fc00a7f2d7cbc8624c17d4d05b7277ecb91d316",
+      "encode": false
     }
   ]
 }

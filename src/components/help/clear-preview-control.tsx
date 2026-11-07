@@ -4,34 +4,51 @@ import { useState } from "react";
 
 import { CLEAR_CONTROL } from "@/content/public/policies";
 import { CLEAR_PREVIEW, WISHLIST_KEY_PREFIX } from "@/content/public/strings";
+import { bagStore, clearDeliveryPin, clearFinishSelections } from "@/lib/bag";
 
 /**
- * The Cookies page's clear control (prototype/pages/policies/cookies/index.html with
- * prototype/shared/pending.js, ported — never imported). At S1.3 the storefront writes only the wishlist
- * keys; the prototype's other keys (its bag, delivery check, order preview and frame keys) are cleared as well, as
- * pending.js clears them — defensively, nothing writes them. S1.5 and S1.6 choose their own storage and update
- * this control (and the Cookies copy at S3.1). The E10 waiting-list key is not among them (D-32j). Raises
- * `wishlistchange` so open hearts refresh.
+ * The Cookies page's clear control (prototype/pages/policies/cookies/index.html with prototype/shared/pending.js:11,
+ * ported — never imported).
+ *
+ * - S1.5: the bag, the delivery PIN and the finishes chosen on artwork pages are cleared through the bag's one API
+ *   (src/lib/bag/) — never by removing their keys here: `bagStore.clear()` empties the bag in memory and in storage,
+ *   which notifies every consumer (the header badge, the drawer, the cart page — and `bagchange` on the window) and,
+ *   the bag being empty, aborts a validation request in flight, so a late answer cannot bring a row back;
+ *   `clearDeliveryPin()` forgets the PIN and tells the page's PIN forms (`deliverycheck`); `clearFinishSelections()`
+ *   forgets every artwork's chosen finish. The memory side clears even when storage refuses.
+ * - The wishlist keys (`aalishaan-wishlist-*`) are removed here as at S1.3, and `wishlistchange` is still raised so
+ *   open hearts and the Saved view refresh; the prototype's order-preview key is cleared defensively (nothing writes
+ *   it; S1.6 chooses its own storage and updates this control, and S3.1 the Cookies copy). Every other key — the
+ *   Admin's, the E10 waiting list's (D-32j), anything unrelated — is left alone.
+ * - The status is the prototype's "cleared" line only when every part was removed from storage; otherwise its
+ *   "Storage is unavailable" line — including a bag kept in memory because storage refused it, whose stored copy
+ *   this page could not remove.
  */
-const LOCAL_KEYS = ["aalishaanProductBag", "aalishaanDeliveryCheck"];
 const SESSION_KEYS = ["aalishaanOrderPreview"];
-const SESSION_PREFIX = "aalishaan-frame-";
 
 export function ClearPreviewControl() {
   const [status, setStatus] = useState("");
   const clear = () => {
+    bagStore.clear();
+    const bagCleared = bagStore.getSnapshot().persistence === "local";
+    const pinCleared = clearDeliveryPin();
+    const finishesCleared = clearFinishSelections();
+    let othersCleared = false;
     try {
       for (const key of Object.keys(localStorage))
-        if (LOCAL_KEYS.includes(key) || key.startsWith(WISHLIST_KEY_PREFIX))
-          localStorage.removeItem(key);
+        if (key.startsWith(WISHLIST_KEY_PREFIX)) localStorage.removeItem(key);
       for (const key of Object.keys(sessionStorage))
-        if (SESSION_KEYS.includes(key) || key.startsWith(SESSION_PREFIX))
-          sessionStorage.removeItem(key);
-      window.dispatchEvent(new Event("wishlistchange"));
-      setStatus(CLEAR_PREVIEW.cleared);
+        if (SESSION_KEYS.includes(key)) sessionStorage.removeItem(key);
+      othersCleared = true;
     } catch {
-      setStatus(CLEAR_PREVIEW.unavailable);
+      othersCleared = false;
     }
+    window.dispatchEvent(new Event("wishlistchange"));
+    setStatus(
+      bagCleared && pinCleared && finishesCleared && othersCleared
+        ? CLEAR_PREVIEW.cleared
+        : CLEAR_PREVIEW.unavailable,
+    );
   };
   return (
     <>

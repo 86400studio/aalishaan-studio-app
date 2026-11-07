@@ -694,6 +694,45 @@
   color: var(--taupe);
   max-width: 20rem;
 }
+/* S1.5 — the cart drawer's bag rows (prototype/shared/bag.js:26, the `<style>` bag.js appends to every page's head,
+   last in the cascade, with the inline style bag.js:15 gives the drawer's Remove button) and the checkout line under
+   the disabled checkout control (r3.css `.pd-bag-note`, the artwork pages' static drawer). Here, not in a page sheet:
+   the drawer is the shell's, on every page and on the global 404 (not-found.css imports this sheet). On the
+   prototype's commerce pages gallery-r8.css:73's `.commerce-page .bag-row p` also reached the drawer's row text
+   (14px); the app's drawer sits outside the page wrapper, so its rows read the same on every page. */
+:where(.site) #cart-drawer .bag-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid #ddd;
+}
+:where(.site) #cart-drawer .bag-row img {
+  width: 72px;
+  height: 90px;
+  object-fit: contain;
+}
+:where(.site) #cart-drawer .bag-row h3 {
+  font-size: 18px;
+  margin: 0;
+}
+:where(.site) #cart-drawer .bag-row p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+:where(.site) #cart-drawer .bag-remove {
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+:where(.site) #cart-drawer .pd-bag-note {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
 :where(.site) .toast {
   position: fixed;
   left: 50%;

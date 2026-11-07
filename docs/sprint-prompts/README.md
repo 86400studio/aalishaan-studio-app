@@ -10,7 +10,7 @@ One file per sprint, created **before** implementation starts and completed befo
 
 The sequence of sprints lives in `docs/ROADMAP.md`; the active one is named in `docs/PROJECT-STATUS.md` §1.
 
-**Start the next implementation session with S1.5.** S1.4 is complete; its [closure record](https://github.com/86400studio/aalishaan-studio-app/pull/28#issuecomment-6632354084) is the evidence behind that statement. After this documentation-publication PR merges, use current main containing these prompts, read [S1.5](S1.5-artwork-bag-cart.md) and begin its step 0. Create/safely update the actual S1.5 branch; do not implement on the publication branch or blindly resume the old preparation baseline. Preserve local edits and untracked files when syncing. PROJECT-STATUS's fresh-session notice supersedes its retained S1.4 snapshot; full tracker/parity reconciliation remains S1.5 step 0.
+**Start the next implementation session with S1.5.** S1.4 is complete; its [closure record](https://github.com/86400studio/aalishaan-studio-app/pull/28#issuecomment-6632354084) is the evidence behind that statement. After this documentation-publication PR merges, use current main containing these prompts, read [S1.5](S1.5-artwork-bag-cart.md) and begin its step 0. Create/safely update the actual S1.5 branch; do not implement on the publication branch or blindly resume the old preparation baseline. Preserve local edits and untracked files when syncing. PROJECT-STATUS's fresh-session notice supersedes its retained S1.4 snapshot; full tracker/parity reconciliation remains S1.5 step 0. **2026-11-07:** that PR (#30) merged as `12cf71e`; S1.5 started the same day and its step 0 reconciled S1.4 to Done (→ "Active sprint" below).
 
 Owner-selected workflow (2026-09-23): GPT-6 Astra Codex prepares sprint prompts and independently reviews Claude Code's completed implementation; Claude implements and fixes findings; the owner merges. Prompt preparation does not authorize implementation or constitute its review.
 
@@ -25,7 +25,7 @@ Publication exception (owner-requested, 2026-11-07): publish the nine advance im
 
 | Sprint | Implementation prompt | Review draft | Preparation / execution readiness |
 |---|---|---|---|
-| S1.5 | [Artwork pages, bag API & Cart](S1.5-artwork-bag-cart.md) | [Review draft](../code-reviews/S1.5-artwork-bag-cart-review.md) | Pair prepared; implementation not started; prerequisite recheck at execution |
+| S1.5 | [Artwork pages, bag API & Cart](S1.5-artwork-bag-cart.md) | [Review draft](../code-reviews/S1.5-artwork-bag-cart-review.md) | Pair prepared; **In Progress since 2026-11-07** on `claude/s1.5-artwork-bag-cart` at `12cf71e`; step 0 done (S1.4 reconciled); Commit NO · Push NO |
 | S1.6 | [Checkout, pending order & Razorpay Order](S1.6-checkout-pending-order.md) | [Review draft](../code-reviews/S1.6-checkout-pending-order-review.md) | Pair prepared; depends on completed S1.5 and Gate 0; atomic transaction and capability lifecycle require resolution before dependent code (record §A) |
 | S1.7 | [Razorpay verification, idempotent webhook & tri-state confirmation](S1.7-razorpay-verification.md) | [Review draft](../code-reviews/S1.7-razorpay-verification-review.md) | Pair prepared; depends on completed S1.6, D-21 and Gate 0; verify atomic finalization, capability lifecycle and lost-webhook recovery (record §A) |
 | S1.8 | [Pending-work worker, confirmation email, receipt & pending-order expiry](S1.8-worker-email-receipt.md) | [Review draft](../code-reviews/S1.8-worker-email-receipt-review.md) | Pair prepared; depends on completed S1.7; worker/expiry transactions, D-06 email, D-10 PDF/font/storage, SMTP and scheduling proof remain execution prerequisites |
@@ -55,22 +55,21 @@ Final S2.4 preparation checks (2026-11-07): two independent documentation reader
 
 **Next pair to prepare: S2.5 — Catalogue management, production files & publish gates. Current inventory: 39 roadmap sprints, 18 prepared pairs, 21 pairs remaining through S3.4.** Pending candidate/evidence fields in a prepared review draft are expected, not a missing prompt pair. Every advance prompt requires actual repository/code/schema/dependency revalidation before eventual implementation or review. Recompute this count from the roadmap and files in future sessions.
 
-Next sprint to execute: [S1.5 — Artwork pages, bag API & Cart](S1.5-artwork-bag-cart.md). Its 2026-11-05 preparation branch and PR #28 merge SHA are historical: execution starts from current main containing the documentation-publication merge, on the actual S1.5 branch. **Planning only; implementation not started. Implementation Commit NO · Push NO.** The builder supplies each review draft's actual immutable range and CI/Preview evidence after implementation. S1.4 is **Done 2026-11-04**, confirmed by the owner and its [closure and Production smoke record](https://github.com/86400studio/aalishaan-studio-app/pull/28#issuecomment-6632354084). Full tracker reconciliation is S1.5 step 0. The S1.4 snapshot below is retained as history and does not describe current readiness.
+Active sprint: [S1.5 — Artwork pages, bag API & Cart](S1.5-artwork-bag-cart.md), prepared 2026-11-05 (an advance pair, published by PR #30 on 2026-11-07) and **In Progress since 2026-11-07** in a local Claude Code session in VS Code on `claude/s1.5-artwork-bag-cart`, at `main` = `12cf71e` (the PR #30 merge; the 2026-11-05 preparation baseline `cae54ff` fast-forwarded, nothing of its own on the branch). Not pushed; **Commit: NO · Push: NO**. Its section H is the execution record — the owner's four amendments of 2026-11-07 (`PROJECT-STATUS.md` D-58) and the implementation contracts. Step 0 reconciled S1.4 to Done from PR #28's records. No migration; Gate 0: none. The builder supplies each review draft's actual immutable range and CI/Preview evidence after implementation.
 
-Historical S1.4 implementation snapshot: [S1.4 — Catalogue browse pages from the database](S1.4-catalogue-browse.md), prepared 2026-10-29 with `/sprint-prompt`
-(Mode A) and saved locally on `claude/s1.4-catalogue-browse` for a fresh Claude session, and **In Progress the same day** in a local Claude
-Code session in VS Code — no cloud leg this time: the owner ran the planning and the execution locally on 2026-10-29. The branch was created
-locally from `main` = `0d209b1` (the PR #26 merge) and is not pushed: one branch, one eventual PR, no PR yet; **Commit: NO · Push: NO** (no
-commit or push authorised yet). The full prompt includes the owner's requirement to use the exact prototype images and verify that they load
-on Preview; Production image loading remains scheduled for S3.3 under D-48. Step 0 reconciled S1.3b to Done from the PR #26 records — the
-[merge-and-smoke record](https://github.com/86400studio/aalishaan-studio-app/pull/26#issuecomment-6418598629) confirms its closure. No
-migration is planned; Gate 0: none. Steps 1–5 and the hermetic part of step 6 were done the same day in the working tree, uncommitted (the record
-→ "Execution"): the reader, the hook, the five pages, the listing, `browse.css`, the 12 browse images in the manifest, the unit and e2e
-tests and a sealed local run beside the frozen prototype; a whole-diff review (four lenses, each finding challenged by an independent skeptic) confirmed 24 findings, none blocking, each fixed or put to the owner; a verification pass over the fixes confirmed 14 more, all fixed; and the checks were run again. The owner authorised the TEST plan and Commit / Push for this branch and answered the decisions on 2026-10-29
-(`PROJECT-STATUS.md` §5 #36, #37); the TEST plan's steps 1–5 ran the same day (the record → "The TEST run") — draft
-PR #28.
+Latest completed sprint: [S1.4 — Catalogue browse pages from the database](S1.4-catalogue-browse.md), prepared 2026-10-29 with `/sprint-prompt`
+(Mode A) and In Progress the same day in a local Claude Code session in VS Code on `claude/s1.4-catalogue-browse` (PR #28) — step 0
+reconciled S1.3b; built and reviewed locally; the owner's OK of the TEST plan with Commit / Push and the decisions on 2026-10-29
+(`PROJECT-STATUS.md` §5 #36, #37); the TEST run; and **Done 2026-11-04** (the Preview test at the reviewed head `f76ff1c` — 180 passed,
+the 17 pages against the frozen pages at four widths, the images from TEST, axe, the hook; Lighthouse mobile medians 75 / 72 / 61 logged
+under the owner's S1.4 exception of 2026-11-03 — ≥ 90 on all pages still required before launch, D-57; Codex **APPROVE** on
+`0d209b1..f76ff1c`; `/close` at `15b1fa3`; merged by the owner as `cae54ff`; Production deployment 7547310639; smoke pass, Production's
+catalogue and images empty by design until S3.3 — the [Preview record](https://github.com/86400studio/aalishaan-studio-app/pull/28#issuecomment-6599502863)
+and the [closure note](https://github.com/86400studio/aalishaan-studio-app/pull/28#issuecomment-6632354084) are comments on PR #28;
+reconciled 2026-11-07 in the S1.5 branch). Its paired [review record](../code-reviews/S1.4-catalogue-browse-review.md) holds the review
+context and the returned record.
 
-Latest completed sprint: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
+Before that: [S1.3b — Home speed fix (D-19)](S1.3b-home-speed.md), inserted 2026-10-22 before S1.4 by the owner's D-19 choice of
 2026-10-21 (`PROJECT-STATUS.md` §5 #30), prepared and In Progress the same day in the fourth Claude Code cloud session on
 `claude/hopeful-gates-rq8oiv` (PR #26) — the open Dependabot updates adopted first (the owner's one-time exception to D-42, §5 #31), then the
 speed work — with the VS Code leg from 2026-10-24 (the pick-up audit and its corrections, the owner's answers of 2026-10-26, the TEST run the
@@ -82,7 +81,7 @@ images missing on Production by design until S3.3 — the Preview record, the `/
 reconciled 2026-10-29 in the S1.4 branch). Its paired [review record](../code-reviews/S1.3b-home-speed-review.md) holds the review context
 and the returned record.
 
-Before that: [S1.3 — Public shell, tokens, Home & copy pages](S1.3-public-shell.md), **Done 2026-10-22** (PR #24, merged as `8a106fb`;
+Before S1.3b: [S1.3 — Public shell, tokens, Home & copy pages](S1.3-public-shell.md), **Done 2026-10-22** (PR #24, merged as `8a106fb`;
 Codex APPROVE on `649cf2c..208cc09`; Lighthouse mobile on Home median 38, overridden for S1.3 by the owner — D-19; smoke pass, the bucket
 images missing on Production by design until S3.3). Its paired [review record](../code-reviews/S1.3-public-shell-review.md) holds the review
 context and the returned record.
