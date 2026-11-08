@@ -5,6 +5,15 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  BAG_ROW,
+  BAG_STATUS,
+  BAG_STORAGE_NOTICES,
+  CART_HEAD,
+  CART_PAGE,
+  CHECKOUT_CONTROL,
+  DELIVERY_CHECK as CART_DELIVERY_CHECK,
+} from "@/content/public/cart";
+import {
   HELP_HEAD,
   HELP_PAGE,
   HELP_QUESTIONS,
@@ -41,6 +50,23 @@ import {
   policyBySlug,
 } from "@/content/public/policies";
 import {
+  ARTWORK_NOT_AVAILABLE,
+  CLOSER_LOOK,
+  DELIVERY_CHECK,
+  LIGHTBOX,
+  PALETTE_HUES,
+  PRODUCT_FAQ,
+  PRODUCT_HERO,
+  PRODUCT_NOSCRIPT,
+  PRODUCT_NOTICES,
+  PRODUCT_VIEWS,
+  RELATED,
+  SIZE_GUIDE,
+  STORY,
+  STYLE_ASIDE,
+  WHAT_YOU_RECEIVE,
+} from "@/content/public/product";
+import {
   BRAND,
   CART_DRAWER,
   FOOTER,
@@ -61,6 +87,34 @@ import {
   POLICY_CARVE_OUTS,
   buildSeedPlan,
 } from "../../scripts/testing/lib/catalogue.mjs";
+
+/**
+ * D-49 — the three NS-36 replacements (docs/content/new-strings.md, owner-approved 2026-11-07): the E8 sentence the
+ * frozen prototype still holds, and the sentence the app renders instead. Every parity check below reads an app
+ * string back to its E8 original through `asE8`; the NS-36 test pins the approved wording itself.
+ */
+const NS36 = [
+  {
+    e8: "Delivery is planned across India. Enter your PIN code on any artwork page, in your bag or at checkout to see a sample serviceability check and delivery estimate. Shipping charges, final serviceable locations and production and delivery estimates will be confirmed before orders open.",
+    approved:
+      "Delivery is planned across India. Shipping charges, serviceable locations and production and delivery estimates will be confirmed before orders open; you will then be able to check your PIN code on any artwork page, in your bag or at checkout.",
+  },
+  {
+    e8: "Each piece is printed and framed after you order, then delivered across India. Check your PIN code for a sample estimate. Confirmed production times, delivery estimates and charges will be shown before live orders open.",
+    approved:
+      "Each piece is printed and framed after you order, then delivered across India. Confirmed production times, delivery estimates and charges will be shown before live orders open.",
+  },
+  {
+    e8: "Enter your PIN code to check availability, then see an estimated arrival. Sample coverage.",
+    approved:
+      "Enter your PIN code. Delivery availability and estimates will be shown here before orders open.",
+  },
+] as const;
+
+/** The E8 text an app string stands for: an NS-36 replacement maps back to its original; anything else is itself. */
+function asE8(s: string): string {
+  return NS36.find((r) => r.approved === s)?.e8 ?? s;
+}
 
 /**
  * Copy parity — S1.3 (CLAUDE.md "Approved content and design"; docs/APPROVED-INPUTS.md §2; D-08): the strings
@@ -213,7 +267,7 @@ describe("Home — prototype/index.html", () => {
     expectIn(HOME_TEXT, HOME_FAQ.action.label);
     for (const item of HOME_FAQ.items) {
       expectIn(HOME_TEXT, item.q);
-      expectIn(HOME_TEXT, item.a);
+      expectIn(HOME_TEXT, asE8(item.a));
     }
     expect(HOME_FAQ.items).toHaveLength(5);
   });
@@ -343,11 +397,30 @@ describe("Help — prototype/pages/help/index.html", () => {
     }
   });
 
+  it("NS-36 (D-49): the approved delivery sentences replace the E8 ones in Help, both FAQs and the PIN hint; none promises a sample", () => {
+    const deliver = HELP_QUESTIONS.find(
+      (item) => item.q === "Where do you deliver?",
+    );
+    expect(deliver?.a).toBe(NS36[0].approved);
+    for (const faq of [HOME_FAQ.items, PRODUCT_FAQ.items.slice(0, 5)])
+      expect(
+        faq.find((item) => item.q === "How long does delivery take?")?.a,
+      ).toBe(NS36[1].approved);
+    expect(DELIVERY_CHECK.hint).toBe(NS36[2].approved);
+    for (const r of NS36) {
+      expect(r.approved).not.toMatch(/sample/i);
+      expect(r.e8).toMatch(/sample/i);
+    }
+    expect(
+      HELP_INDEX.find((entry) => entry.href === "/help")?.search,
+    ).toContain(NS36[0].approved);
+  });
+
   it("renders the eleven E8 questions verbatim and omits exactly the two E10 entries (NS-15)", () => {
     expect(HELP_QUESTIONS).toHaveLength(11);
     for (const item of HELP_QUESTIONS) {
       expectIn(HELP, `data-topic="${item.topic}"`);
-      expectIn(HELP, `<summary>${item.q}</summary><p>${item.a}</p>`);
+      expectIn(HELP, `<summary>${item.q}</summary><p>${asE8(item.a)}</p>`);
     }
     for (const q of E10_QUESTIONS) {
       expectIn(HELP, `<summary>${q}</summary>`);
@@ -557,6 +630,7 @@ describe("About hub, About the Studio, Contact, Track, 404, 500", () => {
       for (const removed of [
         ...triples.map((sentence) => ({ sentence, replacement: "" })),
         ...POLICY_CARVE_OUTS,
+        ...NS36.map((r) => ({ sentence: r.e8, replacement: r.approved })),
       ])
         if (out.includes(removed.sentence)) {
           expect(out.split(removed.sentence)).toHaveLength(2);
@@ -684,6 +758,327 @@ describe("About hub, About the Studio, Contact, Track, 404, 500", () => {
       expectIn(html, `>${RECOVERY.primary.label}</a>`);
       expectIn(html, `>${RECOVERY.secondary.label}</a>`);
     }
+  });
+});
+
+describe("The artwork pages — prototype/pages/artworks/<slug>/index.html (S1.5)", () => {
+  const WILLOW = page("pages/artworks/willow-after-rain/index.html");
+  const WILLOW_TEXT = text(WILLOW);
+  const LANTERN_PAGE = page(
+    "pages/artworks/the-lantern-that-outlasted-the-gale/index.html",
+  );
+  const R3 = readFileSync(path.join(ROOT, "prototype/product/r3.js"), "utf8");
+  const GENERATOR = readFileSync(
+    path.join(ROOT, "prototype/scripts/build-products.cjs"),
+    "utf8",
+  );
+
+  it("carries the hero, the section nav, the size guide and the moodboard copy verbatim", () => {
+    for (const s of [
+      PRODUCT_HERO.zoomHint,
+      PRODUCT_HERO.frameLegend,
+      PRODUCT_HERO.addToCart,
+      PRODUCT_HERO.continueCheckout,
+      PRODUCT_HERO.reassurance,
+      PRODUCT_HERO.recommendation("Antique Gold"),
+      ...PRODUCT_HERO.sectionNav.links.map((l) => l.label),
+      SIZE_GUIDE.heading,
+      SIZE_GUIDE.body,
+      SIZE_GUIDE.dimensions.Portrait.print,
+      SIZE_GUIDE.dimensions.Portrait.detail,
+      SIZE_GUIDE.small,
+      SIZE_GUIDE.compare.label,
+      SIZE_GUIDE.sheet.caption("portrait", "living room"),
+      CLOSER_LOOK.eyebrow,
+      CLOSER_LOOK.heading,
+      CLOSER_LOOK.intro,
+      CLOSER_LOOK.artwork.caption,
+      CLOSER_LOOK.close.caption("Antique Gold"),
+      CLOSER_LOOK.paper.caption,
+      ...CLOSER_LOOK.framedOrder.map((f) =>
+        CLOSER_LOOK.framed.caption(
+          { white: "White", black: "Black", "antique-gold": "Antique Gold" }[f],
+        ),
+      ),
+    ])
+      expectIn(WILLOW_TEXT, s);
+    for (const attribute of [
+      `aria-label="${PRODUCT_HERO.sectionLabel}"`,
+      `aria-label="${PRODUCT_HERO.stageLabel}"`,
+      `aria-label="${PRODUCT_HERO.thumbsLabel}"`,
+      `aria-label="${PRODUCT_HERO.sectionNav.label}"`,
+      `data-zoom-alt="${SIZE_GUIDE.compare.alt}"`,
+      `data-zoom-caption="${SIZE_GUIDE.compare.caption}"`,
+      `alt="${SIZE_GUIDE.sheet.alt("portrait", "living room")}"`,
+      `aria-label="${CLOSER_LOOK.enlarge(CLOSER_LOOK.artwork.caption)}"`,
+    ])
+      expectIn(WILLOW, attribute);
+    for (const link of PRODUCT_HERO.sectionNav.links)
+      expectIn(WILLOW, `href="${link.href}">${link.label}</a>`);
+    // The other orientation's lines, the Lantern's room figure and its extra thumbnails.
+    const LANTERN_TEXT = text(LANTERN_PAGE);
+    expectIn(LANTERN_TEXT, SIZE_GUIDE.dimensions.Landscape.print);
+    expectIn(LANTERN_TEXT, SIZE_GUIDE.dimensions.Landscape.detail);
+    expectIn(LANTERN_TEXT, SIZE_GUIDE.room.caption("Black", "study & office"));
+    expectIn(
+      LANTERN_PAGE,
+      `alt="${SIZE_GUIDE.room.alt("The Lantern That Outlasted the Gale", "study & office", "Black")}"`,
+    );
+    for (const view of Object.values(PRODUCT_VIEWS))
+      expectIn(LANTERN_TEXT, view.label);
+  });
+
+  it("the gallery's alts and captions and the moodboard's alts are r3.js's runtime templates (rule 7)", () => {
+    for (const fragment of [
+      "${p.altText || p.title} — ${names[frame]} frame",
+      "Framed in ${names[frame]}",
+      "${p.title} — ${names[frame]} frame, close up",
+      "${names[frame]} frame, close up",
+      "${p.title} — print detail on Hahnemühle Museum Etching paper",
+      "Print detail on Hahnemühle Museum Etching paper",
+      "${p.title} — the artwork without its frame",
+      "In a ${roomLower} · ${names[frame]} frame",
+      "Illustrative A2 ${p.orientation.toLowerCase()} size guide for a ${roomLower}; not this artwork",
+      "Illustrative A2 ${p.orientation.toLowerCase()} scale in a ${roomLower}",
+      "alt:`${names[pick]} frame detail`",
+      "alt:'Paper and print detail'",
+      "alt:`${p.title} in a ${names[f]} frame`",
+      "`${item.caption} · ${cursor + 1} of ${set.length}`",
+      "names[frame] + ' frame finish, close up'",
+      `'Added to cart · ' + p.title + ' · ' + names[frame] + ' frame'`,
+      `'${PRODUCT_NOTICES.limited}'`,
+      `'${PRODUCT_NOTICES.memoryOnly}'`,
+    ])
+      expect(R3, fragment).toContain(fragment);
+    expect(PRODUCT_VIEWS.framed.alt("Alt", "Black")).toBe("Alt — Black frame");
+    expect(PRODUCT_VIEWS.room.caption("bedroom", "White")).toBe(
+      "In a bedroom · White frame",
+    );
+    expect(LIGHTBOX.position("The artwork", 1, 6)).toBe("The artwork · 1 of 6");
+    expect(PRODUCT_NOTICES.added("Willow After Rain", "Black")).toBe(
+      "Added to cart · Willow After Rain · Black frame",
+    );
+  });
+
+  it("carries What you'll receive, the story heading and the style aside verbatim", () => {
+    for (const s of [
+      WHAT_YOU_RECEIVE.heading,
+      WHAT_YOU_RECEIVE.intro,
+      WHAT_YOU_RECEIVE.paper.heading,
+      WHAT_YOU_RECEIVE.paper.body,
+      WHAT_YOU_RECEIVE.frame.heading,
+      `Antique Gold${WHAT_YOU_RECEIVE.frame.afterName}`,
+      WHAT_YOU_RECEIVE.glazing.heading,
+      WHAT_YOU_RECEIVE.glazing.body,
+      WHAT_YOU_RECEIVE.hanging.heading,
+      WHAT_YOU_RECEIVE.hanging.body,
+      WHAT_YOU_RECEIVE.footnote,
+      STORY.heading,
+      STYLE_ASIDE.eyebrow,
+      STYLE_ASIDE.printNote,
+      ...Object.values(STYLE_ASIDE.meta),
+      STYLE_ASIDE.seeAll("Rinpa Moon"),
+      RELATED.heading,
+      RELATED.open,
+    ])
+      expectIn(WILLOW_TEXT, s);
+    for (const attribute of [
+      `alt="${WHAT_YOU_RECEIVE.paper.alt("Willow After Rain")}"`,
+      `data-zoom-caption="${WHAT_YOU_RECEIVE.paper.zoomCaption}"`,
+      `aria-label="${WHAT_YOU_RECEIVE.paper.enlarge}"`,
+      `alt="${WHAT_YOU_RECEIVE.frame.alt("Antique Gold")}"`,
+      `alt="${WHAT_YOU_RECEIVE.glazing.alt}"`,
+      `alt="${WHAT_YOU_RECEIVE.hanging.alt}"`,
+      `aria-label="${STYLE_ASIDE.paletteLabel}"`,
+      `id="${SIZE_GUIDE.id}"`,
+      `id="${WHAT_YOU_RECEIVE.id}"`,
+      `id="${STORY.id}"`,
+      `id="${PRODUCT_FAQ.id}"`,
+    ])
+      expectIn(WILLOW, attribute);
+  });
+
+  it("the palette colours are the generator's hueColours, every one of them", () => {
+    const block = GENERATOR.match(/const hueColours = \{([\s\S]*?)\};/)![1]!;
+    const generator = Object.fromEntries(
+      [...block.matchAll(/'([^']+)':'([^']+)'/g)].map((m) => [m[1], m[2]]),
+    );
+    expect(PALETTE_HUES).toEqual(generator);
+    expect(GENERATOR).toContain("hueColours[name] || '#d8d2c8'");
+  });
+
+  it("the seven FAQs are the page's verbatim; 1–5 are before-you-buy.json and Home's FAQ (one D-49 sentence for both)", () => {
+    // The links read from the root, as Home's are (the page sits three folders down).
+    const html = WILLOW.replaceAll('href="../../../', 'href="');
+    const details = [
+      ...html.matchAll(
+        /<details class="r11-faq"[^>]*><summary>([^<]+)<\/summary><p>(.*?)<\/p><\/details>/g,
+      ),
+    ];
+    expect(details).toHaveLength(7);
+    PRODUCT_FAQ.items.forEach((item, i) => {
+      expect(item.q).toBe(details[i]![1]);
+      const answer =
+        typeof item.a === "string"
+          ? item.a
+          : item.a
+              .map((part) => (typeof part === "string" ? part : part.label))
+              .join("");
+      expect(asE8(answer)).toBe(details[i]![2]!.replace(/<[^>]+>/g, ""));
+    });
+    const sixth = PRODUCT_FAQ.items[5]!.a;
+    expect(typeof sixth).not.toBe("string");
+    for (const part of sixth as ReadonlyArray<
+      string | { label: string; href: string }
+    >)
+      if (typeof part !== "string") expectLink(html, part);
+    const data = JSON.parse(
+      readFileSync(
+        path.join(ROOT, "prototype/data/before-you-buy.json"),
+        "utf8",
+      ),
+    ) as Array<[string, string]>;
+    expect(
+      PRODUCT_FAQ.items
+        .slice(0, 5)
+        .map((i) => [i.q, typeof i.a === "string" ? asE8(i.a) : i.a]),
+    ).toEqual(data);
+    expect(PRODUCT_FAQ.items.slice(0, 5)).toEqual(HOME_FAQ.items);
+    for (const s of [
+      PRODUCT_FAQ.eyebrow,
+      PRODUCT_FAQ.heading,
+      PRODUCT_FAQ.intro,
+      PRODUCT_FAQ.contact.label,
+    ])
+      expectIn(WILLOW_TEXT, s);
+    expectLink(html, PRODUCT_FAQ.contact);
+    expectIn(
+      html,
+      `width="${PRODUCT_FAQ.image.width}" height="${PRODUCT_FAQ.image.height}" alt=""`,
+    );
+  });
+
+  it("the delivery form, the lightbox, the sticky bar and the no-JS line are the page's; the invalid-PIN line is delivery.js's", () => {
+    expectIn(WILLOW_TEXT, DELIVERY_CHECK.label);
+    expectIn(WILLOW, `placeholder="${DELIVERY_CHECK.placeholder}"`);
+    expectIn(WILLOW, `<button type="submit">${DELIVERY_CHECK.submit}</button>`);
+    expectIn(WILLOW_TEXT, asE8(DELIVERY_CHECK.hint));
+    expect(
+      readFileSync(path.join(ROOT, "prototype/shared/delivery.js"), "utf8"),
+    ).toContain(`message: '${DELIVERY_CHECK.invalid}'`);
+    expectIn(WILLOW, `aria-label="${LIGHTBOX.label}"`);
+    expectIn(WILLOW, `>${LIGHTBOX.close}</button>`);
+    expectIn(
+      WILLOW,
+      `aria-label="${LIGHTBOX.previous.label}">${LIGHTBOX.previous.mark}<`,
+    );
+    expectIn(
+      WILLOW,
+      `aria-label="${LIGHTBOX.next.label}">${LIGHTBOX.next.mark}<`,
+    );
+    expectIn(WILLOW, `<small>A2 · <span id="sticky-frame">`);
+    expectIn(WILLOW, `<p class="pd-noscript">${PRODUCT_NOSCRIPT}</p>`);
+  });
+
+  it("the not-available state is new wording (NS-PROPOSED), absent from every prototype page, and states no fact", () => {
+    for (const s of [
+      ARTWORK_NOT_AVAILABLE.heading,
+      ARTWORK_NOT_AVAILABLE.body,
+      ARTWORK_NOT_AVAILABLE.title,
+    ]) {
+      expect(WILLOW).not.toContain(s);
+      expect(LANTERN_PAGE).not.toContain(s);
+      expect(s).not.toMatch(/preview|sample|soon|\d/i);
+    }
+    expect(ARTWORK_NOT_AVAILABLE.action).toEqual(CART_DRAWER.empty.primary);
+  });
+});
+
+describe("The cart page and the bag — prototype/pages/cart/index.html, shared/bag.js (S1.5)", () => {
+  const CART = page("pages/cart/index.html");
+  const CART_TEXT = text(CART);
+  const BAG = readFileSync(path.join(ROOT, "prototype/shared/bag.js"), "utf8");
+  const LANTERN = page(
+    "pages/artworks/the-lantern-that-outlasted-the-gale/index.html",
+  );
+  /** The cart page links from two levels down (`../../`). */
+  const expectCartLink = (link: { label: string; href: string }) =>
+    expectIn(CART, `href="../../${prototypeHref(link.href)}">${link.label}<`);
+
+  it("carries the head, the heading, the artworks column and the summary verbatim", () => {
+    expectIn(CART, `<title>${CART_HEAD.title}</title>`);
+    expectIn(CART, `name="description" content="${CART_HEAD.description}"`);
+    expectIn(CART, `<h1 class="checkout-heading">${CART_PAGE.heading}</h1>`);
+    expectIn(CART, `<h2>${CART_PAGE.items.heading}</h2>`);
+    expectCartLink(CART_PAGE.items.explore);
+    const { summary } = CART_PAGE;
+    expectIn(CART, `<span class="eyebrow">${summary.eyebrow}</span>`);
+    expectIn(CART, `<h2>${summary.heading}</h2>`);
+    expectIn(CART, `<dt>${summary.subtotal}</dt>`);
+    expectIn(
+      CART,
+      `<dt>${summary.delivery}</dt><dd>${summary.deliveryValue}</dd>`,
+    );
+    expectIn(CART, `<p class="flow-fine">${summary.fine}</p>`);
+    expectIn(CART, `<p class="flow-fine">${summary.guest}</p>`);
+    expectIn(CART, `<p class="flow-help">${summary.helpBefore}<a`);
+    expectCartLink(summary.help);
+  });
+
+  it("the PIN form's label, placeholder and button are the cart's; the checkout labels and line are the prototype's", () => {
+    expectIn(
+      CART,
+      `<label for="cart-pincode">${CART_DELIVERY_CHECK.cartLabel}</label>`,
+    );
+    expectIn(CART, `placeholder="${CART_DELIVERY_CHECK.placeholder}"`);
+    expectIn(
+      CART,
+      `class="button button--secondary">${CART_DELIVERY_CHECK.submit}</button>`,
+    );
+    expectIn(CART, `>${CHECKOUT_CONTROL.cart}</a></div>`);
+    expectIn(BAG, `'Continue to checkout':'Explore artworks'`);
+    expect(CHECKOUT_CONTROL.drawer).toBe("Continue to checkout");
+    expectIn(
+      LANTERN,
+      `<p class="pd-bag-note">${CHECKOUT_CONTROL.unavailable}</p>`,
+    );
+  });
+
+  it("the empty bag, the drawer's rows and its notices are bag.js's own runtime strings (rule 7)", () => {
+    expectIn(BAG, `<h2>${CART_PAGE.empty.heading}</h2>`);
+    expectIn(BAG, `>${CART_PAGE.empty.action.label}</a>\``);
+    // The prototype's empty line names the sample bag; the drawer's own sentence replaces it.
+    expectIn(BAG, `Your cart is empty. ${CART_PAGE.empty.body}</p>`);
+    expect(CART_PAGE.empty.body).not.toMatch(/sample/i);
+    expectIn(BAG, `>${CART_DRAWER.editBag.label}</a>`);
+    expectIn(BAG, `'pages/cart/index.html'`);
+    expectIn(BAG, `<p role="status">${BAG_STORAGE_NOTICES.memoryOnly}</p>`);
+    expectIn(BAG, `'Remove '+items[index].title`);
+    expect(BAG_ROW.removeFor("X")).toBe("Remove X");
+  });
+
+  it("the new technical states (NS-PROPOSED) are absent from the prototype and claim nothing", () => {
+    const proposed = [
+      BAG_STATUS.pending,
+      BAG_STATUS.failed,
+      BAG_STATUS.retry,
+      BAG_STATUS.removed(1),
+      BAG_STATUS.removed(2),
+      BAG_STATUS.subtotalPending,
+      BAG_STATUS.subtotalFailed,
+      BAG_STORAGE_NOTICES.corruptCleared,
+      CART_PAGE.noscript.before.trim(),
+    ];
+    for (const s of proposed) {
+      expect(CART_TEXT).not.toContain(s);
+      expect(BAG).not.toContain(s);
+      expect(s).not.toMatch(/preview|sample|sent|paid|confirmed|₹/i);
+    }
+    expect(CART_PAGE.noscript.link).toEqual({
+      label: "browse the artworks",
+      href: "/shop",
+    });
+    expectCartLink(CART_PAGE.noscript.link);
   });
 });
 

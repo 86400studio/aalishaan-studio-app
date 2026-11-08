@@ -57,6 +57,8 @@ export const CART_DRAWER = {
     primary: { label: "Explore artworks", href: "/shop" },
     secondary: { label: "View cart page", href: "/cart" },
   },
+  /** S1.5 — the drawer with rows (prototype/shared/bag.js:15): the link to the cart page under the checkout control. */
+  editBag: { label: "Edit your bag", href: "/cart" },
   footerAction: { label: "Saved artworks", href: "/shop?saved=1#artworks" },
 } as const;
 

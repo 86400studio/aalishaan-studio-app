@@ -1,9 +1,11 @@
 /**
  * The manifest aliases that are not app routes (prototype/site-manifest.json `aliases`;
- * docs/TECH-ARCHITECTURE.md §3d), as 301 redirects — the S1.3 route group, and from S1.4 the prototype's
- * Shop All path (its query kept, so `/shop-all?room=Bedroom` lands on that filter). The legacy nested artwork alias
- * belongs to S1.5; `/admin/wireframe`, `/site-map`, `/404` and `/500` are not page routes and have no redirect
- * (their disposition is the S3.4 alias review).
+ * docs/TECH-ARCHITECTURE.md §3d), as 301 redirects — the S1.3 route group, from S1.4 the prototype's Shop All path
+ * (its query kept, so `/shop-all?room=Bedroom` lands on that filter), and from S1.5 the one legacy nested artwork path
+ * (§3d: the manifest serves `pages/artworks/the-ship-behind-the-fog-bell/index.html` at both). The framework keeps the
+ * query string of every one. `/product` is not here: it is served, with the Lantern's canonical link
+ * (src/app/(public)/product/page.tsx). `/admin/wireframe`, `/site-map`, `/404` and `/500` are not page routes and have
+ * no redirect (their disposition is the S3.4 alias review).
  */
 export const ALIAS_REDIRECTS: ReadonlyArray<{
   source: string;
@@ -15,4 +17,8 @@ export const ALIAS_REDIRECTS: ReadonlyArray<{
   // D-09: the prototype's demo confirmation page is not ported; the nearest honest destination.
   { source: "/order/demo", destination: "/track" },
   { source: "/shop-all", destination: "/shop" },
+  {
+    source: "/collections/the-age-of-sail/the-ship-behind-the-fog-bell",
+    destination: "/artworks/the-ship-behind-the-fog-bell",
+  },
 ];

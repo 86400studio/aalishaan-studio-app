@@ -1,0 +1,222 @@
+/*
+ * The cart page `/cart` — S1.5 (prototype/pages/cart/index.html, `<body class="browse-page utility-page
+ * commerce-page">`). Imported by src/app/(public)/cart/page.tsx only, after the layout's storefront.css, home.css and
+ * utility.css, which already carry the commerce page scope, `.utility-main`, `.flow-layout`, `.flow-panel`,
+ * `.flow-fine`, `.flow-help`, the utility form fields and their responsive rules (S1.3, the Track page). This sheet
+ * adds the rest of the frozen cart's cascade, as effective values — pending.css:1, 3 → storefront-r7.css:6, 25–27,
+ * 31–32 → gallery-r8.css:71–78, 139–145 → revision-r9.css:48 — every rule scoped with `:where(.site)` (no added
+ * specificity) and its source cited. The cart drawer's rows are the shell's (storefront.css), since the drawer is
+ * not inside the page wrapper. The E10 intake rules and the prototype's sample button (`.flow-sample`) are not
+ * ported.
+ */
+
+/* ---------- the heading (revision-r9.css:48; the h1 itself carries the class, so `.checkout-heading h1` does not apply) ---------- */
+body :where(.site) .checkout-heading {
+  margin-bottom: 32px;
+}
+
+/* ---------- the artworks column (storefront-r7.css:26) ---------- */
+:where(.site) .flow-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+:where(.site) .flow-section-title h2 {
+  font-size: 27px;
+}
+:where(.site) .flow-section-title .text-link {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------- the summary (storefront-r7.css:26; gallery-r8.css:78) ---------- */
+:where(.site) .flow-summary {
+  position: sticky;
+  top: 115px;
+}
+:where(.site) .flow-totals {
+  margin: 20px 0;
+  font-variant-numeric: tabular-nums;
+}
+:where(.site) .flow-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 13px;
+  font-size: 14px;
+}
+:where(.site) .flow-totals > div:first-child {
+  border-bottom: 1px solid #e5e3e0;
+  font-weight: 600;
+  font-size: 16px;
+}
+:where(.site) .flow-totals dd {
+  text-align: right;
+  margin: 0;
+}
+:where(.site) .flow-totals > div + div {
+  color: #6b655e;
+}
+:where(.site) .flow-summary .button {
+  width: 100%;
+  white-space: normal;
+  border-radius: 7px;
+}
+:where(.site) .flow-summary .delivery-check__row .button {
+  width: auto;
+}
+:where(.site) .flow-summary .delivery-check {
+  border-top: 1px solid #e5e3e0;
+  padding-top: 24px;
+  margin: 24px 0;
+}
+
+/* ---------- the PIN form (pending.css:3; its result line is one sentence, so the `small` rules of pending.css:3 and
+   storefront-r7.css:6 have nothing to style) ---------- */
+:where(.site) .delivery-check {
+  margin: 14px 0 18px;
+}
+:where(.site) .delivery-check label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+:where(.site) .delivery-check__row {
+  display: flex;
+  gap: 10px;
+}
+:where(.site) .delivery-check__row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  letter-spacing: 0.08em;
+}
+:where(.site) .delivery-check__row .button {
+  flex: none;
+  min-height: 48px;
+  white-space: nowrap;
+}
+:where(.site) .delivery-check__result {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+:where(.site) .delivery-check__result:empty {
+  display: none;
+}
+:where(.site) .delivery-check__result[data-status="invalid"] {
+  color: #8f2a24;
+}
+
+/* ---------- the rows (pending.css:1 → storefront-r7.css:27 → gallery-r8.css:72–74, 76; effective values) ----------
+   On the cart the row text is gallery-r8's 14px / 1.7 (`!important`, so it also wins over `.bag-price`'s 16px; the
+   price keeps storefront-r7's ink colour). */
+:where(.site) .commerce-page .bag-row {
+  display: grid;
+  grid-template-columns: 125px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid #e5e3e0;
+}
+:where(.site) .commerce-page .bag-row img {
+  width: 125px;
+  height: 160px;
+  background: #fff;
+  object-fit: contain;
+}
+:where(.site) .commerce-page .bag-row h3 {
+  font: 400 26px/1.2 var(--font-display);
+  margin: 0 0 12px;
+}
+:where(.site) .commerce-page .bag-row p {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: var(--fine-print);
+  margin-bottom: 12px;
+}
+:where(.site) .commerce-page .bag-row .bag-price {
+  color: #191813;
+}
+:where(.site) .commerce-page .bag-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+:where(.site) .commerce-page .bag-controls label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--fine-print);
+}
+:where(.site) .commerce-page .bag-controls input {
+  width: 60px;
+  font-size: 16px;
+  border-radius: 4px;
+  min-height: 48px;
+}
+:where(.site) .commerce-page .bag-controls select {
+  max-width: 150px;
+  font-size: 16px;
+  border-radius: 4px;
+  min-height: 48px;
+}
+:where(.site) .commerce-page .bag-controls button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  color: #767069;
+}
+/* NS-PROPOSED "Try again" after a failed check: the status line's own spacing (no prototype source) */
+:where(.site) .commerce-page .bag-retry {
+  margin: 0 0 12px;
+}
+
+/* ---------- responsive (storefront-r7.css:31–32; gallery-r8.css:139–145) ---------- */
+@media (max-width: 900px) {
+  :where(.site) .flow-section-title {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  :where(.site) .commerce-page .bag-row {
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 16px;
+  }
+  :where(.site) .commerce-page .bag-row img {
+    width: 90px;
+    height: 130px;
+  }
+}
+@media (max-width: 700px) {
+  :where(.site) .flow-summary {
+    position: static;
+  }
+}
+@media (max-width: 599px) {
+  :where(.site) .commerce-page .bag-row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 14px;
+  }
+  :where(.site) .commerce-page .bag-row img {
+    width: 76px;
+    height: 106px;
+  }
+  :where(.site) .commerce-page .bag-row h3 {
+    font-size: 23px;
+    overflow-wrap: break-word;
+  }
+  :where(.site) .commerce-page .bag-controls {
+    gap: 12px 8px;
+  }
+  :where(.site) .commerce-page .bag-controls select {
+    max-width: 100%;
+    width: 100%;
+  }
+  :where(.site) .commerce-page .bag-controls label:has(select) {
+    width: 100%;
+  }
+}

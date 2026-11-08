@@ -123,7 +123,8 @@ export const HELP_QUESTIONS: readonly HelpQuestion[] = [
   {
     topic: "Delivery & care",
     q: "Where do you deliver?",
-    a: "Delivery is planned across India. Enter your PIN code on any artwork page, in your bag or at checkout to see a sample serviceability check and delivery estimate. Shipping charges, final serviceable locations and production and delivery estimates will be confirmed before orders open.",
+    /** D-49 — NS-36, the owner-approved replacement of the E8 sentence (2026-11-07). */
+    a: "Delivery is planned across India. Shipping charges, serviceable locations and production and delivery estimates will be confirmed before orders open; you will then be able to check your PIN code on any artwork page, in your bag or at checkout.",
   },
   {
     topic: "Delivery & care",

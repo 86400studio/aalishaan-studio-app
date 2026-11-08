@@ -12,7 +12,10 @@ import { expect, test } from "./harness/fixtures";
  * `/shop-all` answers 301 with its query; the Saved artworks view shows what this browser saved — from Shop, from
  * Home, from another tab — says so honestly when storage is blocked, and opens from the cart drawer and the Menu; the
  * hubs list their cards in order and each detail page its own artworks; an unknown slug is the designed 404 from the
- * server; and without JavaScript Shop All shows every artwork and no heart. No server write happens anywhere in this
+ * server; and without JavaScript Shop All shows every artwork and no heart. S1.5 adds the shared-consumer cases: a
+ * Back / Forward step that changes only the query closes an open drawer (docs/PROJECT-STATUS.md §10 #26 (b)), and every
+ * card's View Artwork leads to an artwork page that answers (tests/e2e/product-cart.spec.ts covers those pages). No
+ * server write happens anywhere in this
  * file; the only state touched is this browser context's localStorage. In local mode every request that leaves the
  * target origin is aborted (the sealed build's Storage URLs name a placeholder project), so the run stays on the
  * loopback server. Every test runs on both projects (the required-projects reporter counts a skip as a failure).
@@ -252,6 +255,20 @@ async function saveInThisBrowser(page: Page, ...slugs: string[]) {
     },
     slugs.map((slug) => `aalishaan-wishlist-${slug}`),
   );
+}
+
+/** Opens one of the shell's drawers from its hydrated header button. */
+async function openDrawer(
+  page: Page,
+  id: "#cart-drawer" | "#mobile-nav",
+  opener: RegExp,
+): Promise<Locator> {
+  const button = page.getByRole("button", { name: opener });
+  await hydrated(button);
+  await button.click();
+  const drawer = page.locator(id);
+  await expect(drawer).toHaveAttribute("data-open", "true");
+  return drawer;
 }
 
 const historyLength = (page: Page) =>
@@ -817,6 +834,37 @@ test.describe("S1.4 — Saved artworks (this browser only)", () => {
       }
     }
   });
+
+  test("a Back or Forward step that changes only the query closes an open drawer (S1.5, §10 #26 (b))", async ({
+    page,
+  }) => {
+    await page.goto("/shop");
+    await expectArtworks(page, 22);
+    // Into the Saved view from the cart drawer: a push that keeps the path.
+    let drawer = await openDrawer(page, "#cart-drawer", /^Open cart/);
+    await drawer
+      .getByRole("link", { name: "Saved artworks", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/shop\?saved=1#artworks$/);
+    await expect(page.locator("[data-catalogue-label]")).toHaveText(
+      "Saved artworks",
+    );
+    // Back to /shop with a drawer open: the path is the same, the drawer closes and the page is usable.
+    drawer = await openDrawer(page, "#cart-drawer", /^Open cart/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/shop$/);
+    await expect(drawer).not.toHaveAttribute("data-open", "true");
+    await expect(page.locator(".site > .page")).not.toHaveAttribute("inert");
+    // Forward with the menu (≤ 1199 px) or the cart drawer open: closed as well.
+    const phone = (page.viewportSize()?.width ?? 0) <= 1199;
+    drawer = phone
+      ? await openDrawer(page, "#mobile-nav", /^Open menu$/)
+      : await openDrawer(page, "#cart-drawer", /^Open cart/);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/shop\?saved=1#artworks$/);
+    await expect(drawer).not.toHaveAttribute("data-open", "true");
+    await expect(page.locator(".site > .page")).not.toHaveAttribute("inert");
+  });
 });
 
 test.describe("S1.4 — the hubs and the detail pages", () => {
@@ -941,6 +989,41 @@ test.describe("S1.4 — the hubs and the detail pages", () => {
     await back.click();
     await expect(page).toHaveURL(/\/art-styles$/);
     await expect(h1(page, "Art Styles")).toBeVisible();
+  });
+
+  test("S1.5: every Shop card's View Artwork leads to its artwork page, which now answers", async ({
+    page,
+  }) => {
+    await page.goto("/shop");
+    await expectArtworks(page, 22);
+    const slugs = await page
+      .locator(ART_CARDS)
+      .evaluateAll((cards) =>
+        cards.map((card) => card.getAttribute("data-product") ?? ""),
+      );
+    expect(slugs).toHaveLength(22);
+    for (const slug of slugs) {
+      await expect(
+        page
+          .locator(`${ART_CARDS}[data-product="${slug}"]`)
+          .getByRole("link", { name: "View Artwork", exact: true }),
+        slug,
+      ).toHaveAttribute("href", `/artworks/${slug}`);
+      // The browser context's own request (the bypass cookie, never the secret header), redirect not followed.
+      const response = await page.request.get(`/artworks/${slug}`, {
+        maxRedirects: 0,
+      });
+      expect(response.status(), slug).toBe(200);
+    }
+    // One of them followed as a person does: the artwork page, its heading the card's title.
+    const card = page.locator(
+      `${ART_CARDS}[data-product="the-first-warm-wall"]`,
+    );
+    const link = card.getByRole("link", { name: "View Artwork", exact: true });
+    await hydrated(link);
+    await link.click();
+    await expect(page).toHaveURL(/\/artworks\/the-first-warm-wall$/);
+    await expect(h1(page, "The First Warm Wall")).toBeVisible();
   });
 });
 

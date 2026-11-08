@@ -474,6 +474,7 @@ describe("transitive protection — the marker the bundler enforces", () => {
 
   it("has the expected server modules", () => {
     expect(serverFiles.sort()).toEqual([
+      "bag.ts",
       "catalogue-revalidation.ts",
       "catalogue.ts",
       "health.ts",
@@ -531,6 +532,35 @@ describe("transitive protection — the marker the bundler enforces", () => {
     expect(names.length).toBeGreaterThan(0);
     for (const name of names) {
       const source = readFileSync(path.join(dir, name), "utf8");
+      // Import specifiers only — `from "…"` and a bare `import "…"` — as above.
+      const specifiers = [...source.matchAll(/(?:from|import) "([^"]+)"/g)].map(
+        (match) => match[1],
+      );
+      for (const specifier of specifiers) {
+        expect(specifier, `${name} imports ${specifier}`).not.toMatch(
+          /(^|\/)server(\/|$)|^server-only$|^@supabase\//,
+        );
+      }
+      expect(source).not.toMatch(SERVER_ONLY_READ);
+    }
+  });
+
+  it("the bag's browser API (src/lib/bag — browser-shared since S1.5) and its wire schema import no server module or SDK and read no server-only name", () => {
+    const dir = path.join(ROOT, "src", "lib", "bag");
+    const files: string[] = [];
+    const walk = (current: string) => {
+      for (const entry of readdirSync(current, { withFileTypes: true })) {
+        const full = path.join(current, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(ts|tsx)$/.test(entry.name)) files.push(full);
+      }
+    };
+    walk(dir);
+    expect(files.length).toBeGreaterThan(0);
+    files.push(path.join(ROOT, "src", "lib", "schemas", "bag.ts"));
+    for (const full of files) {
+      const name = toPosix(path.relative(ROOT, full));
+      const source = readFileSync(full, "utf8");
       // Import specifiers only — `from "…"` and a bare `import "…"` — as above.
       const specifiers = [...source.matchAll(/(?:from|import) "([^"]+)"/g)].map(
         (match) => match[1],

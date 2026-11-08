@@ -93,6 +93,11 @@ const NATIVE: Record<string, { width: number; height: number }> = {
   "assets/site/GEN-04-Print Closeup.png": { width: 1254, height: 1254 },
   "assets/site/size-comparison-A2.png": { width: 2048, height: 1035 },
   "assets/site/Before you buy.png": { width: 2084, height: 754 },
+  // S1.5: the frame swatches (the GEN 01 Black / White craft originals by SHA-256) and the FAQ illustration —
+  // read from the same checkout on 2026-11-07.
+  "assets/site/frame 2.png": { width: 1254, height: 1254 },
+  "assets/site/frame 3.png": { width: 1254, height: 1254 },
+  "assets/site/Product Page FAQ.png": { width: 1672, height: 941 },
 };
 
 describe("scripts/testing/site-images.json — the pinned manifest", () => {
@@ -117,7 +122,7 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
         `baseline hash for ${entry.source_path}`,
       ).toBe(entry.sha256);
     }
-    expect(manifest.entries).toHaveLength(51);
+    expect(manifest.entries).toHaveLength(70);
   });
 
   it("the encoded copies come from PNG originals — native for the PNG-only sources, narrower delivery copies from S1.3b; the rest are the prototype's responsive WebP copies, and from S1.4 its web copies of the three collection covers", () => {
@@ -132,6 +137,7 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
       "gen-03-acrylic-glazing",
       "gen-03-back-of-frame-and-hanging-system",
       "gen-04-print-closeup",
+      "product-page-faq",
       "size-comparison-a2",
     ]);
     // The S1.3b delivery copies: the widths Home draws (the sprint record → "Image delivery copies").
@@ -153,6 +159,12 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
           "gen-03-back-of-frame-and-hanging-system",
           "gen-04-print-closeup",
         ].flatMap((k) => [160, 320, 480].map((w) => `site/${k}-${w}.webp`)),
+        // S1.5 (the D-51 precedent): the black and white frame swatches, from the swatch PNGs.
+        ...["black", "white"].flatMap((f) =>
+          [160, 320, 480].map(
+            (w) => `site/gen-01-craft-detail-${f}-frame-${w}.webp`,
+          ),
+        ),
       ].sort(),
     );
     for (const entry of encoded)
@@ -175,8 +187,19 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
           ?.slice(1),
         entry.source_path,
       ).toEqual([entry.name, entry.size]);
+    // The S1.5 artwork pages' reference pictures are the prototype's own WebP copies, uploaded as they are —
+    // exactly these twelve (six sheets, two craft details, the Lantern's four — pinned in the S1.5 block below);
+    // every other WebP copy is a responsive one.
+    const references = manifest.entries.filter(
+      (e) =>
+        !e.encode &&
+        /^assets\/(product-references|product\/the-lantern-that-outlasted-the-gale)\//.test(
+          e.source_path,
+        ),
+    );
+    expect(references).toHaveLength(12);
     for (const entry of manifest.entries.filter(
-      (e) => !e.encode && !covers.includes(e),
+      (e) => !e.encode && !covers.includes(e) && !references.includes(e),
     ))
       expect(entry.source_path).toMatch(
         /^assets\/site\/responsive\/[a-z0-9-]+\.webp$/,
@@ -185,6 +208,110 @@ describe("scripts/testing/site-images.json — the pinned manifest", () => {
     for (const entry of manifest.entries)
       expect(entry.source_path).not.toMatch(
         /hero-desktop-landscape|hero-mobile-landscape|footer/i,
+      );
+  });
+});
+
+describe("the S1.5 artwork pages' reference pictures", () => {
+  const byName = (name: string) =>
+    manifest.entries.filter((e) => e.name === name);
+
+  it("the six size-guide sheets are the prototype's 1120 × 1400 product-reference copies, as they are", () => {
+    const sheets = [
+      "living-room-portrait",
+      "bedroom-portrait",
+      "study-office-portrait",
+      "study-office-landscape",
+      "bedroom-landscape",
+      "dining-room-landscape",
+    ];
+    for (const sheet of sheets) {
+      const entries = byName(`sizeguide-${sheet}`);
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({
+        size: "1120",
+        width: 1120,
+        height: 1400,
+        encode: false,
+        source_path: `assets/product-references/sizeguide-${sheet}.webp`,
+      });
+    }
+    expect(
+      manifest.entries.filter((e) => e.name.startsWith("sizeguide-")),
+    ).toHaveLength(6);
+  });
+
+  it("the black and white craft details: the 1254 px product-reference copies as they are, the swatch copies from the swatch PNGs — the same pictures as the GEN 01 originals", () => {
+    for (const [finish, swatch] of [
+      ["black", "frame 2.png"],
+      ["white", "frame 3.png"],
+    ] as const) {
+      const name = `gen-01-craft-detail-${finish}-frame`;
+      const Finish = finish === "black" ? "Black" : "White";
+      expect(
+        byName(name)
+          .map((e) => e.size)
+          .sort(),
+      ).toEqual(["1254", "160", "320", "480"]);
+      expect(byName(name).find((e) => e.size === "1254")).toMatchObject({
+        width: 1254,
+        height: 1254,
+        encode: false,
+        source_path: `assets/product-references/${name}.webp`,
+      });
+      for (const entry of byName(name).filter((e) => e.size !== "1254")) {
+        expect(entry.encode).toBe(true);
+        expect(entry.source_path).toBe(`assets/site/${swatch}`);
+        // Source identity: the swatch PNG is the GEN 01 craft original (the gold key's precedent).
+        expect(entry.sha256).toBe(
+          baseline.files[
+            `assets/rooms/GEN 01 - Craft Detail - ${Finish} Frame.png`
+          ],
+        );
+      }
+    }
+    // The gold swatch and craft detail stay on the S1.3 key, whose PNG is `frame 1.png` by SHA-256.
+    expect(byName("gen-01-craft-detail-gold-frame")[0]!.sha256).toBe(
+      baseline.files["assets/site/frame 1.png"],
+    );
+  });
+
+  it("the FAQ illustration is one copy encoded at its native 1672 × 941; the Lantern's master and rooms are its own copies", () => {
+    expect(byName("product-page-faq")).toEqual([
+      expect.objectContaining({
+        size: "1672",
+        width: 1672,
+        height: 941,
+        encode: true,
+        source_path: "assets/site/Product Page FAQ.png",
+      }),
+    ]);
+    const lantern = "assets/product/the-lantern-that-outlasted-the-gale";
+    expect(byName("lantern-artwork-master")).toEqual([
+      expect.objectContaining({
+        size: "1499",
+        width: 1499,
+        height: 1049,
+        encode: false,
+        source_path: `${lantern}/14-f-artwork-master.webp`,
+      }),
+    ]);
+    for (const finish of ["black", "white", "antique-gold"])
+      expect(byName(`lantern-room-${finish}`)).toEqual([
+        expect.objectContaining({
+          size: "1122",
+          width: 1122,
+          height: 1402,
+          encode: false,
+          source_path: `${lantern}/14-f-${finish}-room.webp`,
+        }),
+      ]);
+  });
+
+  it("no lightbox zoom original is listed: the lightbox shows the largest Storage copies (the owner's amendment H.1 #2)", () => {
+    for (const entry of manifest.entries)
+      expect(entry.source_path).not.toMatch(
+        /^assets\/(size-guides\/sizeguide-|catalogue\/|originals\/)|\/originals\//,
       );
   });
 });

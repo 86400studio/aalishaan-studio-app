@@ -4,17 +4,18 @@ import { createHash, timingSafeEqual } from "node:crypto";
 
 import { revalidatePath, revalidateTag } from "next/cache";
 
-import { CATALOGUE_PAGE_PATHS } from "@/lib/catalogue/browse-model";
+import { REVALIDATED_PAGE_PATHS } from "@/lib/catalogue/browse-model";
 
 import { CATALOGUE_TAG } from "./catalogue";
 
 /**
  * The catalogue's revalidation hook behind `POST /api/revalidate/catalogue` — S1.4 (docs/TECH-ARCHITECTURE.md §3c;
  * the retired S0.2 proof route's reviewed pattern). It lets a publish (the S2.5 Admin, or the owner's trusted
- * tooling) refresh the ISR browse pages at once instead of after their window. It reads and writes no data: it only
- * expires the catalogue's data-cache tag and the 17 browse paths, so the next visit renders the projection afresh — a
+ * tooling) refresh the ISR catalogue pages at once instead of after their window. It reads and writes no data: it
+ * only expires the catalogue's data-cache tag and the 40 catalogue paths — S1.4's 17 browse pages, S1.5's 22 artwork
+ * pages and `/product` (`REVALIDATED_PAGE_PATHS`, src/lib/catalogue/browse-model.ts) —, so the next visit renders the projection afresh — a
  * hidden or drafted artwork is gone on the next request. That visit waits for its render (no stale page after the
- * hook), so a call while the projection cannot be read turns the browse pages into the designed 500 — under `next
+ * hook), so a call while the projection cannot be read turns those pages into the designed 500 — under `next
  * start` until a read succeeds; on Vercel the platform's cache decides after the first request
  * (src/lib/server/catalogue.ts; docs/TECH-ARCHITECTURE.md §3c).
  *
@@ -25,7 +26,7 @@ import { CATALOGUE_TAG } from "./catalogue";
  *      carry it — `openssl rand -hex 32` gives a valid one) — absent, malformed or wrong credentials are denied;
  *   3. a small, exact JSON body `{ "target": "catalogue" }` — the only target; no caller-chosen path, tag or URL.
  * Every denial in 2 is the same generic `404`, which reads no body; invalid input after it is `400`. Only then are the
- * one allow-listed tag (`revalidateTag(…, { expire: 0 })`: never served stale again) and the 17 literal paths
+ * one allow-listed tag (`revalidateTag(…, { expire: 0 })`: never served stale again) and the 40 fixed paths
  * (`revalidatePath`, which also reaches a page prerendered without the tag, as a build without its environment
  * prerenders it) expired. No secret, upstream body or stack trace in any response; `Cache-Control: no-store`.
  * Deployment Protection is separate from this authorisation. The secret is read here and nowhere else.
@@ -169,12 +170,12 @@ export async function handleCatalogueRevalidation(
   const target = text === null ? null : parseRevalidationRequest(text);
   if (target === null) return jsonResponse(400, { status: "invalid_request" });
 
-  // The one target today: every consumer of the projection — the data-cache entry and the 17 browse pages.
+  // The one target today: every consumer of the projection — the data-cache entry and the 40 catalogue pages.
   deps.revalidateTag(CATALOGUE_TAG, { expire: 0 });
-  for (const path of CATALOGUE_PAGE_PATHS) deps.revalidatePath(path);
+  for (const path of REVALIDATED_PAGE_PATHS) deps.revalidatePath(path);
   return jsonResponse(200, {
     status: "revalidated",
     target,
-    paths: CATALOGUE_PAGE_PATHS.length,
+    paths: REVALIDATED_PAGE_PATHS.length,
   });
 }
