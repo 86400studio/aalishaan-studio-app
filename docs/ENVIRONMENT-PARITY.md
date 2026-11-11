@@ -97,7 +97,7 @@ CI/test configuration. Match application names to `TECH-ARCHITECTURE.md` §6. Th
 | `NEXT_PUBLIC_SUPABASE_URL` | Public | TEST URL | TEST URL | PROD URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public/publishable | TEST key | TEST key | PROD key |
 | `SUPABASE_SECRET_KEY` (server only: webhooks, worker, exports) | Server-only | TEST secret | TEST secret | PROD secret |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Public key id / server-only secret | Test mode | Test mode | Live mode |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` (first read at S1.6: the gate opens only on a Test Mode key id, `rzp_test_…`; the key id is also read at build time for the CSP's provider origins) | Public key id / server-only secret | Test mode | Test mode (entered by the owner 2026-11-11 from a new account) | Live mode (S3.3) |
 | `RAZORPAY_WEBHOOK_SECRET` | Server-only | Local listener secret | Sandbox endpoint secret | Live endpoint secret |
 | Prices | N/A — amounts are computed server-side from the catalogue tables (no provider price IDs) | — | — | — |
 | `SHIPROCKET_API_EMAIL` / `SHIPROCKET_API_PASSWORD` / `SHIPROCKET_WEBHOOK_TOKEN` | Server-only | Test account | Test account | Live account |
@@ -114,7 +114,8 @@ CI/test configuration. Match application names to `TECH-ARCHITECTURE.md` §6. Th
 | `SUPABASE_TEST_PROJECT_REF` / `SUPABASE_PROD_PROJECT_REF` (S0.2; non-secret identifiers — the trusted guard input, never derived from a URL or a key) | Server-only configuration | Both refs | Both refs | Both refs |
 | ~~`S0_2_PROOF_TOKEN`~~ (S0.2; the Preview-only proof route `POST /api/setup-proof`) — **retired by S1.1 (2026-10-05): route, helper, tests and tool removed; the owner deleted the Preview entry on 2026-10-02 and confirmed it on 2026-10-06, names only; the owner's local env file does not contain it (`PROJECT-STATUS.md` §5 #7)** | ~~Server-only~~ | ~~In the owner's trusted proof process only (the app never reads it locally)~~ — none | ~~Preview value~~ — none | **absent** |
 | Sentry environment tag | Derived from `VERCEL_ENV` (server at runtime; browser inlined at build by `next.config.ts`) — never `NODE_ENV` | `development` | `preview` | `production` |
-| `SALES_MODE` | Server-only config (`off` / `test` / `live`) | `test` (or `off`) | `test` from S1.6 | `off` until S3.4, then `live` |
+| `SALES_MODE` (first read at S1.6 by the sales gate, `src/lib/server/checkout/gate.ts`: only `test`, outside Production, on the TEST project, opens checkout; anything else — and Production always — is closed) | Server-only config (`off` / `test` / `live`) | `test` (or `off`) | `test` since 2026-11-11 (the owner's Preview-only entry — D-63) | `off` until S3.4, then `live` |
+| `ORDER_TOKEN_SECRET` (S1.6, D-61 — the key the order-confirmation link is derived from; at least 32 random bytes as base64url; read by the sales gate only; absent or malformed → checkout closed) | Server-only | Only when a local process runs the open test flow — a local value of its own | A Preview value of its own (entered by the owner 2026-11-11) | A Production value of its own at S3.3 — never the Preview's |
 | `PLAYWRIGHT_BASE_URL` (S0.2: no fallback; the immutable Preview deployment origin, matched with `PLAYWRIGHT_CANDIDATE_SHA` against the GitHub deployment record before any request; never the Production domain or a branch alias) | CI variable / local shell | Local loopback origin (`PLAYWRIGHT_TARGET_MODE=local` — never Preview evidence) | Validated Preview origin | Production only for the morning check (S3.4; no production mode exists at S0.2) |
 | `PLAYWRIGHT_CANDIDATE_SHA` (S0.2) | CI variable / local shell — non-secret | — | The full candidate SHA | The merge SHA (S3.4) |
 | `PLAYWRIGHT_TARGET_MODE` (S0.2; `preview` default or `local`) | Local shell — non-secret | `local` | `preview` | — |
@@ -545,6 +546,11 @@ For each applicable proof record: `[ID] · [PASS/FAIL/PENDING/N/A] · [DATE] · 
 - `P11 · PASS · 2026-11-07 · 1792b0e86f561a1c8d5ee7269611536039eee95e · TEST kivaatbvxifunilxoxde · the S1.5 record → H.7 step 1 · pnpm db:test:preflight passed before the upload (13:33:51 UTC), before pnpm test, before each Preview e2e run and before the hook's writes — "Preflight PASSED (read-only; nothing was written)."`
 - P12: unchanged — S1.5 adds no environment name (CATALOGUE_REVALIDATION_SECRET is S1.4's; `.env.example`'s placeholder line is the owner's edit, confirmed by name only on 2026-11-08 and committed on the S1.5 branch — PROJECT-STATUS §10 #26 (d)).
 - P3, P4, P5, P7, P8, P9, P13: not applicable or unchanged (S1.5 adds no migration, auth setting, payment, provider webhook, email or form write).
+
+**S1.5 closure records** (2026-11-10, reconciled in the S1.6 branch after the owner merged PR #31 as `7471b443ec76a520f5fbd84a0f808747c83347d0` on 2026-11-08 — the Codex-approved head `6a77fd3` (APPROVE, 2026-11-08, no findings) plus the review-record append `3eb1cb0`; S1.6's step 0. Quoted from the PR #31 comments "`/close` record" and "Merge and Production smoke — S1.5 closure note"; nothing was re-run for this entry.)
+
+- `P10 (Preview half, repeated at /close) · PASS · 2026-11-08 · 3eb1cb0b95510b1b9d9d827a24eb42ff52dbd0ba · Preview: GitHub deployment 7634106800 · the PR #31 /close record · pnpm test:e2e run 6: 298 passed (runs 1–5 each cut by one or two infrastructure flakes, recorded there); the hook and bag checks 16 / 16.`
+- `P10 (Production half) · PASS · 2026-11-08 · 7471b443ec76a520f5fbd84a0f808747c83347d0 · Production: GitHub deployment 7635471721 (success 11:54:14 UTC) · the PR #31 closure note · the read-only Production smoke of 11:55:18–11:56:43 UTC: 16 pages, 21 browser loads, 45 images; no write, sales closed.`
 
 Use existing CI, Preview and project records; do not duplicate full reports here. Negative controls
 match the specific test identity/event, not total production counts that legitimate users can change.
