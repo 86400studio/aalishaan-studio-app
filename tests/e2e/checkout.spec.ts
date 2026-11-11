@@ -111,6 +111,24 @@ function watchErrors(page: Page) {
   return { pageErrors, consoleErrors };
 }
 
+/**
+ * The console's reports of requests this page's Content-Security-Policy refused — without the one refusal that is
+ * expected and accepted: Razorpay's Checkout.js tries to send its own usage analytics to lumberjack.razorpay.com,
+ * and this site's `connect-src` does not allow that. The payment window opens and works without it (seen on the
+ * Preview, 2026-11-11 — the S1.6 record → H.11), so the origin is deliberately not added. Any OTHER refusal is a
+ * finding: a provider origin the page really needs, or something that should not be loading at all.
+ */
+function policyRefusals(consoleErrors: readonly string[]): string[] {
+  return consoleErrors
+    .filter((text) => /Content Security Policy/i.test(text))
+    .filter(
+      (text) =>
+        !/^(?:Connecting to|Refused to connect to) 'https:\/\/lumberjack\.razorpay\.com\//.test(
+          text,
+        ),
+    );
+}
+
 /** Writes a stored bag from a page that runs no script, then loads `path` as a new document. */
 async function plantBag(page: Page, path: string, quantity = 1): Promise<void> {
   await page.goto("/robots.txt");
@@ -324,9 +342,7 @@ test.describe("S1.6 — the checkout page", () => {
       )
       .toBe("function");
     expect(pageErrors).toEqual([]);
-    expect(
-      consoleErrors.filter((text) => /Content Security Policy/i.test(text)),
-    ).toEqual([]);
+    expect(policyRefusals(consoleErrors)).toEqual([]);
   });
 
   test("an empty bag: the empty panel where checkout is open, the closed panel where it is not — never a form", async ({
@@ -591,9 +607,7 @@ test.describe("S1.6 — the checkout page", () => {
       timeout: 30_000,
     });
     expect(pageErrors).toEqual([]);
-    expect(
-      consoleErrors.filter((text) => /Content Security Policy/i.test(text)),
-    ).toEqual([]);
+    expect(policyRefusals(consoleErrors)).toEqual([]);
   });
 
   test("a submission whose security token was removed in transit is refused by the server: no payment window, no order to resume", async ({
