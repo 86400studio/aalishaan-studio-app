@@ -23,12 +23,18 @@ import "@/styles/checkout.css";
  * Not ported: everything the prototype simulated — its sample-details button and design-preview line, the
  * PIN-to-city lookup, the delivery line, the E10 intake slot (D-32j), the sample-order label, the browser-side order
  * preview — and its no-JavaScript wording; the payment-policy line (NS-15) is not approved. Without JavaScript the
- * bag cannot be read and nothing can be sent: the pay button stays disabled and the no-JavaScript line says so.
+ * bag cannot be read and nothing can be sent, so — as the frozen page does (its `<noscript>` style) and as
+ * docs/DESIGN.md's no-JS fallbacks ask ("checkout/track forms hidden behind a readable message") — the form is
+ * hidden and the no-JavaScript line is what the page says; the pay button is rendered disabled as well.
  */
 export const metadata: Metadata = {
   title: CHECKOUT_HEAD.title,
   description: CHECKOUT_HEAD.description,
 };
+
+// prototype/pages/checkout/index.html's `<noscript>` style, for the one element this page has of its list (the
+// stepped checkout and the sample button are not ported).
+const NO_SCRIPT_CSS = "#checkout-form{display:none}";
 
 function pageConfig(): CheckoutPageConfig {
   try {
@@ -49,6 +55,7 @@ export default function CheckoutPage() {
         <Checkout open={false} />
       )}
       <noscript>
+        <style>{NO_SCRIPT_CSS}</style>
         <p>
           {noscript.before}
           {/* a plain link: without JavaScript there is no client navigation */}

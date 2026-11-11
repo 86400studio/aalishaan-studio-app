@@ -1157,6 +1157,20 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
       expect(codeOf(file), file).not.toMatch(/bagStore|removeCodes/);
     expect(form).not.toMatch(/\bclear\b|\bremove\b|setQuantity|changeFinish/);
   });
+
+  it("without JavaScript the form is hidden behind the no-JavaScript line, as the frozen page's <noscript> style does", () => {
+    const page = codeOf("src/app/(public)/checkout/page.tsx");
+    expect(page).toContain(
+      'const NO_SCRIPT_CSS = "#checkout-form{display:none}";',
+    );
+    expect(page).toMatch(
+      /<noscript>\s*<style>\{NO_SCRIPT_CSS\}<\/style>\s*<p>\s*\{noscript\.before\}/,
+    );
+    // The frozen page's own list, of which only the form exists here.
+    expect(
+      read("prototype/pages/checkout/index.html").replace(/\s+/g, " "),
+    ).toContain("<noscript><style>#checkout-form,");
+  });
 });
 
 describe("the checkout page's server render", () => {

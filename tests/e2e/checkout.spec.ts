@@ -678,7 +678,9 @@ test.describe("S1.6 — without JavaScript", () => {
       "Checkout needs JavaScript. You can still browse the artworks.",
     );
     await expect(line.locator("a")).toHaveAttribute("href", "/shop");
-    // Open: the pay button is rendered disabled. Closed: there is none.
+    // The form is hidden behind the line, as on the frozen page (its <noscript> style) — nothing to type into.
+    await expect(page.locator("#checkout-form")).toBeHidden();
+    // Open: the pay button is rendered disabled as well. Closed: there is none.
     const pay = payButton(page);
     if ((await pay.count()) > 0) await expect(pay).toBeDisabled();
     else await expect(page.locator("#checkout-closed")).toBeVisible();
