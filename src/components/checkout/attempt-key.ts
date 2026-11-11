@@ -22,8 +22,10 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   never capture a later order. A malformed stored value is ignored.
  * - **The hold** is the launch the server answered for an order, kept in memory for the page's life: while it
  *   stands, the page offers only "continue to payment" for that order, never a new one. It is released by
- *   `forget()` alone — the callers release it when the server says the attempt is over or when `expires_at` has
- *   passed (`launchExpired`), never because a browser callback fired.
+ *   `forget()` alone — the callers release it when the server says the attempt is over or when its deadline has
+ *   passed (`holdExpired`), never because a browser callback fired. The deadline is the moment the answer was
+ *   received plus the time the SERVER said remains (`expires_in_ms`): the server has already judged the order
+ *   payable by the database's clock, and a device clock that is wrong must neither discard that answer nor extend it.
  */
 
 export { ATTEMPT_STORAGE_KEY };
@@ -47,6 +49,8 @@ export type CheckoutHold = {
   readonly prefill: CheckoutPrefill | null;
   /** True once the payment window reported a completed payment to the browser (unverified — NS-05). */
   readonly reported: boolean;
+  /** When the hold ends, on this device's clock: the receipt of the launch plus the server's remaining time. */
+  readonly deadlineMs: number;
 };
 
 export type AttemptEnvironment = {
@@ -67,11 +71,15 @@ export type AttemptKeys = {
   dropStored: (key: string) => void;
   /** Forgets the slot, the hold and the stored key: the next pay press is a new order. */
   forget: () => void;
-  /** Records the launch that now holds the page. */
-  hold: (launch: CheckoutLaunch, prefill: CheckoutPrefill | null) => void;
+  /** Records the launch that now holds the page; `receivedMs` is this device's time when the answer arrived. */
+  hold: (
+    launch: CheckoutLaunch,
+    prefill: CheckoutPrefill | null,
+    receivedMs: number,
+  ) => void;
   /** Marks the hold as reported complete by the browser (unverified). */
   markReported: () => void;
-  /** The hold, or null. Expiry is the caller's check (`launchExpired`). */
+  /** The hold, or null. Expiry is the caller's check (`holdExpired`). */
   held: () => CheckoutHold | null;
 };
 
@@ -97,19 +105,36 @@ export function mintAttemptKey(
   return key;
 }
 
-/** True when the launch's payment window has passed at `nowMs` — or its deadline cannot be read. */
-export function launchExpired(launch: CheckoutLaunch, nowMs: number): boolean {
-  const deadline = Date.parse(launch.expires_at);
-  return !Number.isFinite(deadline) || deadline <= nowMs;
+/**
+ * The device-clock time at which a launch received at `receivedMs` stops being payable: the receipt plus the time
+ * the server said remains. A remaining time that cannot be read counts as none.
+ */
+export function launchDeadline(
+  launch: CheckoutLaunch,
+  receivedMs: number,
+): number {
+  const remaining = launch.expires_in_ms;
+  return (
+    receivedMs +
+    (typeof remaining === "number" &&
+    Number.isFinite(remaining) &&
+    remaining > 0
+      ? remaining
+      : 0)
+  );
 }
 
-/** Milliseconds from `nowMs` to the launch's deadline; 0 when it has passed or cannot be read. */
-export function millisecondsToExpiry(
-  launch: CheckoutLaunch,
+/** True when the hold's deadline has passed at `nowMs`. */
+export function holdExpired(hold: CheckoutHold, nowMs: number): boolean {
+  return hold.deadlineMs <= nowMs;
+}
+
+/** Milliseconds from `nowMs` to the hold's deadline; 0 when it has passed. */
+export function millisecondsToDeadline(
+  hold: CheckoutHold,
   nowMs: number,
 ): number {
-  const deadline = Date.parse(launch.expires_at);
-  return Number.isFinite(deadline) ? Math.max(0, deadline - nowMs) : 0;
+  return Math.max(0, hold.deadlineMs - nowMs);
 }
 
 export function createAttemptKeys(
@@ -172,8 +197,13 @@ export function createAttemptKeys(
       hold = null;
       removeStored();
     },
-    hold(launch, prefill) {
-      hold = { launch, prefill, reported: false };
+    hold(launch, prefill, receivedMs) {
+      hold = {
+        launch,
+        prefill,
+        reported: false,
+        deadlineMs: launchDeadline(launch, receivedMs),
+      };
     },
     markReported() {
       if (hold !== null) hold = { ...hold, reported: true };

@@ -48,8 +48,8 @@ import {
 
 import {
   attemptKeys,
-  launchExpired,
-  millisecondsToExpiry,
+  holdExpired,
+  millisecondsToDeadline,
   type CheckoutHold,
   type CheckoutPrefill,
 } from "./attempt-key";
@@ -403,12 +403,9 @@ function OpenCheckout({
       if (attemptKeys.slot() !== null || attemptKeys.held() !== null) return;
       switch (step.do) {
         case "launch":
-          if (launchExpired(step.launch, Date.now())) {
-            attemptKeys.forget();
-            setNotice({ id: "expired" });
-            return;
-          }
-          attemptKeys.hold(step.launch, null);
+          // The server judged the deadline by the database's clock: its answer stands, and the page times what
+          // remains from this moment (never `expires_at` against the device's clock).
+          attemptKeys.hold(step.launch, null, Date.now());
           setToken(null);
           setHold(attemptKeys.held());
           setNotice({
@@ -441,7 +438,7 @@ function OpenCheckout({
   // payment until it is reloaded, when the server says where the order stands.
   useEffect(() => {
     if (hold === null || hold.reported) return;
-    const remaining = millisecondsToExpiry(hold.launch, Date.now());
+    const remaining = millisecondsToDeadline(hold, Date.now());
     if (remaining > MAX_TIMER_MS) return;
     const timer = setTimeout(() => {
       attemptKeys.forget();
@@ -517,7 +514,7 @@ function OpenCheckout({
 
   /** Opens Razorpay's window for the order that holds the page — with the launch the server answered, as it is. */
   const openWindow = (target: CheckoutHold) => {
-    if (launchExpired(target.launch, Date.now())) {
+    if (holdExpired(target, Date.now())) {
       releaseExpired();
       return;
     }
@@ -549,11 +546,9 @@ function OpenCheckout({
   const carryOut = (step: CheckoutStep, prefill: CheckoutPrefill) => {
     switch (step.do) {
       case "launch": {
-        if (launchExpired(step.launch, Date.now())) {
-          releaseExpired();
-          return;
-        }
-        attemptKeys.hold(step.launch, prefill);
+        // A launch is the server's verdict that the order is payable now; the page does not second-guess it with
+        // the device's clock (a wrong clock would otherwise discard it and the next press would be a new order).
+        attemptKeys.hold(step.launch, prefill, Date.now());
         const held = attemptKeys.held();
         setHold(held);
         // A page that was left while the answer travelled opens nothing: the hold waits for the return.

@@ -100,14 +100,17 @@ export type NormalisedCheckoutFields = {
   state: string;
 };
 
-// Control characters (C0, DEL, C1), the bidirectional controls and the line / paragraph separators, written as
-// code points so no invisible character sits in this file.
+// Control characters (C0, DEL, C1), the bidirectional controls, the line / paragraph separators and unpaired
+// UTF-16 surrogates, written as code points so no invisible character sits in this file. A string is walked by code
+// point, so only a surrogate WITHOUT its partner shows up in the surrogate block: such text is not valid Unicode and
+// cannot be stored as JSON by the database — it is refused here, as a field error, before anything else runs.
 const FORBIDDEN_CODE_POINT_RANGES: ReadonlyArray<readonly [number, number]> = [
   [0x0000, 0x001f],
   [0x007f, 0x009f],
   [0x200e, 0x200f],
   [0x2028, 0x202e],
   [0x2066, 0x2069],
+  [0xd800, 0xdfff],
 ];
 
 function hasForbiddenCharacter(value: string): boolean {
@@ -261,6 +264,11 @@ export type CheckoutLaunch = {
   order_number: string;
   /** ISO timestamp: when this pending order stops being payable. Never extended. */
   expires_at: string;
+  /**
+   * Milliseconds from this answer to that deadline, by the database's own clock. The page times the deadline from
+   * the moment it received the answer — it never compares `expires_at` with the device's clock, which may be wrong.
+   */
+  expires_in_ms: number;
 };
 
 /**

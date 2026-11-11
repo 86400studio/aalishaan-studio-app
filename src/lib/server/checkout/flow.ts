@@ -159,6 +159,8 @@ function launchOf(state: AttemptState, step: Step): CheckoutActionResult {
       currency: "INR",
       order_number: state.orderNumber,
       expires_at: state.expiresAt.toISOString(),
+      // Both instants are the database's: the remaining time does not depend on this server's or the device's clock.
+      expires_in_ms: state.expiresAt.getTime() - state.serverTime.getTime(),
     },
   };
 }

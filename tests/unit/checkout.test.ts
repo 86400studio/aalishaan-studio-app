@@ -227,6 +227,8 @@ const LAUNCH: CheckoutActionResult = {
     currency: "INR",
     order_number: "AS-1001",
     expires_at: LINKED.expiresAt!.toISOString(),
+    // The database's deadline minus the database's own time — one hour in this fixture.
+    expires_in_ms: 60 * 60 * 1000,
   },
 };
 
@@ -334,6 +336,7 @@ describe("submitCheckout — the allowed path", () => {
       "amount_paise",
       "currency",
       "expires_at",
+      "expires_in_ms",
       "key_id",
       "order_number",
       "provider_order_id",
@@ -658,6 +661,42 @@ describe("resumeCheckout — by the attempt key alone", () => {
     const second = await resume();
     expect(first).toEqual(second);
     expect(d.store.linkProviderOrder).not.toHaveBeenCalled();
+  });
+
+  it("the remaining time is the database's deadline minus the database's own time — no other clock is involved", async () => {
+    // The database answers "ten minutes remain" with a clock that is nowhere near this machine's.
+    const serverTime = new Date("2031-03-04T05:06:07.000Z");
+    d.store.attemptState.mockResolvedValue(
+      ok({
+        ...LINKED,
+        placedAt: new Date(serverTime.getTime() - 50 * 60 * 1000),
+        serverTime,
+        expiresAt: new Date(serverTime.getTime() + 10 * 60 * 1000),
+      }),
+    );
+    const result = await resume();
+    expect(result.status).toBe("launch");
+    if (result.status === "launch") {
+      expect(result.launch.expires_in_ms).toBe(10 * 60 * 1000);
+      expect(result.launch.expires_at).toBe("2031-03-04T05:16:07.000Z");
+    }
+    // A later resume reports less time left for the same deadline: the deadline itself never moves.
+    const later = new Date(serverTime.getTime() + 4 * 60 * 1000);
+    d.store.attemptState.mockResolvedValue(
+      ok({
+        ...LINKED,
+        placedAt: new Date(serverTime.getTime() - 50 * 60 * 1000),
+        serverTime: later,
+        expiresAt: new Date(serverTime.getTime() + 10 * 60 * 1000),
+      }),
+    );
+    const again = await resume();
+    expect(
+      again.status === "launch" && [
+        again.launch.expires_at,
+        again.launch.expires_in_ms,
+      ],
+    ).toEqual(["2031-03-04T05:16:07.000Z", 6 * 60 * 1000]);
   });
 
   it("a closed gate answers closed with no read", async () => {

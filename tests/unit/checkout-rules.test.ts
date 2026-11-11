@@ -40,8 +40,9 @@ import {
   ATTEMPT_STORAGE_KEY,
   base64Url,
   createAttemptKeys,
-  launchExpired,
-  millisecondsToExpiry,
+  holdExpired,
+  launchDeadline,
+  millisecondsToDeadline,
   mintAttemptKey,
 } from "@/components/checkout/attempt-key";
 import { Checkout } from "@/components/checkout/checkout-form";
@@ -369,6 +370,9 @@ describe("normaliseCheckoutFields — the one normalisation, browser and server 
       String.fromCharCode(0x1b),
       String.fromCharCode(0x202e),
       String.fromCharCode(0x2028),
+      // An unpaired surrogate (a high one and a low one): not valid Unicode, and the database cannot store it.
+      String.fromCharCode(0xd83d),
+      String.fromCharCode(0xdc00),
     ]) {
       const result = normaliseCheckoutFields({
         ...VALID_FIELDS,
@@ -376,6 +380,39 @@ describe("normaliseCheckoutFields — the one normalisation, browser and server 
       });
       expect(result).toEqual({ ok: false, errors: { address: "invalid" } });
     }
+  });
+
+  it("refuses an unpaired surrogate in every text field and in the email, and keeps a real astral character", () => {
+    const lone = String.fromCharCode(0xd83d);
+    for (const field of [
+      "name",
+      "address",
+      "address2",
+      "city",
+      "state",
+    ] as const) {
+      const result = normaliseCheckoutFields({
+        ...VALID_FIELDS,
+        [field]: `Text${lone}`,
+      });
+      expect(result).toEqual({ ok: false, errors: { [field]: "invalid" } });
+    }
+    expect(
+      normaliseCheckoutFields({
+        ...VALID_FIELDS,
+        email: `a${lone}@example.com`,
+      }),
+    ).toEqual({ ok: false, errors: { email: "invalid" } });
+    // A valid pair is one character above the Basic Multilingual Plane and is kept as typed.
+    const astral = String.fromCodePoint(0x1f3a8);
+    const kept = normaliseCheckoutFields({
+      ...VALID_FIELDS,
+      address2: `Near the gallery ${astral}`,
+    });
+    expect(kept.ok && kept.fields.line2).toBe(`Near the gallery ${astral}`);
+    // What the server would send to the database is valid JSON text for every accepted value.
+    if (kept.ok)
+      expect(JSON.parse(JSON.stringify(kept.fields))).toEqual(kept.fields);
   });
 });
 
@@ -556,6 +593,7 @@ const LAUNCH = {
   currency: "INR" as const,
   order_number: "AS-1001",
   expires_at: "2026-11-11T11:00:00.000Z",
+  expires_in_ms: 3_600_000,
 };
 
 /** A Storage double that records every write. */
@@ -683,11 +721,12 @@ describe("the attempt key in the browser (src/components/checkout/attempt-key.ts
     expect(data.has(ATTEMPT_STORAGE_KEY)).toBe(false);
 
     keys.keyFor("payload");
-    keys.hold(LAUNCH, null);
+    keys.hold(LAUNCH, null, 1_000);
     expect(keys.held()).toEqual({
       launch: LAUNCH,
       prefill: null,
       reported: false,
+      deadlineMs: 3_601_000,
     });
     keys.markReported();
     expect(keys.held()?.reported).toBe(true);
@@ -697,14 +736,30 @@ describe("the attempt key in the browser (src/components/checkout/attempt-key.ts
     expect(data.has(ATTEMPT_STORAGE_KEY)).toBe(false);
   });
 
-  it("judges the deadline from the server's launch; an unreadable deadline counts as passed", () => {
-    const deadline = Date.parse(LAUNCH.expires_at);
-    expect(launchExpired(LAUNCH, deadline - 1)).toBe(false);
-    expect(launchExpired(LAUNCH, deadline)).toBe(true);
-    expect(launchExpired({ ...LAUNCH, expires_at: "soon" }, 0)).toBe(true);
-    expect(millisecondsToExpiry(LAUNCH, deadline - 5000)).toBe(5000);
-    expect(millisecondsToExpiry(LAUNCH, deadline + 5000)).toBe(0);
-    expect(millisecondsToExpiry({ ...LAUNCH, expires_at: "soon" }, 0)).toBe(0);
+  it("times the deadline from the receipt of the launch plus the server's remaining time — never the device clock against expires_at", () => {
+    // A device clock years ahead of the launch's own expires_at: the server has just said the order is payable
+    // for another hour, and that verdict stands on this device.
+    const received = Date.parse("2031-01-01T00:00:00.000Z");
+    expect(received).toBeGreaterThan(Date.parse(LAUNCH.expires_at));
+    expect(launchDeadline(LAUNCH, received)).toBe(received + 3_600_000);
+    const keys = createAttemptKeys({
+      storage: () => null,
+      fillRandom: counterRandom(),
+    });
+    keys.hold(LAUNCH, null, received);
+    const held = keys.held()!;
+    expect(holdExpired(held, received)).toBe(false);
+    expect(holdExpired(held, received + 3_600_000 - 1)).toBe(false);
+    expect(holdExpired(held, received + 3_600_000)).toBe(true);
+    expect(millisecondsToDeadline(held, received + 3_595_000)).toBe(5000);
+    expect(millisecondsToDeadline(held, received + 4_000_000)).toBe(0);
+    // A device clock far behind does not extend the hold either: it still ends one hour after the receipt.
+    const early = Date.parse("2001-01-01T00:00:00.000Z");
+    keys.hold(LAUNCH, null, early);
+    expect(holdExpired(keys.held()!, early + 3_600_000)).toBe(true);
+    // A remaining time that cannot be read counts as none: the hold ends at once, it is never open-ended.
+    for (const bad of [Number.NaN, -1, 0, Number.POSITIVE_INFINITY])
+      expect(launchDeadline({ ...LAUNCH, expires_in_ms: bad }, 10)).toBe(10);
   });
 });
 

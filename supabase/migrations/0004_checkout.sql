@@ -401,6 +401,12 @@ begin
     where v.variant_code = any (v_codes)
     order by v.variant_code
       for share of v, a;
+  -- Every bought code must have a row that is now locked: variant_code is unique, so no unlocked row can then
+  -- match in the statements below (a row that became visible only after the locking statement is refused here).
+  get diagnostics v_found = row_count;
+  if v_found is distinct from jsonb_array_length(v_items)::bigint then
+    raise exception 'checkout: item_unavailable' using errcode = 'ZC005';
+  end if;
 
   select count(*),
          bool_and(a.status = 'Active'::public.artwork_status
@@ -675,9 +681,10 @@ language plpgsql
 set search_path = ''
 as $fn$
 declare
-  v_pa     public.payment_attempts%rowtype;
-  v_order  public.orders%rowtype;
-  v_closed boolean := false;
+  v_pa      public.payment_attempts%rowtype;
+  v_order   public.orders%rowtype;
+  v_closed  boolean := false;
+  v_flagged boolean := false;
 begin
   if p_payment_attempt_id is null or p_needs_review is null
      or coalesce(p_outcome not in ('failed', 'unknown'), true)
@@ -699,9 +706,15 @@ begin
       raise exception 'checkout: state_conflict' using errcode = 'ZC011';
     end if;
     update public.payment_attempts set provider_order_state = p_outcome where id = v_pa.id;
-    if p_needs_review and not v_order.needs_review then
-      update public.orders set needs_review = true where id = v_order.id;
-    end if;
+    v_closed := true;
+  end if;
+  -- The review flag is raised whenever it is asked for and not yet set — also when the attempt already holds this
+  -- outcome (a link refused during recovery reaches here with the state already unknown).
+  v_flagged := p_needs_review and not v_order.needs_review;
+  if v_flagged then
+    update public.orders set needs_review = true where id = v_order.id;
+  end if;
+  if v_closed or v_flagged then
     insert into public.audit_log (actor_type, action, entity_type, entity_id, previous, next, reason)
     values (
       'system',
@@ -711,7 +724,6 @@ begin
       jsonb_build_object('provider_order_state', v_pa.provider_order_state),
       jsonb_build_object('provider_order_state', p_outcome, 'needs_review', p_needs_review),
       p_reason);
-    v_closed := true;
   end if;
 
   return public.checkout_attempt_state(v_order.checkout_attempt_hash)
@@ -720,7 +732,7 @@ end;
 $fn$;
 
 comment on function public.checkout_close_provider_create(uuid, text, text, boolean) is
-  'S1.6: records that the provider call of a checkout attempt ended without a link — requested → failed (the provider refused: no payment can start) or requested → unknown (no usable answer: held, never called again), or unknown → failed — with a reason code, an optional review flag on the order and one audit_log row. The same outcome again changes nothing; a linked attempt is never closed. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
+  'S1.6: records that the provider call of a checkout attempt ended without a link — requested → failed (the provider refused: no payment can start) or requested → unknown (no usable answer: held, never called again), or unknown → failed — with a reason code, an optional review flag on the order and one audit_log row. The same outcome again changes nothing, unless it asks for a review the order does not have yet: the flag is then raised and audited, the state untouched; a linked attempt is never closed. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
 
 revoke execute on function public.checkout_close_provider_create(uuid, text, text, boolean) from public, anon, authenticated;
 grant execute on function public.checkout_close_provider_create(uuid, text, text, boolean) to service_role;

@@ -1,10 +1,12 @@
 import { createHash, randomBytes } from "node:crypto";
 
-import { createClient } from "@supabase/supabase-js";
-import { describe, expect, it, vi } from "vitest";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+import { buildSeedPlan } from "../../scripts/testing/lib/catalogue.mjs";
+import { readStaffFixtures } from "../../scripts/testing/lib/staff.mjs";
 import { resolveTestTarget } from "../../scripts/testing/lib/supabase-target.mjs";
 
 import {
@@ -16,7 +18,9 @@ import {
 
 /**
  * 0004_checkout on the real TEST project (docs/database-changes/S1.6-0004-checkout.md → Verification;
- * ENVIRONMENT-PARITY.md §12): the five functions denied to the publishable key with privileged post-checks; one
+ * ENVIRONMENT-PARITY.md §12): the five functions denied to the publishable key AND to a signed-in staff member
+ * (role authenticated) by their own EXECUTE grant — the message names the function, so a table's denial cannot stand
+ * in for it — with privileged post-checks; one
  * allowed purchase committing every row, the snapshot and the policy references; the same attempt again returning
  * the same order without taking a number; other details under the same key refused; REAL concurrent submissions of
  * one attempt producing one order and of several attempts producing contiguous numbers; a failure in the middle of
@@ -34,7 +38,11 @@ import {
  * Rows this file writes are synthetic (`synthetic = true`, an `@example.test` address, a `9…` test number) and are
  * retained history by design: orders and the rows beneath them are append-only or non-deletable, and every created
  * order consumes its number (the change record's "Fixture lifecycle"). One test changes one variant's price and
- * availability for a moment and restores both in a `finally`, with a read-back.
+ * availability for a moment and restores both — to the SEEDED values, in its `finally` and again in `afterAll`,
+ * with a read-back; the suite refuses to start if that variant already differs from the seed (an interrupted
+ * earlier run is never adopted as normal). The access cases sign the support fixture in once (a password session,
+ * ended afterwards). The before/after counts assume nothing else writes orders on TEST while the suite runs: the
+ * Preview's checkout must not be used during `pnpm test`.
  */
 
 const NO_SESSION = {
@@ -48,16 +56,9 @@ const runId = randomBytes(6).toString("hex");
 
 const target = resolveTestTarget(process.env);
 if (!target.ok) throw new Error(target.reasons.join("; "));
-const privileged = createClient(
-  target.target.url,
-  target.target.secretKey,
-  NO_SESSION,
-);
-const anon = createClient(
-  target.target.url,
-  target.target.publishableKey,
-  NO_SESSION,
-);
+const TARGET = target.target;
+const privileged = createClient(TARGET.url, TARGET.secretKey, NO_SESSION);
+const anon = createClient(TARGET.url, TARGET.publishableKey, NO_SESSION);
 
 const rpc: RpcCall = async (name, args) => {
   const { data, error } = await privileged.rpc(name, args);
@@ -97,30 +98,66 @@ if (probe.error)
     `0004_checkout is not applied on TEST (checkout_attempt_state: ${probe.error.code}) — apply it first (docs/database-changes/S1.6-0004-checkout.md)`,
   );
 
-// Two purchasable variants of two artworks, with the prices the database holds now.
+// Two purchasable variants of the first two seeded artworks (never the catalogue suite's own probe artwork, the
+// last of the seed plan). The seed's price and availability are what the price test restores, there and in afterAll.
+const plan = buildSeedPlan();
+const SEEDED = plan.artworks.slice(0, 2).map((artwork) => {
+  const code = `${artwork.slug}:antique-gold`;
+  const variant = plan.variants.find((v) => v.variant_code === code);
+  if (!variant) throw new Error(`${code} is not in the seed plan`);
+  return {
+    code,
+    price: BigInt(variant.price_paise),
+    availability: variant.availability as string,
+  };
+});
 const catalogue = await privileged
   .from("variants")
   .select("id,variant_code,price_paise,availability,artworks!inner(status)")
-  .eq("availability", "made_to_order")
-  .eq("artworks.status", "Active")
-  .like("variant_code", "%:antique-gold")
-  .order("variant_code", { ascending: false })
-  .limit(2);
-if (catalogue.error || (catalogue.data ?? []).length < 2)
-  throw new Error(
-    `the TEST catalogue has no two purchasable variants (${catalogue.error?.code ?? "too few"}) — run pnpm db:test:seed --apply first`,
+  .in(
+    "variant_code",
+    SEEDED.map((variant) => variant.code),
   );
-const [FIRST, SECOND] = (
-  catalogue.data as Array<{
-    id: string;
-    variant_code: string;
-    price_paise: number;
-  }>
-).map((row) => ({
-  id: row.id,
-  code: row.variant_code,
-  price: BigInt(row.price_paise),
-}));
+if (catalogue.error || (catalogue.data ?? []).length !== 2)
+  throw new Error(
+    `the TEST catalogue does not hold the two seeded variants (${catalogue.error?.code ?? "missing"}) — run pnpm db:test:seed --apply first`,
+  );
+const catalogueRows = catalogue.data as unknown as Array<{
+  id: string;
+  variant_code: string;
+  price_paise: number | string;
+  availability: string;
+  artworks: { status: string };
+}>;
+const [FIRST, SECOND] = SEEDED.map((seeded) => {
+  const row = catalogueRows.find((r) => r.variant_code === seeded.code);
+  if (!row) throw new Error(`${seeded.code} is not on TEST`);
+  // A row that differs from the seed is an interrupted earlier run or a changed catalogue: never adopted as normal.
+  if (
+    BigInt(row.price_paise) !== seeded.price ||
+    row.availability !== seeded.availability ||
+    row.artworks.status !== "Active"
+  )
+    throw new Error(
+      `${seeded.code} on TEST differs from the seed (its price, its availability or its artwork's status) — restore it with pnpm db:test:seed --apply before running this suite`,
+    );
+  return { id: row.id, ...seeded };
+});
+/** True once the price test has touched SECOND: afterAll then restores it whatever happened. */
+let probed = false;
+
+afterAll(async () => {
+  if (!probed) return;
+  const restore = await privileged
+    .from("variants")
+    .update({
+      price_paise: Number(SECOND.price),
+      availability: SECOND.availability,
+    })
+    .eq("id", SECOND.id)
+    .select("variant_code");
+  expect(restore.error).toBeNull();
+});
 
 console.log(
   `[integration] checkout: effective rule v${rule.version} is ${OPEN ? "OPEN and synthetic — the open cases run" : "CLOSED — only the closed case and the access cases run; the open cases are skipped"}.`,
@@ -219,40 +256,59 @@ let providerSequence = 0;
 const providerOrderId = () =>
   `order_IT${runId}${String((providerSequence += 1)).padStart(4, "0")}`;
 
-describe("0004_checkout — access: the publishable key reaches none of the five functions", () => {
-  const CALLS: Array<[string, Record<string, unknown>]> = [
-    ["checkout_attempt_state", { p_attempt_hash: "0".repeat(64) }],
-    ["checkout_create_pending_order", { p_request: {} }],
-    [
-      "checkout_claim_provider_create",
-      { p_payment_attempt_id: "00000000-0000-0000-0000-000000000000" },
-    ],
-    [
-      "checkout_link_provider_order",
-      {
-        p_payment_attempt_id: "00000000-0000-0000-0000-000000000000",
-        p_provider_order_id: "order_PLACEHOLDER001",
-        p_provider_created_at: new Date().toISOString(),
-      },
-    ],
-    [
-      "checkout_close_provider_create",
-      {
-        p_payment_attempt_id: "00000000-0000-0000-0000-000000000000",
-        p_outcome: "failed",
-        p_reason: "probe",
-        p_needs_review: false,
-      },
-    ],
-  ];
+const CALLS: Array<[string, Record<string, unknown>]> = [
+  ["checkout_attempt_state", { p_attempt_hash: "0".repeat(64) }],
+  ["checkout_create_pending_order", { p_request: {} }],
+  [
+    "checkout_claim_provider_create",
+    { p_payment_attempt_id: "00000000-0000-0000-0000-000000000000" },
+  ],
+  [
+    "checkout_link_provider_order",
+    {
+      p_payment_attempt_id: "00000000-0000-0000-0000-000000000000",
+      p_provider_order_id: "order_PLACEHOLDER001",
+      p_provider_created_at: new Date().toISOString(),
+    },
+  ],
+  [
+    "checkout_close_provider_create",
+    {
+      p_payment_attempt_id: "00000000-0000-0000-0000-000000000000",
+      p_outcome: "failed",
+      p_reason: "probe",
+      p_needs_review: false,
+    },
+  ],
+];
 
+/**
+ * The refusal is the FUNCTION's own grant: Postgres names the function. A table's denial carries the same code
+ * (42501), so the code alone would also pass with EXECUTE still granted — the tables refuse anon and authenticated
+ * too.
+ */
+function deniedAtTheFunction(
+  result: {
+    error: { code?: string; message?: string } | null;
+    status: number;
+  },
+  name: string,
+  statuses: number[],
+) {
+  expect(result.error?.code, name).toBe("42501");
+  expect(result.error?.message ?? "", name).toContain(
+    `permission denied for function ${name}`,
+  );
+  expect(statuses, name).toContain(result.status);
+}
+
+describe("0004_checkout — access: the publishable key reaches none of the five functions", () => {
   it.each(CALLS)(
     "%s is denied (42501) and writes nothing",
     async (name, args) => {
       const before = await counts();
       const result = await anon.rpc(name, args);
-      expect(result.error?.code, name).toBe("42501");
-      expect([401, 403], name).toContain(result.status);
+      deniedAtTheFunction(result, name, [401, 403]);
       expect(await counts()).toEqual(before);
     },
   );
@@ -282,7 +338,7 @@ describe("0004_checkout — access: the publishable key reaches none of the five
     const result = await anon.rpc("checkout_create_pending_order", {
       p_request: body,
     });
-    expect(result.error?.code).toBe("42501");
+    deniedAtTheFunction(result, "checkout_create_pending_order", [401, 403]);
     expect(await counts()).toEqual(before);
     const contact = await privileged
       .from("customers_contact")
@@ -298,6 +354,44 @@ describe("0004_checkout — access: the publishable key reaches none of the five
       refusal: "invalid_request",
     });
   });
+});
+
+describe("0004_checkout — access: a signed-in staff member (role authenticated) reaches none of them either", () => {
+  let session: SupabaseClient;
+
+  beforeAll(async () => {
+    const fixtures = readStaffFixtures(process.env);
+    if (!fixtures.ok)
+      throw new Error(
+        `the TEST staff fixtures are not configured: ${fixtures.reasons.join("; ")} — set the names in the trusted local process and run pnpm db:test:staff-users --apply`,
+      );
+    const support = fixtures.fixtures.find((f) => f.role === "support");
+    if (!support) throw new Error("no support fixture");
+    session = createClient(TARGET.url, TARGET.publishableKey, NO_SESSION);
+    const signedIn = await session.auth.signInWithPassword({
+      email: support.email,
+      password: support.password,
+    });
+    if (signedIn.error)
+      throw new Error(
+        `the support fixture could not sign in (${signedIn.error.code ?? signedIn.error.status}) — run pnpm db:test:staff-users --apply, and check that the user is not revoked`,
+      );
+  });
+
+  // The suite leaves no session behind on TEST.
+  afterAll(async () => {
+    await session?.auth.signOut({ scope: "local" });
+  });
+
+  it.each(CALLS)(
+    "%s is denied to the authenticated role by its own grant and writes nothing",
+    async (name, args) => {
+      const before = await counts();
+      const result = await session.rpc(name, args);
+      deniedAtTheFunction(result, name, [403]);
+      expect(await counts()).toEqual(before);
+    },
+  );
 });
 
 describe.skipIf(OPEN)(
@@ -723,13 +817,15 @@ describe.skipIf(!OPEN)("0004_checkout — the atomic write", () => {
   });
 
   it("a price changed or a variant made unavailable since the page was shown is refused — then restored", async () => {
-    const original = await privileged
-      .from("variants")
-      .select("price_paise,availability")
-      .eq("id", SECOND.id)
-      .single();
-    expect(original.error).toBeNull();
+    // The seeded values (checked equal to the row when this file loaded) are what is restored.
+    const original = {
+      data: {
+        price_paise: Number(SECOND.price),
+        availability: SECOND.availability,
+      },
+    };
     const before = await counts();
+    probed = true;
     try {
       const raised = await privileged
         .from("variants")
@@ -756,7 +852,7 @@ describe.skipIf(!OPEN)("0004_checkout — the atomic write", () => {
     } finally {
       const restored = await privileged
         .from("variants")
-        .update(original.data!)
+        .update(original.data)
         .eq("id", SECOND.id);
       expect(restored.error).toBeNull();
     }
@@ -972,6 +1068,57 @@ describe.skipIf(!OPEN)("0004_checkout — the provider step", () => {
       ),
     ).toEqual({ ok: false, refusal: "state_conflict" });
     expect(failed.ok && failed.value.paymentStatus).toBe("pending");
+  });
+
+  it("the same outcome asked again WITH a review flag raises the flag and writes its audit row; the state does not change", async () => {
+    const { state } = await created();
+    await store.claimProviderCreate(state.paymentAttemptId);
+    const first = await store.closeProviderCreate(
+      state.paymentAttemptId,
+      "unknown",
+      "provider_timeout",
+      false,
+    );
+    expect(first.ok && first.value.closed).toBe(true);
+    expect(first.ok && first.value.needsReview).toBe(false);
+    // What a link refused during recovery asks for: review, while the attempt is already unknown.
+    const flagged = await store.closeProviderCreate(
+      state.paymentAttemptId,
+      "unknown",
+      "link_conflict",
+      true,
+    );
+    expect(flagged.ok && flagged.value.closed).toBe(false);
+    expect(flagged.ok && flagged.value.providerOrderState).toBe("unknown");
+    expect(flagged.ok && flagged.value.needsReview).toBe(true);
+    // Asked a third time, nothing more happens.
+    const again = await store.closeProviderCreate(
+      state.paymentAttemptId,
+      "unknown",
+      "link_conflict",
+      true,
+    );
+    expect(again.ok && again.value.closed).toBe(false);
+    const audit = await privileged
+      .from("audit_log")
+      .select("action,previous,next,reason")
+      .eq("entity_type", "payment_attempt")
+      .eq("entity_id", state.paymentAttemptId)
+      .order("created_at", { ascending: true });
+    expect(audit.data).toEqual([
+      {
+        action: "checkout.provider_create.unknown",
+        previous: { provider_order_state: "requested" },
+        next: { provider_order_state: "unknown", needs_review: false },
+        reason: "provider_timeout",
+      },
+      {
+        action: "checkout.provider_create.unknown",
+        previous: { provider_order_state: "unknown" },
+        next: { provider_order_state: "unknown", needs_review: true },
+        reason: "link_conflict",
+      },
+    ]);
   });
 
   it("refuses an unknown payment attempt id and malformed close arguments", async () => {

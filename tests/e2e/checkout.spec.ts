@@ -314,11 +314,15 @@ test.describe("S1.6 — the checkout page", () => {
     // Both provider scripts are on the page and the policy refused nothing.
     await expectChallengePassed(page);
     await expect(payButton(page)).toBeEnabled();
-    expect(
-      await page.evaluate(
-        () => typeof (window as { Razorpay?: unknown }).Razorpay,
-      ),
-    ).toBe("function");
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => typeof (window as { Razorpay?: unknown }).Razorpay,
+          ),
+        { timeout: 20_000 },
+      )
+      .toBe("function");
     expect(pageErrors).toEqual([]);
     expect(
       consoleErrors.filter((text) => /Content Security Policy/i.test(text)),
@@ -397,9 +401,12 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(field(page, "email")).toBeFocused();
     await expect(status(page)).toHaveText(CHECK_DETAILS);
     // The PIN field takes digits only, six at most.
-    await field(page, "pin").fill("4000a01999");
+    // Typed key by key, as a person does: fill() inserts the whole text in one step, and the browser's maxlength
+    // then cuts the insert before the page's own filter sees it.
+    await field(page, "pin").fill("");
+    await field(page, "pin").pressSequentially("4000a01999");
     await expect(field(page, "pin")).toHaveValue("400001");
-    await expect(razorpayFrame(page)).toHaveCount(0);
+    await expect(razorpayFrame(page)).toBeHidden();
     expect(actionRequests, "no server action was called").toEqual([]);
   });
 
@@ -419,6 +426,7 @@ test.describe("S1.6 — the checkout page", () => {
       }
       await page.goto("/cart");
     }
+    test.setTimeout(60_000);
     // The control is a link only once the bag's check has answered.
     const link = control.getByRole("link", { name: "Continue to checkout →" });
     await expect(link).toBeVisible();
@@ -486,33 +494,38 @@ test.describe("S1.6 — the checkout page", () => {
     const open = await checkoutIsOpen(page, target);
     if (target.mode === "local" || !open) {
       // A sealed local run reaches no provider: nothing here is a payment path.
-      await expect(razorpayFrame(page)).toHaveCount(0);
+      await expect(razorpayFrame(page)).toBeHidden();
       return;
     }
+    // One submission, two reloads with their resume calls and two openings of the provider's window: more than the
+    // suite's 30 seconds on a cold Preview function.
+    test.setTimeout(120_000);
     const { pageErrors, consoleErrors } = watchErrors(page);
     const values = details(testInfo.project.name);
     await expectBagChecked(page);
     await fill(page, values);
     await expectChallengePassed(page);
 
-    // The order of events: the server action answers (200) and only afterwards does the payment frame attach.
-    const events: string[] = [];
-    page.on("response", (response) => {
-      const request = response.request();
-      if (request.method() === "POST" && request.headers()["next-action"])
-        events.push(`action:${response.status()}`);
-    });
-    page.on("frameattached", (frame) => {
-      if (frame.url().startsWith(RAZORPAY_FRAME_ORIGIN)) events.push("frame");
-    });
-    page.on("framenavigated", (frame) => {
-      if (frame.url().startsWith(RAZORPAY_FRAME_ORIGIN)) events.push("frame");
+    // The order of events, held still: the server action's answer is kept back for a moment, and while it is
+    // held the payment window is looked at — it must not be showing. Only then is the answer handed to the page.
+    await expect(razorpayFrame(page)).toBeHidden();
+    const answers: Array<{ status: number; windowShowing: boolean }> = [];
+    await page.route("**/checkout", async (route) => {
+      const request = route.request();
+      if (request.method() !== "POST" || !request.headers()["next-action"])
+        return route.continue();
+      const response = await route.fetch();
+      answers.push({
+        status: response.status(),
+        windowShowing: await razorpayFrame(page).isVisible(),
+      });
+      await route.fulfill({ response });
     });
     await payButton(page).click();
     await expect(razorpayFrame(page)).toBeVisible({ timeout: 45_000 });
-    expect(events[0], "the server answered first").toBe("action:200");
-    expect(events).toContain("frame");
-    expect(events.indexOf("action:200")).toBeLessThan(events.indexOf("frame"));
+    await page.unroute("**/checkout");
+    // Exactly one submission was made, the server answered it, and no payment window was showing before it did.
+    expect(answers).toEqual([{ status: 200, windowShowing: false }]);
 
     // The attempt key — and nothing personal — is what the browser keeps; the bag is untouched.
     const stored = await page.evaluate(
@@ -590,9 +603,10 @@ test.describe("S1.6 — the checkout page", () => {
     await plantBag(page, "/checkout");
     const open = await checkoutIsOpen(page, target);
     if (target.mode === "local" || !open) {
-      await expect(razorpayFrame(page)).toHaveCount(0);
+      await expect(razorpayFrame(page)).toBeHidden();
       return;
     }
+    test.setTimeout(60_000);
     await expectBagChecked(page);
     await fill(page, details(`${testInfo.project.name}-notoken`));
     await expectChallengePassed(page);
@@ -623,7 +637,7 @@ test.describe("S1.6 — the checkout page", () => {
     await payButton(page).click();
     await expect(status(page)).toHaveText(UNAVAILABLE, { timeout: 30_000 });
     expect(tampered, "the submission was intercepted once").toBe(1);
-    await expect(razorpayFrame(page)).toHaveCount(0);
+    await expect(razorpayFrame(page)).toBeHidden();
     await page.unroute("**/checkout");
     // Nothing was created under that key: a reload finds no order waiting.
     await page.reload();

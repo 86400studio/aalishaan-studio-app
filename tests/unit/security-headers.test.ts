@@ -85,6 +85,9 @@ describe(
       }
       expect(rules[0].has).toBeUndefined();
       expect(rules[0].missing).toBeUndefined();
+      // S1.6: `next dev` must not print Server Function arguments (the checkout's attempt key and what the customer
+      // typed, the staff sign-in's password) to the terminal.
+      expect(config.logging).toEqual({ serverFunctions: false });
 
       const names = rules[0].headers.map((header) => header.key.toLowerCase());
       expect(new Set(names).size).toBe(names.length);

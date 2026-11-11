@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   // Stop `next dev` writing its agent block into the governing AGENTS.md / CLAUDE.md.
   agentRules: false,
   poweredByHeader: false,
+  // S1.6: `next dev` prints every Server Function call with its arguments by default. The checkout's actions
+  // carry the attempt key and what the customer typed, and the staff sign-in carries a password — none of it
+  // belongs in a terminal or a pasted log. (Development only; `next start` and Vercel never log arguments.)
+  logging: { serverFunctions: false },
   experimental: {
     // S1.3: one designed 404 for every unmatched URL, served by src/app/global-not-found.tsx with its own document;
     // there is no root not-found.tsx, which would sit in every route's tree and take its fonts and sheets there.
