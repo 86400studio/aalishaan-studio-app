@@ -98,6 +98,41 @@ describe(
       expect(connect).toEqual(["'self'", EXAMPLE_INGEST_ORIGIN]);
     });
 
+    // S1.6: the deployed policy names the provider origins only where the two public checkout values are set.
+    it("serves the provider origins from the two public checkout values, and none without them", async () => {
+      const cspOf = async (env: Record<string, string | undefined>) => {
+        const config = await loadNextConfig(env);
+        const rules = (await config.headers?.()) ?? [];
+        expect(rules).toHaveLength(1);
+        return parsePolicy(
+          rules[0].headers.find(
+            (h) => h.key.toLowerCase() === "content-security-policy",
+          )?.value ?? "",
+        );
+      };
+      const closed = await cspOf({
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: undefined,
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: undefined,
+      });
+      expect(closed.has("frame-src")).toBe(false);
+      expect(closed.get("script-src")).toEqual(["'self'", "'unsafe-inline'"]);
+
+      const open = await cspOf({
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: "example-site-key",
+        NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test_EXAMPLEKEYID00",
+      });
+      expect(open.get("frame-src")).toEqual([
+        "https://challenges.cloudflare.com",
+        "https://api.razorpay.com",
+      ]);
+      expect(open.get("script-src")).toEqual([
+        "'self'",
+        "'unsafe-inline'",
+        "https://challenges.cloudflare.com",
+        "https://checkout.razorpay.com",
+      ]);
+    });
+
     // S1.3 (D-48): the deployed policy's img-src, as next.config.ts wires it from the public build value.
     it.each([
       [
@@ -243,6 +278,85 @@ describe("Content-Security-Policy", () => {
     // Only the origin is exposed: never the DSN's key or project path.
     expect(withDsn).not.toContain("examplepublickey");
     expect(withDsn).not.toContain("/7890");
+  });
+
+  // S1.6: the checkout's two providers, each by exact origin and only where its public value is configured.
+  it("names no provider origin and has no frame-src while the public checkout values are absent or blank", () => {
+    for (const options of [
+      {},
+      { turnstileSiteKey: "", razorpayKeyId: "" },
+      { turnstileSiteKey: "   ", razorpayKeyId: undefined },
+    ]) {
+      const policy = parsePolicy(contentSecurityPolicy(options));
+      expect(policy.has("frame-src")).toBe(false);
+      expect(policy.get("script-src")).toEqual(["'self'", "'unsafe-inline'"]);
+      expect(contentSecurityPolicy(options)).not.toMatch(/https?:\/\//);
+    }
+  });
+
+  it("allows Turnstile's script and frame from its one origin when the site key is configured, and nothing else", () => {
+    const policy = parsePolicy(
+      contentSecurityPolicy({ turnstileSiteKey: "example-site-key" }),
+    );
+    expect(policy.get("script-src")).toEqual([
+      "'self'",
+      "'unsafe-inline'",
+      "https://challenges.cloudflare.com",
+    ]);
+    expect(policy.get("frame-src")).toEqual([
+      "https://challenges.cloudflare.com",
+    ]);
+    expect(policy.get("connect-src")).toEqual(["'self'"]);
+    expect(policy.get("img-src")).toEqual(["'self'", "data:"]);
+  });
+
+  it("allows Checkout.js from Razorpay's checkout origin and its payment frame from Razorpay's API origin when the key id is configured", () => {
+    const text = contentSecurityPolicy({
+      turnstileSiteKey: "example-site-key",
+      razorpayKeyId: "rzp_test_EXAMPLEKEYID00",
+    });
+    const policy = parsePolicy(text);
+    expect(policy.get("script-src")).toEqual([
+      "'self'",
+      "'unsafe-inline'",
+      "https://challenges.cloudflare.com",
+      "https://checkout.razorpay.com",
+    ]);
+    expect(policy.get("frame-src")).toEqual([
+      "https://challenges.cloudflare.com",
+      "https://api.razorpay.com",
+    ]);
+    // Exactly these three origins, each on its own directive; the key id and the site key are never in the policy.
+    expect([...new Set(text.match(/https?:\/\/[^\s;]+/g))].sort()).toEqual([
+      "https://api.razorpay.com",
+      "https://challenges.cloudflare.com",
+      "https://checkout.razorpay.com",
+    ]);
+    expect(text).not.toContain("rzp_test_");
+    expect(text).not.toContain("example-site-key");
+    for (const [name, sources] of policy)
+      for (const source of sources)
+        expect(source, `${name} ${source}`).not.toContain("*");
+  });
+
+  it("keeps every framing and injection protection when the providers are allowed", () => {
+    const policy = parsePolicy(
+      contentSecurityPolicy({
+        turnstileSiteKey: "example-site-key",
+        razorpayKeyId: "rzp_test_EXAMPLEKEYID00",
+        sentryDsn: EXAMPLE_DSN,
+      }),
+    );
+    expect(policy.get("default-src")).toEqual(["'self'"]);
+    expect(policy.get("object-src")).toEqual(["'none'"]);
+    expect(policy.get("frame-ancestors")).toEqual(["'none'"]);
+    expect(policy.get("base-uri")).toEqual(["'self'"]);
+    expect(policy.get("form-action")).toEqual(["'self'"]);
+    expect(policy.get("script-src")).not.toContain("'unsafe-eval'");
+    expect(policy.get("connect-src")).toEqual([
+      "'self'",
+      EXAMPLE_INGEST_ORIGIN,
+    ]);
   });
 
   it.each([

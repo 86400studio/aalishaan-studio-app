@@ -104,10 +104,10 @@ export const BAG_ROW = {
 } as const;
 
 /**
- * The checkout control while no checkout exists (S1.5; S1.6 replaces it with guarded navigation —
- * src/components/commerce/checkout-control.tsx). The labels are the prototype's links (bag.js:15, the drawer;
- * build-shop-flow.cjs:10, the cart) and the line is the artwork pages' static drawer line (build-products.cjs:168 —
- * rule 7, not new wording).
+ * The checkout control of the drawer and the cart (src/components/commerce/checkout-control.tsx — since S1.6 a
+ * guarded link to the checkout where checkout is open, the disabled button everywhere else). The labels are the
+ * prototype's links (bag.js:15, the drawer; build-shop-flow.cjs:10, the cart) and `unavailable` — the line of the
+ * closed state — is the artwork pages' static drawer line (build-products.cjs:168 — rule 7, not new wording).
  */
 export const CHECKOUT_CONTROL = {
   drawer: "Continue to checkout",

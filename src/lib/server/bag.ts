@@ -9,11 +9,13 @@ import {
 } from "@/lib/schemas/bag";
 import type { FinishCode, PublicCatalogueRow } from "@/lib/schemas/catalogue";
 
+import { consumeBagCheck } from "./bag-throttle";
 import {
   readPublicCatalogueFresh,
   type CatalogueRead,
   type CatalogueUnavailableReason,
 } from "./catalogue";
+import { clientAddressOf, type ThrottleOutcome } from "./login-throttle";
 
 /**
  * Bag validation behind `POST /api/bag` — S1.5 (docs/sprint-prompts/S1.5-artwork-bag-cart.md §H.2 "POST /api/bag
@@ -39,14 +41,18 @@ import {
  *      actual body above it — is 413, and the stream is cancelled;
  *   4. the strict schema (src/lib/schemas/bag.ts) — exactly `{ items: [{ variant_code, quantity }] }`, 0–66 rows, no
  *      duplicates, quantities safe integers 1–99; a supplied price, total, title or any other key is 400;
- *   5. the fresh read — unavailable is 503 `{ status: "unavailable" }`.
+ *   5. for a non-empty bag, the rate limit (S1.6, D-58 #3 — src/lib/server/bag-throttle.ts): too many checks from
+ *      this address is 429 `{ status: "throttled" }`; a limiter that cannot answer is 503 `{ status: "unavailable" }`
+ *      (fails closed) — in both cases the projection is not read;
+ *   6. the fresh read — unavailable is 503 `{ status: "unavailable" }`.
  * Only then 200. Every answer is JSON with `Cache-Control: no-store`; an error is one enumerated status. No answer
  * echoes the request or carries upstream text, and the log receives sanitised reason codes only (never a code, a
- * quantity, a value or a key). An empty bag is answered without reading the projection.
+ * quantity, a value, a key or an address). An empty bag is answered without the limiter and without reading the
+ * projection.
  *
- * The request is bounded (owner amendment H.1 #3: bounds only — a rate limit arrives with S1.6's Upstash work; the
- * read-amplification residual is recorded in docs/THREAT-MODEL.md). An S1.5 answer is display only: S1.6
- * recomputes every order line from the projection on the server.
+ * The request is bounded and, since S1.6, rate-limited per client address (the S1.5 residual of docs/THREAT-MODEL.md
+ * is closed by it). An answer is display only: the checkout recomputes every order line in the database, inside its
+ * own transaction (supabase/migrations/0004_checkout.sql).
  */
 
 export type ValidatedBagItem = {
@@ -239,6 +245,7 @@ const ERROR_HTTP_STATUS: Readonly<Record<BagErrorStatus, number>> = {
   invalid_request: 400,
   method_not_allowed: 405,
   too_large: 413,
+  throttled: 429,
   unavailable: 503,
 };
 
@@ -253,6 +260,8 @@ function errorResponse(status: BagErrorStatus): Response {
 export type BagRequestDependencies = {
   /** One fresh read of the projection. */
   read: () => Promise<CatalogueRead>;
+  /** Counts one check of a non-empty bag for a client address (S1.6, D-58 #3). */
+  limit: (address: string) => Promise<ThrottleOutcome>;
   /** Where a sanitised reason code goes. */
   report: (message: string) => void;
 };
@@ -260,6 +269,7 @@ export type BagRequestDependencies = {
 function defaultDependencies(): BagRequestDependencies {
   return {
     read: () => readPublicCatalogueFresh(),
+    limit: (address) => consumeBagCheck(address),
     report: (message) => console.error(message),
   };
 }
@@ -282,6 +292,21 @@ export async function handleBagRequest(
   }
   const parsed = bagRequestSchema.safeParse(candidate);
   if (!parsed.success) return errorResponse("invalid_request");
+
+  // Limit before the projection is read; an empty bag needs neither.
+  if (parsed.data.items.length > 0) {
+    let allowed: ThrottleOutcome;
+    try {
+      allowed = await deps.limit(clientAddressOf(request.headers));
+    } catch {
+      allowed = { ok: false, reason: "unavailable" };
+    }
+    if (!allowed.ok) {
+      if (allowed.reason === "rate_limited") return errorResponse("throttled");
+      deps.report("[bag] rate limit unavailable");
+      return errorResponse("unavailable");
+    }
+  }
 
   const validation = await validateBag(parsed.data.items, deps.read);
   if (validation.status !== "ok") {

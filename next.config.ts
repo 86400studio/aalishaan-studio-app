@@ -41,6 +41,10 @@ const nextConfig: NextConfig = {
             sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
             isDevelopment: process.env.NODE_ENV === "development",
+            // S1.6: the two public checkout values. Where they are configured (the Preview and local), the
+            // policy names Turnstile's and Razorpay's origins; Production has neither until S3.3.
+            turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+            razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           }),
           HOLDING_NOINDEX_HEADER,
         ],

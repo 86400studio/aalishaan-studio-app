@@ -163,8 +163,12 @@ function defaultDependencies(): ThrottleDependencies {
   return { env: readUpstashEnv(), fetch: globalThis.fetch };
 }
 
-/** One pipeline request; the parsed JSON body, or `null` for every way the request can fail. */
-async function runPipeline(
+/**
+ * One pipeline request; the parsed JSON body, or `null` for every way the request can fail. Exported unchanged at
+ * S1.6 for the checkout and bag limiters (src/lib/server/checkout-throttle.ts, bag-throttle.ts), which keep their own
+ * keys, limits and namespaces: the staff policy above is not theirs to change.
+ */
+export async function runPipeline(
   commands: unknown[][],
   deps: ThrottleDependencies,
 ): Promise<{ body: unknown } | null> {

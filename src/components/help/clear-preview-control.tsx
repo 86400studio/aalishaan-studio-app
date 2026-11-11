@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { ATTEMPT_STORAGE_KEY } from "@/components/checkout/storage-key";
+import { formMemory } from "@/components/checkout/form-memory";
 import { CLEAR_CONTROL } from "@/content/public/policies";
 import { CLEAR_PREVIEW, WISHLIST_KEY_PREFIX } from "@/content/public/strings";
 import { bagStore, clearDeliveryPin, clearFinishSelections } from "@/lib/bag";
@@ -18,13 +20,18 @@ import { bagStore, clearDeliveryPin, clearFinishSelections } from "@/lib/bag";
  *   forgets every artwork's chosen finish. The memory side clears even when storage refuses.
  * - The wishlist keys (`aalishaan-wishlist-*`) are removed here as at S1.3, and `wishlistchange` is still raised so
  *   open hearts and the Saved view refresh; the prototype's order-preview key is cleared defensively (nothing writes
- *   it; S1.6 chooses its own storage and updates this control, and S3.1 the Cookies copy). Every other key — the
- *   Admin's, the E10 waiting list's (D-32j), anything unrelated — is left alone.
+ *   it; S3.1 updates the Cookies copy). Every other key — the Admin's, the E10 waiting list's (D-32j), anything
+ *   unrelated — is left alone.
+ * - S1.6: the checkout's one stored value — the random attempt key in `sessionStorage`
+ *   (src/components/checkout/storage-key.ts; no personal data) — is removed with the session keys, so a reload no
+ *   longer asks about that attempt; and what was typed into the checkout form, which lives in memory only
+ *   (src/components/checkout/form-memory.ts), is forgotten. An order that is already waiting for its payment in this
+ *   page session keeps holding the checkout: clearing stored selections is not what ends an order.
  * - The status is the prototype's "cleared" line only when every part was removed from storage; otherwise its
  *   "Storage is unavailable" line — including a bag kept in memory because storage refused it, whose stored copy
  *   this page could not remove.
  */
-const SESSION_KEYS = ["aalishaanOrderPreview"];
+const SESSION_KEYS = ["aalishaanOrderPreview", ATTEMPT_STORAGE_KEY];
 
 export function ClearPreviewControl() {
   const [status, setStatus] = useState("");
@@ -33,6 +40,7 @@ export function ClearPreviewControl() {
     const bagCleared = bagStore.getSnapshot().persistence === "local";
     const pinCleared = clearDeliveryPin();
     const finishesCleared = clearFinishSelections();
+    formMemory.clear();
     let othersCleared = false;
     try {
       for (const key of Object.keys(localStorage))
