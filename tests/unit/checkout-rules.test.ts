@@ -2,9 +2,26 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+
+// The checkout page reads the bag through one hook. Unset, it answers as the real hook; the held-order renders below
+// set the bag they need, so the bag can be anything while an order holds the page. The real hook always runs (inside
+// the render's BagProvider), so the hooks are called the same way whichever answer is used.
+const bagOverride = vi.hoisted(() => ({ current: undefined as unknown }));
+vi.mock("@/components/commerce/use-bag-lines", async (importOriginal) => {
+  const real = (await importOriginal()) as {
+    useBagLines: (active?: boolean) => unknown;
+  };
+  return {
+    ...real,
+    useBagLines: (active?: boolean) => {
+      const value = real.useBagLines(active);
+      return bagOverride.current ?? value;
+    },
+  };
+});
 
 import {
   ATTEMPT_KEY_PATTERN,
@@ -38,15 +55,30 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   ATTEMPT_KEY_BYTES,
   ATTEMPT_STORAGE_KEY,
+  attemptKeys,
   base64Url,
   createAttemptKeys,
   holdExpired,
   launchDeadline,
   millisecondsToDeadline,
   mintAttemptKey,
+  type CheckoutHold,
 } from "@/components/checkout/attempt-key";
-import { Checkout } from "@/components/checkout/checkout-form";
+import {
+  Checkout,
+  type CheckoutActions,
+} from "@/components/checkout/checkout-form";
 import { createFormMemory } from "@/components/checkout/form-memory";
+import {
+  heldOrderNote,
+  heldOrderOf,
+  itemsOf,
+  launchAmountPaise,
+  orderForLaunch,
+  sameItems,
+  sameOrder,
+  type HeldOrder,
+} from "@/components/checkout/held-order";
 import {
   fieldMessage,
   firstRefusedField,
@@ -69,15 +101,23 @@ import {
   TURNSTILE_ACTION as TURNSTILE_WIDGET_ACTION,
   TURNSTILE_SRC,
 } from "@/components/checkout/turnstile-widget";
+import { bagLines } from "@/components/commerce/bag-lines";
 import { BagProvider } from "@/components/commerce/bag-provider";
 import {
   CHECKOUT_CLOSED,
   CHECKOUT_FIELD_MESSAGES,
+  CHECKOUT_HELD_ORDER,
   CHECKOUT_NOTICES,
   CHECKOUT_PAY,
   CHECKOUT_TEST_MODE,
 } from "@/content/public/checkout";
-import type { CheckoutActionResult } from "@/lib/schemas/checkout";
+import type { BagRow } from "@/lib/bag";
+import type { BagValidationResult } from "@/lib/schemas/bag";
+import { FINISH_NAMES, type FinishCode } from "@/lib/schemas/catalogue";
+import type {
+  CheckoutActionResult,
+  CheckoutLaunch,
+} from "@/lib/schemas/checkout";
 
 /**
  * The checkout's rules that need no network — S1.6: the sales gate (src/lib/server/checkout/gate.ts), the wire
@@ -722,11 +762,13 @@ describe("the attempt key in the browser (src/components/checkout/attempt-key.ts
 
     keys.keyFor("payload");
     keys.hold(LAUNCH, null, 1_000);
+    // A hold found after a reload: the page does not know the order's rows (src/components/checkout/held-order.ts).
     expect(keys.held()).toEqual({
       launch: LAUNCH,
       prefill: null,
       reported: false,
       deadlineMs: 3_601_000,
+      order: null,
     });
     keys.markReported();
     expect(keys.held()?.reported).toBe(true);
@@ -1249,5 +1291,482 @@ describe("the checkout page's server render", () => {
     // The site key reaches the page's props only; no secret-shaped value is rendered.
     expect(html).not.toContain("example-site-key");
     expect(html).not.toMatch(/Use sample details|Place sample order|WhatsApp/);
+  });
+});
+
+/**
+ * The order that holds the page is what its summary shows — the independent review's finding of 2026-11-12
+ * (docs/code-reviews/S1.6-checkout-pending-order-review.md, round 1). Its case: a payment started for artwork A, the
+ * window closed, "Edit bag" used to change the bag, the page returned to — the summary showed the changed bag while
+ * "Continue to payment" opened A's order. The rules are src/components/checkout/held-order.ts; the page is rendered on
+ * the server with the bag hook's answer replaced (`bagOverride`), so the bag can be anything while an order holds the
+ * page. Placeholder values only.
+ */
+describe("the order that holds the page (src/components/checkout/held-order.ts)", () => {
+  type Item = BagValidationResult["items"][number];
+
+  function item(
+    slug: string,
+    finish: FinishCode,
+    title: string,
+    quantity: number,
+    unit: bigint,
+    orientation: "Portrait" | "Landscape" = "Portrait",
+  ): Item {
+    return {
+      variant_code: `${slug}:${finish}`,
+      quantity,
+      slug,
+      title,
+      orientation,
+      finish,
+      finish_name: FINISH_NAMES[finish],
+      available: true,
+      unit_price_paise: unit,
+      line_total_paise: unit * BigInt(quantity),
+    };
+  }
+
+  function answerOf(...items: Item[]): BagValidationResult {
+    return {
+      status: "ok",
+      items,
+      removed: [],
+      subtotal_paise: items.reduce(
+        (sum, one) => sum + one.line_total_paise,
+        BigInt(0),
+      ),
+      item_count: items.reduce((count, one) => count + one.quantity, 0),
+    };
+  }
+
+  const A = item(
+    "the-first-warm-wall",
+    "white",
+    "The First Warm Wall",
+    1,
+    BigInt(1_900_000),
+  );
+  const A_TWICE = { ...A, quantity: 2, line_total_paise: BigInt(3_800_000) };
+  /** Artwork A once, at a later price. */
+  const A_AT_17000 = {
+    ...A,
+    unit_price_paise: BigInt(1_700_000),
+    line_total_paise: BigInt(1_700_000),
+  };
+  const B_TWICE = item(
+    "a-second-artwork",
+    "black",
+    "A Second Artwork",
+    2,
+    BigInt(1_900_000),
+    "Landscape",
+  );
+
+  /** The order the pay press started: artwork A once, ₹19,000. */
+  const LAUNCH_A: CheckoutLaunch = {
+    key_id: "rzp_test_PLACEHOLDER0001",
+    provider_order_id: "order_PLACEHOLDER001",
+    amount_paise: "1900000",
+    currency: "INR",
+    order_number: "AS-1240",
+    expires_at: "2026-11-12T13:00:00.000Z",
+    expires_in_ms: 3_600_000,
+  };
+
+  const PREFILL = {
+    name: "Placeholder Name",
+    email: "placeholder@example.test",
+    contact: "9000000000",
+    method: "upi",
+  };
+
+  /** The bag hook's value for a checked bag holding `answer`'s items (or a bag not yet read). */
+  function bagReading(answer: BagValidationResult, hydrated = true) {
+    const rows: BagRow[] = hydrated
+      ? answer.items.map((one) => ({
+          code: one.variant_code,
+          quantity: one.quantity,
+        }))
+      : [];
+    return {
+      snapshot: {
+        hydrated,
+        rows,
+        revision: 7,
+        persistence: "local",
+        notice: null,
+      },
+      validation: {
+        status: hydrated ? "ok" : "idle",
+        revision: 7,
+        result: hydrated ? answer : null,
+        removedCount: 0,
+      },
+      ...bagLines(rows, hydrated ? answer : null, new Map()),
+      answer: hydrated ? answer : null,
+      messages: [],
+      failed: false,
+      retry: () => {},
+      demandValidation: () => () => {},
+      dismissRemovedNotice: () => {},
+    };
+  }
+
+  const NO_ACTIONS: CheckoutActions = {
+    submit: () => Promise.reject(new Error("nothing is submitted in a render")),
+    resume: () => Promise.reject(new Error("nothing is resumed in a render")),
+  };
+
+  const Bag = BagProvider as ComponentType<{ children?: ReactNode }>;
+  function render(): string {
+    return renderToStaticMarkup(
+      createElement(
+        Bag,
+        null,
+        createElement(Checkout, {
+          open: true,
+          turnstileSiteKey: "example-site-key",
+          actions: NO_ACTIONS,
+        }),
+      ),
+    );
+  }
+
+  /** The summary's rows: each row's variant code and its visible text. */
+  function rowsOf(html: string): Array<{ code: string; text: string }> {
+    return [
+      ...html.matchAll(
+        /<article class="bag-row" data-code="([^"]+)">([\s\S]*?)<\/article>/g,
+      ),
+    ].map((match) => ({
+      code: match[1],
+      text: match[2]
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    }));
+  }
+
+  const cell = (html: string, attribute: string) =>
+    new RegExp(`<dd ${attribute}="">([^<]*)</dd>`).exec(html)?.[1];
+  const bagStatusLine = (html: string) =>
+    /<p id="checkout-bag-status"[^>]*>([^<]*)<\/p>/.exec(html)?.[1];
+  const statusLine = (html: string) =>
+    /<p id="checkout-status"[^>]*>([^<]*)<\/p>/.exec(html)?.[1];
+  const payButton = (html: string) =>
+    /<button type="submit"[^>]*data-checkout-next=""[^>]*>([^<]*)<\/button>/.exec(
+      html,
+    );
+
+  function holdOf(order: HeldOrder | null, reported = false): CheckoutHold {
+    return { launch: LAUNCH_A, prefill: null, reported, deadlineMs: 0, order };
+  }
+
+  describe("its rules", () => {
+    it("is the answer the pay press submitted: its rows in the answer's order, its items by code, its subtotal", () => {
+      const order = heldOrderOf(answerOf(B_TWICE, A));
+      expect(order.lines.map((line) => [line.code, line.quantity])).toEqual([
+        ["a-second-artwork:black", 2],
+        ["the-first-warm-wall:white", 1],
+      ]);
+      expect(order.lines.map((line) => line.title)).toEqual([
+        "A Second Artwork",
+        "The First Warm Wall",
+      ]);
+      expect(order.lines.map((line) => line.price)).toEqual([
+        { status: "priced", line: "₹38,000", each: "₹19,000" },
+        { status: "priced", line: "₹19,000", each: null },
+      ]);
+      expect(order.items).toEqual([
+        ["a-second-artwork:black", 2],
+        ["the-first-warm-wall:white", 1],
+      ]);
+      expect(order.subtotalPaise).toBe(BigInt(5_700_000));
+    });
+
+    it("matches the bag only when it holds the same codes in the same quantities — in any order", () => {
+      const order = heldOrderOf(answerOf(A, B_TWICE));
+      const row = (code: string, quantity: number): BagRow => ({
+        code,
+        quantity,
+      });
+      expect(
+        sameItems(order, [
+          row("a-second-artwork:black", 2),
+          row("the-first-warm-wall:white", 1),
+        ]),
+      ).toBe(true);
+      for (const changed of [
+        // a quantity changed
+        [row("the-first-warm-wall:white", 2), row("a-second-artwork:black", 2)],
+        // an artwork replaced by another at the same price
+        [row("the-first-warm-wall:black", 1), row("a-second-artwork:black", 2)],
+        // an item removed, an item added, the bag emptied
+        [row("the-first-warm-wall:white", 1)],
+        [
+          row("the-first-warm-wall:white", 1),
+          row("a-second-artwork:black", 2),
+          row("a-third-artwork:white", 1),
+        ],
+        [],
+      ])
+        expect(sameItems(order, changed), JSON.stringify(changed)).toBe(false);
+      expect(itemsOf([row("b:white", 1), row("a:white", 3)])).toEqual([
+        ["a:white", 3],
+        ["b:white", 1],
+      ]);
+    });
+
+    it("says nothing when the bag is the order; names a changed bag while payment is offered; always says a reloaded page lists no rows, offering to continue only while payment stands", () => {
+      const order = heldOrderOf(answerOf(A));
+      const sameBag = {
+        hydrated: true,
+        rows: [{ code: A.variant_code, quantity: 1 }],
+      };
+      const changedBag = {
+        hydrated: true,
+        rows: [{ code: A.variant_code, quantity: 2 }],
+      };
+      expect(heldOrderNote(holdOf(order), sameBag, true)).toBeNull();
+      expect(heldOrderNote(holdOf(order), changedBag, true)).toBe(
+        CHECKOUT_HELD_ORDER.bagChanged("AS-1240"),
+      );
+      // An emptied bag is a changed bag; a bag not read yet is not judged.
+      expect(
+        heldOrderNote(holdOf(order), { hydrated: true, rows: [] }, true),
+      ).toBe(CHECKOUT_HELD_ORDER.bagChanged("AS-1240"));
+      expect(
+        heldOrderNote(holdOf(order), { hydrated: false, rows: [] }, true),
+      ).toBeNull();
+      const notListed = `${CHECKOUT_HELD_ORDER.notListed("AS-1240")} ${CHECKOUT_HELD_ORDER.notListedContinue("AS-1240")}`;
+      expect(heldOrderNote(holdOf(null), sameBag, true)).toBe(notListed);
+      // A reported payment or an order that cannot be paid from here offers no payment: nothing about continuing —
+      // but a summary that lists no rows still says why.
+      expect(heldOrderNote(holdOf(order), changedBag, false)).toBeNull();
+      expect(heldOrderNote(holdOf(null), sameBag, false)).toBe(
+        CHECKOUT_HELD_ORDER.notListed("AS-1240"),
+      );
+      expect(CHECKOUT_HELD_ORDER.bagChanged("AS-1240")).toBe(
+        "Your bag has changed since order AS-1240 was started. Continuing to payment pays for order AS-1240 as shown here, not for your bag as it is now.",
+      );
+      expect(notListed).toBe(
+        "This page was opened again, so the artworks of order AS-1240 are not listed here. Continuing to payment pays for order AS-1240 as it was started.",
+      );
+    });
+
+    it("is kept with the hold, survives a reported payment and goes with forget()", () => {
+      const order = heldOrderOf(answerOf(A));
+      attemptKeys.hold(LAUNCH_A, PREFILL, 1_000, order);
+      expect(attemptKeys.held()?.order).toBe(order);
+      attemptKeys.markReported();
+      expect(attemptKeys.held()?.order).toBe(order);
+      attemptKeys.forget();
+      expect(attemptKeys.held()).toBeNull();
+      // A hold made from a resume (a reload) carries no rows.
+      attemptKeys.hold(LAUNCH_A, null, 1_000);
+      expect(attemptKeys.held()?.order).toBeNull();
+      attemptKeys.forget();
+    });
+
+    it("keeps the press's prices only when its subtotal is the order's stored amount — a repeated attempt is answered with the order its first press wrote", () => {
+      const order = heldOrderOf(answerOf(A));
+      expect(orderForLaunch(order, LAUNCH_A)).toBe(order);
+      // The first press wrote the order at ₹19,000 and its answer was lost; the price is now ₹17,000 and the same
+      // bag and details are pressed again — the same attempt key, so the server answers with the stored order.
+      const today = heldOrderOf(answerOf(A_AT_17000));
+      const shown = orderForLaunch(today, LAUNCH_A);
+      expect(shown.items).toEqual(today.items);
+      expect(
+        shown.lines.map((line) => [line.code, line.quantity, line.title]),
+      ).toEqual([["the-first-warm-wall:white", 1, "The First Warm Wall"]]);
+      expect(shown.lines.map((line) => line.price)).toEqual([
+        { status: "pending" },
+      ]);
+      // An amount that cannot be read is never taken for a match.
+      expect(launchAmountPaise(LAUNCH_A)).toBe(BigInt(1_900_000));
+      for (const unreadable of ["19,000", "-1", "01900000", ""]) {
+        expect(
+          launchAmountPaise({ ...LAUNCH_A, amount_paise: unreadable }),
+        ).toBeNull();
+        expect(
+          orderForLaunch(order, { ...LAUNCH_A, amount_paise: unreadable })
+            .lines[0].price,
+        ).toEqual({ status: "pending" });
+      }
+    });
+
+    it("lets a window speak for the page only while its own order holds it", () => {
+      const target = holdOf(heldOrderOf(answerOf(A)));
+      expect(sameOrder(target, target)).toBe(true);
+      expect(sameOrder({ ...target, reported: true }, target)).toBe(true);
+      expect(sameOrder(null, target)).toBe(false);
+      expect(
+        sameOrder(
+          {
+            ...target,
+            launch: { ...LAUNCH_A, provider_order_id: "order_PLACEHOLDER002" },
+          },
+          target,
+        ),
+      ).toBe(false);
+    });
+
+    it("the page binds the order the server answered with, and its window's callbacks to that order", () => {
+      const form = readFileSync(
+        path.join(
+          fileURLToPath(new URL("../../", import.meta.url)),
+          "src/components/checkout/checkout-form.tsx",
+        ),
+        "utf8",
+      ).replace(/\r\n/g, "\n");
+      expect(form).toContain("orderForLaunch(order, step.launch)");
+      const callbacks = form.slice(
+        form.indexOf("const opened = openPaymentWindow("),
+        form.indexOf("if (opened) setNotice(null);"),
+      );
+      // onReported checks the order before it marks anything; onFailed and onDismissed only while it is offered.
+      expect(callbacks).toMatch(
+        /onReported: \(\) => \{\s*const current = attemptKeys\.held\(\);\s*if \(current !== null && !sameOrder\(current, target\)\) return;/,
+      );
+      expect(callbacks.match(/if \(!stillOffered\(\)\) return;/g)).toHaveLength(
+        2,
+      );
+    });
+  });
+
+  describe("the checkout page's server render while an order holds it", () => {
+    afterEach(() => {
+      attemptKeys.forget();
+      bagOverride.current = undefined;
+    });
+
+    it("the review's case: A's window closed, the bag changed to another artwork twice — the summary is still order A, the line says so", () => {
+      attemptKeys.hold(LAUNCH_A, PREFILL, Date.now(), heldOrderOf(answerOf(A)));
+      bagOverride.current = bagReading(answerOf(B_TWICE));
+      const html = render();
+      const rows = rowsOf(html);
+      expect(rows.map((row) => row.code)).toEqual([
+        "the-first-warm-wall:white",
+      ]);
+      expect(rows[0].text).toContain("The First Warm Wall");
+      expect(rows[0].text).toContain("Quantity 1");
+      expect(rows[0].text).toContain("₹19,000");
+      expect(cell(html, "data-subtotal")).toBe("₹19,000");
+      expect(cell(html, "data-test-total")).toBe("₹19,000");
+      expect(bagStatusLine(html)).toBe(
+        CHECKOUT_HELD_ORDER.bagChanged("AS-1240"),
+      );
+      // Nothing of the bag as it is now is shown as the order.
+      expect(html).not.toContain("A Second Artwork");
+      expect(html).not.toContain("₹38,000");
+      expect(html).not.toContain("Quantity 2");
+      // The button re-opens order A — the only thing it can do while A holds the page — and is offered.
+      const button = payButton(html);
+      expect(button?.[1]).toBe(CHECKOUT_PAY.resume);
+      expect(button?.[0]).not.toContain("disabled");
+      expect(statusLine(html)).toBe(CHECKOUT_NOTICES.waiting("AS-1240"));
+    });
+
+    it("the same artwork in another quantity: order A once, never the bag's two", () => {
+      attemptKeys.hold(LAUNCH_A, PREFILL, Date.now(), heldOrderOf(answerOf(A)));
+      bagOverride.current = bagReading(answerOf(A_TWICE));
+      const html = render();
+      expect(rowsOf(html).map((row) => row.text)).toEqual([
+        expect.stringContaining("Quantity 1"),
+      ]);
+      expect(cell(html, "data-subtotal")).toBe("₹19,000");
+      expect(html).not.toContain("₹38,000");
+      expect(bagStatusLine(html)).toBe(
+        CHECKOUT_HELD_ORDER.bagChanged("AS-1240"),
+      );
+    });
+
+    it("a hold found after a reload lists no rows — never the bag's — and gives the order's own amount", () => {
+      attemptKeys.hold(LAUNCH_A, null, Date.now());
+      bagOverride.current = bagReading(answerOf(B_TWICE));
+      const html = render();
+      expect(rowsOf(html)).toEqual([]);
+      expect(cell(html, "data-subtotal")).toBe("₹19,000");
+      expect(cell(html, "data-test-total")).toBe("₹19,000");
+      expect(bagStatusLine(html)).toBe(
+        `${CHECKOUT_HELD_ORDER.notListed("AS-1240")} ${CHECKOUT_HELD_ORDER.notListedContinue("AS-1240")}`,
+      );
+      expect(html).not.toContain("A Second Artwork");
+      expect(html).not.toContain("₹38,000");
+      expect(payButton(html)?.[1]).toBe(CHECKOUT_PAY.resume);
+    });
+
+    it("an unchanged bag: the order's rows and no line", () => {
+      attemptKeys.hold(LAUNCH_A, PREFILL, Date.now(), heldOrderOf(answerOf(A)));
+      bagOverride.current = bagReading(answerOf(A));
+      const html = render();
+      expect(rowsOf(html).map((row) => row.code)).toEqual([
+        "the-first-warm-wall:white",
+      ]);
+      expect(bagStatusLine(html)).toBe("");
+    });
+
+    it("a payment Razorpay reported (NS-05): the order's rows, no pay button and no line about continuing", () => {
+      attemptKeys.hold(LAUNCH_A, PREFILL, Date.now(), heldOrderOf(answerOf(A)));
+      attemptKeys.markReported();
+      bagOverride.current = bagReading(answerOf(B_TWICE));
+      const html = render();
+      expect(rowsOf(html).map((row) => row.code)).toEqual([
+        "the-first-warm-wall:white",
+      ]);
+      expect(html).not.toContain("₹38,000");
+      expect(bagStatusLine(html)).toBe("");
+      expect(statusLine(html)).toBe(CHECKOUT_NOTICES.unverified("AS-1240"));
+      expect(payButton(html)).toBeNull();
+    });
+
+    it("a press that repeated an attempt after the price changed: the order's rows without prices and its stored amount — never today's price", () => {
+      attemptKeys.hold(
+        LAUNCH_A,
+        PREFILL,
+        Date.now(),
+        orderForLaunch(heldOrderOf(answerOf(A_AT_17000)), LAUNCH_A),
+      );
+      bagOverride.current = bagReading(answerOf(A_AT_17000));
+      const html = render();
+      const rows = rowsOf(html);
+      expect(rows.map((row) => row.code)).toEqual([
+        "the-first-warm-wall:white",
+      ]);
+      expect(rows[0].text).toContain("Quantity 1");
+      expect(rows[0].text).not.toContain("₹");
+      expect(cell(html, "data-subtotal")).toBe("₹19,000");
+      expect(cell(html, "data-test-total")).toBe("₹19,000");
+      expect(html).not.toContain("₹17,000");
+      // The bag holds the order's items: no line.
+      expect(bagStatusLine(html)).toBe("");
+    });
+
+    it("a payment reported after a reload: no rows, the line without its offer to continue, NS-05 and no pay button", () => {
+      attemptKeys.hold(LAUNCH_A, null, Date.now());
+      attemptKeys.markReported();
+      bagOverride.current = bagReading(answerOf(B_TWICE));
+      const html = render();
+      expect(rowsOf(html)).toEqual([]);
+      expect(bagStatusLine(html)).toBe(
+        CHECKOUT_HELD_ORDER.notListed("AS-1240"),
+      );
+      expect(statusLine(html)).toBe(CHECKOUT_NOTICES.unverified("AS-1240"));
+      expect(payButton(html)).toBeNull();
+      expect(html).not.toContain("₹38,000");
+    });
+
+    it("no order holds the page: the summary is the bag, as before", () => {
+      bagOverride.current = bagReading(answerOf(B_TWICE));
+      const html = render();
+      expect(rowsOf(html).map((row) => row.code)).toEqual([
+        "a-second-artwork:black",
+      ]);
+      expect(cell(html, "data-subtotal")).toBe("₹38,000");
+      expect(cell(html, "data-test-total")).toBe("₹38,000");
+      expect(bagStatusLine(html)).toBe("");
+      expect(payButton(html)?.[1]).toBe(CHECKOUT_PAY.label);
+    });
   });
 });

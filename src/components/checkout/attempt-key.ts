@@ -3,6 +3,7 @@ import {
   type CheckoutLaunch,
 } from "@/lib/schemas/checkout";
 
+import type { HeldOrder } from "./held-order";
 import { ATTEMPT_STORAGE_KEY } from "./storage-key";
 
 /**
@@ -26,6 +27,9 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   passed (`holdExpired`), never because a browser callback fired. The deadline is the moment the answer was
  *   received plus the time the SERVER said remains (`expires_in_ms`): the server has already judged the order
  *   payable by the database's clock, and a device clock that is wrong must neither discard that answer nor extend it.
+ *   A hold made in answer to a pay press also keeps the order's rows as that press submitted them (./held-order.ts),
+ *   so the summary shows the order being paid for, not the bag as it is now; a hold found after a reload has none.
+ *   They are kept in memory with the hold and never stored.
  */
 
 export { ATTEMPT_STORAGE_KEY };
@@ -51,6 +55,8 @@ export type CheckoutHold = {
   readonly reported: boolean;
   /** When the hold ends, on this device's clock: the receipt of the launch plus the server's remaining time. */
   readonly deadlineMs: number;
+  /** The order's rows as the pay press submitted them; null for a hold found after a reload (not known here). */
+  readonly order: HeldOrder | null;
 };
 
 export type AttemptEnvironment = {
@@ -71,11 +77,15 @@ export type AttemptKeys = {
   dropStored: (key: string) => void;
   /** Forgets the slot, the hold and the stored key: the next pay press is a new order. */
   forget: () => void;
-  /** Records the launch that now holds the page; `receivedMs` is this device's time when the answer arrived. */
+  /**
+   * Records the launch that now holds the page; `receivedMs` is this device's time when the answer arrived, `order`
+   * the order's rows as the pay press submitted them (none after a reload).
+   */
   hold: (
     launch: CheckoutLaunch,
     prefill: CheckoutPrefill | null,
     receivedMs: number,
+    order?: HeldOrder | null,
   ) => void;
   /** Marks the hold as reported complete by the browser (unverified). */
   markReported: () => void;
@@ -197,12 +207,13 @@ export function createAttemptKeys(
       hold = null;
       removeStored();
     },
-    hold(launch, prefill, receivedMs) {
+    hold(launch, prefill, receivedMs, order = null) {
       hold = {
         launch,
         prefill,
         reported: false,
         deadlineMs: launchDeadline(launch, receivedMs),
+        order,
       };
     },
     markReported() {

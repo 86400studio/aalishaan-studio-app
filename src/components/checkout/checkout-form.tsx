@@ -56,6 +56,13 @@ import {
 import { CheckoutRow } from "./checkout-row";
 import { formMemory } from "./form-memory";
 import {
+  heldOrderNote,
+  heldOrderOf,
+  orderForLaunch,
+  sameOrder,
+  type HeldOrder,
+} from "./held-order";
+import {
   fieldMessage,
   firstRefusedField,
   isNeutralNotice,
@@ -97,6 +104,12 @@ import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
  *   the page is reloaded or the order's deadline passes. The window's callbacks call no server action, write
  *   nothing to storage, never empty the bag and never navigate: a reported payment shows the unverified state
  *   (NS-05), a closed window and a failed payment show their lines.
+ * - While an order holds the page, the summary is that order's (./held-order.ts): the rows its pay press submitted
+ *   (without prices when the order's stored amount is not that press's subtotal) — none after a reload, which keeps
+ *   only the key — and its stored amount, never the bag as it is now; a line says when the bag differs from it, or
+ *   that its rows are not listed (NS-40). The bag's own status lines wait until the hold ends. The window's
+ *   callbacks speak only for the order that holds the page: a report that arrives after its hold ended keeps that
+ *   order on screen, reported; a closed or failed window of an order that no longer holds the page changes nothing.
  * - One status line (`#checkout-status`) carries every outcome; the focus moves to it, or to the first refused
  *   field. No animation is added.
  */
@@ -233,6 +246,9 @@ const DEFAULT_PAYMENT_METHOD: CheckoutPaymentMethod =
 
 const STATUS_ID = "checkout-status";
 const BAG_STATUS_ID = "checkout-bag-status";
+
+/** What a hold replaces in the summary: the bag's rows, its "Try again" and the security check. */
+const HELD_REPLACES = "#checkout-items, .bag-retry, #checkout-challenge";
 
 /** The longest delay a browser timer holds (2^31 − 1 ms); a deadline further away is not timed. */
 const MAX_TIMER_MS = 2147483647;
@@ -402,9 +418,15 @@ function OpenCheckout({
       if (step === null || left) return;
       if (attemptKeys.slot() !== null || attemptKeys.held() !== null) return;
       switch (step.do) {
-        case "launch":
+        case "launch": {
           // The server judged the deadline by the database's clock: its answer stands, and the page times what
           // remains from this moment (never `expires_at` against the device's clock).
+          // The hold replaces the rows, the bag's "Try again" and the security check: a focus inside them would fall
+          // to the page, so it moves to the status line, which now names the order.
+          const focused = document.activeElement;
+          const focusLost =
+            focused instanceof Element &&
+            focused.closest(HELD_REPLACES) !== null;
           attemptKeys.hold(step.launch, null, Date.now());
           setToken(null);
           setHold(attemptKeys.held());
@@ -412,7 +434,9 @@ function OpenCheckout({
             id: "waiting",
             orderNumber: step.launch.order_number,
           });
+          if (focusLost) setFocusRequest((count) => count + 1);
           return;
+        }
         case "close":
           onClosed();
           return;
@@ -519,20 +543,33 @@ function OpenCheckout({
       return;
     }
     const orderNumber = target.launch.order_number;
+    /** The order of this window still holds the page, and nothing has been reported for it. */
+    const stillOffered = () =>
+      sameOrder(attemptKeys.held(), target) && !attemptKeys.held()?.reported;
     const opened = openPaymentWindow(target.launch, target.prefill, {
       // Razorpay's report to the browser is not proof: nothing is sent, stored, emptied or navigated.
       onReported: () => {
+        const current = attemptKeys.held();
+        if (current !== null && !sameOrder(current, target)) return;
+        // A report after this order's hold ended (its deadline passed while the window was open): the page shows
+        // this order again, reported — never the bag as it is now beside this order's line — and offers no payment.
+        if (current === null)
+          attemptKeys.hold(
+            target.launch,
+            target.prefill,
+            Date.now(),
+            target.order,
+          );
         attemptKeys.markReported();
         setHold(attemptKeys.held());
-        if (attemptKeys.held() === null) setBlocked(true);
         announce({ id: "unverified", orderNumber });
       },
       onFailed: () => {
-        if (attemptKeys.held()?.reported) return;
+        if (!stillOffered()) return;
         setNotice({ id: "paymentFailed" });
       },
       onDismissed: () => {
-        if (attemptKeys.held()?.reported) return;
+        if (!stillOffered()) return;
         announce({ id: "dismissed", orderNumber });
       },
     });
@@ -543,12 +580,24 @@ function OpenCheckout({
     }
   };
 
-  const carryOut = (step: CheckoutStep, prefill: CheckoutPrefill) => {
+  const carryOut = (
+    step: CheckoutStep,
+    prefill: CheckoutPrefill,
+    order: HeldOrder,
+  ) => {
     switch (step.do) {
       case "launch": {
         // A launch is the server's verdict that the order is payable now; the page does not second-guess it with
         // the device's clock (a wrong clock would otherwise discard it and the next press would be a new order).
-        attemptKeys.hold(step.launch, prefill, Date.now());
+        // The order's rows are the ones this press submitted, whatever the bag holds by the time the answer arrives
+        // — without their prices when the order's stored amount is not this press's subtotal (a repeated attempt is
+        // answered with the order its first press wrote, at that moment's prices).
+        attemptKeys.hold(
+          step.launch,
+          prefill,
+          Date.now(),
+          orderForLaunch(order, step.launch),
+        );
         const held = attemptKeys.held();
         setHold(held);
         // A page that was left while the answer travelled opens nothing: the hold waits for the return.
@@ -590,6 +639,8 @@ function OpenCheckout({
       contact: fields.phone,
       method: payment,
     };
+    // The order as this press submits it — the same answer `startPayment` sends.
+    const order = heldOrderOf(bagAnswer);
     let step: CheckoutStep;
     try {
       step = await startPayment({
@@ -610,7 +661,7 @@ function OpenCheckout({
     }
     pressing.current = false;
     setBusy(false);
-    carryOut(step, prefill);
+    carryOut(step, prefill, order);
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -638,6 +689,14 @@ function OpenCheckout({
   const { contact, payment: paymentCopy, summary, empty } = CHECKOUT_PAGE;
   const bagEmpty =
     snapshot.hydrated && snapshot.rows.length === 0 && !locked && !reported;
+  // The summary describes what the button pays for: the bag, or — while an order holds the page — that order alone.
+  const summaryLines = hold === null ? lines : (hold.order?.lines ?? []);
+  const summaryMessages =
+    hold === null
+      ? messages
+      : [heldOrderNote(hold, snapshot, !(blocked || reported))].filter(
+          (line): line is string => line !== null,
+        );
 
   return (
     <>
@@ -735,21 +794,25 @@ function OpenCheckout({
                 {summary.editBag.label}
               </Link>
               <div id="checkout-items">
-                {lines.map((line) => (
+                {summaryLines.map((line) => (
                   <CheckoutRow key={line.code} line={line} />
                 ))}
               </div>
               <BagStatus
                 id={BAG_STATUS_ID}
                 className="flow-fine"
-                messages={messages}
-                failed={failed}
+                messages={summaryMessages}
+                failed={hold === null && failed}
                 onRetry={retry}
               />
               <dl className="flow-totals">
                 <div>
                   <dt>{summary.subtotal}</dt>
-                  <dd data-subtotal="">{subtotalText(snapshot, validation)}</dd>
+                  <dd data-subtotal="">
+                    {hold === null
+                      ? subtotalText(snapshot, validation)
+                      : launchAmountText(hold.launch)}
+                  </dd>
                 </div>
                 <div>
                   <dt>{summary.shipping}</dt>

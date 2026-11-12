@@ -16,16 +16,23 @@ import type { ResolvedTarget } from "./harness/target";
  *   focus; the bag → checkout → "Edit bag" → Back / Forward round-trip keeping what was typed (in memory only); one
  *   real submission that reaches the server, commits the pending order, creates the Razorpay Test Mode order and
  *   only then opens Razorpay's window; a reload that finds the same order by the attempt key alone and offers the
- *   same payment again — never a new order; nothing personal in browser storage; the bag untouched; and a
- *   submission whose security token was removed in transit refused by the server with no payment window.
+ *   same payment again — never a new order; nothing personal in browser storage; the bag untouched; a submission
+ *   whose security token was removed in transit refused by the server with no payment window; and — the independent
+ *   review's finding of 2026-11-12 — an order that holds the page keeps its own summary when its window is closed,
+ *   the bag is changed through "Edit bag" and the page is returned to or opened again, the button opening only that
+ *   order, and keeps it when a payment is reported (Checkout.js is replaced in that one test by a stand-in at its
+ *   own address that records each window the page opens and makes the window's callbacks on the test's request).
  * - **A sealed local run** (`local` mode): the build is made without the checkout's public values, so checkout is
  *   CLOSED, as on Production — the NS-04 panel, no form, no field, no provider script requested, the cart's control
  *   disabled with its approved line. Every request that leaves the loopback server is aborted.
  *
- * Effects on the Preview, per project and run: one synthetic pending order on TEST (an `@example.test` address, the
- * test number 9000000000, `synthetic = true`) with its Razorpay **Test Mode** order — no money, retained by design
- * (docs/database-changes/S1.6-0004-checkout.md → "Fixture lifecycle"); rate-limit counters under `checkout:` and
- * `bag:` that expire by themselves; Turnstile test verifications. No payment is attempted inside Razorpay's window:
+ * Effects on the Preview, per project and run: two synthetic pending orders on TEST (an `@example.test` address, the
+ * test number 9000000000, `synthetic = true`), each with its Razorpay **Test Mode** order — no money, retained by
+ * design (docs/database-changes/S1.6-0004-checkout.md → "Fixture lifecycle"); three checkout submissions per project,
+ * six per run, against the submit limit of ten per address in a fixed ten-minute window — so the spec is not run
+ * again within ten minutes of a full run (a second run would be throttled on its last submissions); rate-limit
+ * counters under `checkout:` and `bag:` that expire by themselves; Turnstile test verifications. No payment is
+ * attempted inside Razorpay's window (the stand-in's reported payment is the test's own call of the page's callback):
  * what a real Test Mode payment, its dismissal and its failure do to the page is the manual evidence of the sprint
  * record, because the window is Razorpay's own frame. What the database holds for the order (every row, the
  * snapshot, the link, the deadline) is tests/integration/checkout.test.ts and the record's read-only checks: this
@@ -54,6 +61,52 @@ const TEST_DISCLOSURE =
 const CHECK_DETAILS = "Please check the highlighted details.";
 const UNAVAILABLE =
   "Checkout is temporarily unavailable. Nothing was charged. Please try again shortly.";
+const WAITING = (order: string) =>
+  `A payment window is waiting for order ${order}. If you have already paid, please do not pay again: the payment still has to be confirmed.`;
+const DISMISSED = (order: string) =>
+  `The payment window for order ${order} was closed. Nothing has been confirmed. You can continue to payment when you are ready.`;
+/** NS-40: the line under the summary of an order that holds the page. */
+const HELD_BAG_CHANGED = (order: string) =>
+  `Your bag has changed since order ${order} was started. Continuing to payment pays for order ${order} as shown here, not for your bag as it is now.`;
+const HELD_NOT_LISTED = (order: string) =>
+  `This page was opened again, so the artworks of order ${order} are not listed here. Continuing to payment pays for order ${order} as it was started.`;
+/** The same line once no payment is offered (a reported payment): its first sentence only. */
+const HELD_NOT_LISTED_ONLY = (order: string) =>
+  `This page was opened again, so the artworks of order ${order} are not listed here.`;
+/** NS-05: Razorpay reported a completed payment to the browser — not proof. */
+const UNVERIFIED = (order: string) =>
+  `Order ${order}: your payment is not confirmed yet. The order stays pending until the payment provider confirms it. Please do not pay again.`;
+
+const RAZORPAY_CHECKOUT_SRC = `${RAZORPAY_SCRIPT_ORIGIN}/v1/checkout.js`;
+
+/**
+ * For one test only: Checkout.js replaced by a stand-in served at its own address (so the page's policy treats it as
+ * the real script). It opens no window: it records the order, amount and description each opening was given, and
+ * makes the page's own callbacks on request — `__close()` the window closed, `__report()` a payment reported to the
+ * browser — so the test knows exactly which order each press opens.
+ */
+const CHECKOUT_STAND_IN = `
+window.__opened = [];
+window.Razorpay = function (options) {
+  this.on = function () {};
+  this.open = function () {
+    window.__opened.push({ order_id: options.order_id, amount: options.amount, description: options.description });
+    window.__close = function () { options.modal.ondismiss(); };
+    window.__report = function () { options.handler(); };
+  };
+};
+`;
+type StandIn = {
+  __opened: Array<{ order_id: string; amount: number; description: string }>;
+  __close: () => void;
+  __report: () => void;
+};
+const openedWindows = (page: Page) =>
+  page.evaluate(() => (window as unknown as StandIn).__opened);
+const closeWindow = (page: Page) =>
+  page.evaluate(() => (window as unknown as StandIn).__close());
+const reportPayment = (page: Page) =>
+  page.evaluate(() => (window as unknown as StandIn).__report());
 
 const FIELDS = [
   ["name", "Full name", "shipping name"],
@@ -612,6 +665,133 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(status(page)).toContainText(`order ${orderNumber}`, {
       timeout: 30_000,
     });
+    expect(pageErrors).toEqual([]);
+    expect(policyRefusals(consoleErrors)).toEqual([]);
+  });
+
+  test("an order that holds the page is what its summary shows — after its window is closed, the bag is changed and the page is returned to or opened again — and the button opens only that order", async ({
+    page,
+    target,
+  }, testInfo) => {
+    // Before the page asks for Checkout.js: the stand-in records each window the page opens.
+    await page.route(RAZORPAY_CHECKOUT_SRC, (route) =>
+      route.fulfill({
+        contentType: "text/javascript; charset=utf-8",
+        body: CHECKOUT_STAND_IN,
+      }),
+    );
+    await plantBag(page, "/checkout");
+    const open = await checkoutIsOpen(page, target);
+    if (target.mode === "local" || !open) {
+      // A sealed local run reaches no provider: nothing here is a payment path.
+      await expect(razorpayFrame(page)).toBeHidden();
+      return;
+    }
+    // One submission, a trip to the cart and back, a reload with its resume call: more than 30 seconds on a cold
+    // Preview function.
+    test.setTimeout(150_000);
+    const { pageErrors, consoleErrors } = watchErrors(page);
+    const actionCalls: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST" && request.headers()["next-action"])
+        actionCalls.push(request.url());
+    });
+    const rows = page.locator("#checkout-items article.bag-row");
+    const summary = page.locator(".flow-summary");
+    const heldLine = page.locator("#checkout-bag-status");
+
+    // A payment is started for the artwork once, ₹19,000.
+    await expectBagChecked(page);
+    await fill(page, details(`${testInfo.project.name}-held`));
+    await expectChallengePassed(page);
+    await payButton(page).click();
+    await expect
+      .poll(async () => (await openedWindows(page)).length, { timeout: 45_000 })
+      .toBe(1);
+    const [first] = await openedWindows(page);
+    expect(first.amount).toBe(1_900_000);
+    expect(first.order_id).toMatch(/^order_[A-Za-z0-9]{6,}$/);
+    expect(first.description).toMatch(/^AS-\d{4,12}$/);
+    const orderNumber = first.description;
+
+    // The customer closes the window, uses "Edit bag", makes it two of the artwork and comes back through the
+    // cart's own control.
+    await closeWindow(page);
+    await expect(status(page)).toHaveText(DISMISSED(orderNumber));
+    await summary.getByRole("link", { name: "Edit bag" }).click();
+    await expect(page).toHaveURL(/\/cart$/);
+    const quantity = page
+      .locator("#cart-page-items article.bag-row")
+      .getByLabel(/Quantity/)
+      .first();
+    await quantity.fill("2");
+    await quantity.press("Tab");
+    await expect(page.locator("dd[data-subtotal]")).toHaveText("₹38,000");
+    await page
+      .locator("#checkout-link")
+      .getByRole("link", { name: "Continue to checkout →" })
+      .click();
+    await expect(page).toHaveURL(/\/checkout$/);
+
+    // The summary is the order the button pays for — the artwork once, ₹19,000 — and a line says the bag differs.
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText(TITLE);
+    await expect(rows.first()).toContainText("Quantity 1");
+    await expect(page.locator("dd[data-subtotal]")).toHaveText(UNIT);
+    await expect(page.locator("dd[data-test-total]")).toHaveText(UNIT);
+    await expect(heldLine).toHaveText(HELD_BAG_CHANGED(orderNumber));
+    await expect(summary).not.toContainText("₹38,000");
+    await expect(summary).not.toContainText("Quantity 2");
+    await expect(status(page)).toHaveText(WAITING(orderNumber));
+    // "Continue to payment" opens that same order for the same amount, and sends nothing to the server.
+    actionCalls.length = 0;
+    await expect(payButton(page)).toHaveText("Continue to payment");
+    await payButton(page).click();
+    await expect.poll(async () => (await openedWindows(page)).length).toBe(2);
+    expect((await openedWindows(page))[1]).toEqual(first);
+    expect(actionCalls, "re-opening sends nothing to the server").toEqual([]);
+    await closeWindow(page);
+
+    // Opened again (a reload): the page keeps only the attempt key, so it lists none of the order's rows — never
+    // the bag's — gives the order's own amount, and the button still opens that same order.
+    await page.reload();
+    await checkoutIsOpen(page, target);
+    await expect(status(page)).toHaveText(WAITING(orderNumber), {
+      timeout: 30_000,
+    });
+    await expect(heldLine).toHaveText(HELD_NOT_LISTED(orderNumber));
+    await expect(rows).toHaveCount(0);
+    await expect(page.locator("dd[data-subtotal]")).toHaveText(UNIT);
+    await expect(page.locator("dd[data-test-total]")).toHaveText(UNIT);
+    await expect(summary).not.toContainText("₹38,000");
+    actionCalls.length = 0;
+    await payButton(page).click();
+    await expect.poll(async () => (await openedWindows(page)).length).toBe(1);
+    expect((await openedWindows(page))[0]).toEqual(first);
+    expect(actionCalls, "re-opening sends nothing to the server").toEqual([]);
+
+    // Razorpay reports a payment to the browser (not proof): the page stays on that order — still no rows, the line
+    // without its offer to continue — shows NS-05 and offers no payment; nothing is sent.
+    await reportPayment(page);
+    await expect(status(page)).toHaveText(UNVERIFIED(orderNumber));
+    await expect(payButton(page)).toHaveCount(0);
+    await expect(heldLine).toHaveText(HELD_NOT_LISTED_ONLY(orderNumber));
+    await expect(rows).toHaveCount(0);
+    await expect(summary).not.toContainText("₹38,000");
+    expect(
+      actionCalls,
+      "a reported payment sends nothing to the server",
+    ).toEqual([]);
+
+    // The checkout never wrote to the bag: it holds what the customer made it.
+    expect(
+      JSON.parse(
+        (await page.evaluate(
+          (key) => window.localStorage.getItem(key),
+          BAG_KEY,
+        )) ?? "null",
+      ),
+    ).toEqual({ v: 1, items: [{ code: VARIANT, quantity: 2 }] });
     expect(pageErrors).toEqual([]);
     expect(policyRefusals(consoleErrors)).toEqual([]);
   });

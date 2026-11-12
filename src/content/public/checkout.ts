@@ -204,3 +204,23 @@ export const CHECKOUT_NOTICES = {
   scriptUnavailable:
     "The payment window could not load, so payment cannot start. Check your connection and reload the page.",
 } as const;
+
+/**
+ * NS-40 — NS-PROPOSED (technical, D-24): an order holds the page, so its summary shows that order, never the bag as it
+ * is now (src/components/checkout/held-order.ts — the review's finding of 2026-11-12). One line, under the summary's
+ * rows: the bag's change while the page offers to pay for the order; the unlisted rows whenever they are not listed.
+ */
+export const CHECKOUT_HELD_ORDER = {
+  /** NS-PROPOSED — the bag no longer holds the order's items (edited after the order was started). */
+  bagChanged: (orderNumber: string) =>
+    `Your bag has changed since order ${orderNumber} was started. Continuing to payment pays for order ${orderNumber} as shown here, not for your bag as it is now.`,
+  /**
+   * NS-PROPOSED — the page was opened again: it keeps only the attempt key, so it cannot list the order's artworks.
+   * Shown whenever such an order holds the page.
+   */
+  notListed: (orderNumber: string) =>
+    `This page was opened again, so the artworks of order ${orderNumber} are not listed here.`,
+  /** NS-PROPOSED — after `notListed`, while the page offers to pay for that order. */
+  notListedContinue: (orderNumber: string) =>
+    `Continuing to payment pays for order ${orderNumber} as it was started.`,
+} as const;
