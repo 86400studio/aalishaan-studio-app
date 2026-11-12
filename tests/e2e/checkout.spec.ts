@@ -112,21 +112,27 @@ function watchErrors(page: Page) {
 }
 
 /**
- * The console's reports of requests this page's Content-Security-Policy refused — without the one refusal that is
- * expected and accepted: Razorpay's Checkout.js tries to send its own usage analytics to lumberjack.razorpay.com,
- * and this site's `connect-src` does not allow that. The payment window opens and works without it (seen on the
- * Preview, 2026-11-11 — the S1.6 record → H.11), so the origin is deliberately not added. Any OTHER refusal is a
- * finding: a provider origin the page really needs, or something that should not be loading at all.
+ * The two refusals that are expected and accepted — both are Razorpay's Checkout.js asking for something optional
+ * that this site's policy does not allow, and the payment window opens and works without either (seen on the
+ * Preview, 2026-11-11 and 2026-11-12 — the S1.6 record → H.11), so neither origin is added:
+ *
+ * - its usage analytics, posted to lumberjack.razorpay.com (`connect-src`), on every load;
+ * - its risk-detection script from cdn.razorpay.com (`script-src`), which Checkout.js adds on about one load in
+ *   twenty — its own `Math.random() >= .05` sample, asynchronous, inside a try/catch.
+ */
+const ACCEPTED_REFUSALS = [
+  /^(?:Connecting to|Refused to connect to) 'https:\/\/lumberjack\.razorpay\.com\//,
+  /^(?:Loading the script|Refused to load the script) 'https:\/\/cdn\.razorpay\.com\/static\/cx\/razorpay-risk-detection\/bundle\.js'/,
+];
+
+/**
+ * The console's reports of requests this page's Content-Security-Policy refused, without the accepted two above. Any
+ * OTHER refusal is a finding: a provider origin the page really needs, or something that should not be loading at all.
  */
 function policyRefusals(consoleErrors: readonly string[]): string[] {
   return consoleErrors
     .filter((text) => /Content Security Policy/i.test(text))
-    .filter(
-      (text) =>
-        !/^(?:Connecting to|Refused to connect to) 'https:\/\/lumberjack\.razorpay\.com\//.test(
-          text,
-        ),
-    );
+    .filter((text) => !ACCEPTED_REFUSALS.some((pattern) => pattern.test(text)));
 }
 
 /** Writes a stored bag from a page that runs no script, then loads `path` as a new document. */
