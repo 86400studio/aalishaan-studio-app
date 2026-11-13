@@ -27,9 +27,12 @@ describe("supabase/migrations — forward discovery", () => {
     ["0001_catalogue.sql", "0001", "catalogue"],
     ["0002_orders.sql", "0002", "orders"],
     ["0003_staff_auth.sql", "0003", "staff_auth"],
+    // S1.6 (D-60): the checkout's atomic write. The number is the next free one at the sprint that needed it;
+    // the roadmap's later numbers moved with it (docs/ROADMAP.md, docs/TECH-ARCHITECTURE.md §4).
+    ["0004_checkout.sql", "0004", "checkout"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations and the S1.2 migration under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration and the S1.6 migration under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

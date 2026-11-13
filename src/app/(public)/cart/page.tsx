@@ -14,8 +14,9 @@ import "@/styles/commerce.css";
  * build-shop-flow.cjs:7–10; docs/sprint-prompts/S1.5-artwork-bag-cart.md §H.2). A static page in the prototype's DOM
  * order: the heading; the artworks (the editable rows, the empty state and the status line — client state from the
  * one bag, src/lib/bag/, validated by `POST /api/bag`); the summary (the server's subtotal for the current bag, the
- * pending delivery charge and its approved fine print, the PIN form, the disabled checkout control — S1.6 replaces
- * src/components/commerce/checkout-control.tsx —, the guest line and the help line). The page reads no catalogue
+ * pending delivery charge and its approved fine print, the PIN form, the checkout control — since S1.6 a guarded
+ * link to the checkout where checkout is open and the bag's check allows it, the disabled button otherwise
+ * (src/components/commerce/checkout-control.tsx) —, the guest line and the help line). The page reads no catalogue
  * and is not among the revalidation hook's paths.
  *
  * Not ported: the prototype's "Add a sample artwork" button and its status line, the E10 intake slot and resume

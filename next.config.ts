@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   // Stop `next dev` writing its agent block into the governing AGENTS.md / CLAUDE.md.
   agentRules: false,
   poweredByHeader: false,
+  // S1.6: `next dev` prints every Server Function call with its arguments by default. The checkout's actions
+  // carry the attempt key and what the customer typed, and the staff sign-in carries a password — none of it
+  // belongs in a terminal or a pasted log. (Development only; `next start` and Vercel never log arguments.)
+  logging: { serverFunctions: false },
   experimental: {
     // S1.3: one designed 404 for every unmatched URL, served by src/app/global-not-found.tsx with its own document;
     // there is no root not-found.tsx, which would sit in every route's tree and take its fonts and sheets there.
@@ -41,6 +45,10 @@ const nextConfig: NextConfig = {
             sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
             isDevelopment: process.env.NODE_ENV === "development",
+            // S1.6: the two public checkout values. Where they are configured (the Preview and local), the
+            // policy names Turnstile's and Razorpay's origins; Production has neither until S3.3.
+            turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+            razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           }),
           HOLDING_NOINDEX_HEADER,
         ],

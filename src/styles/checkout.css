@@ -1,0 +1,203 @@
+/*
+ * The checkout page `/checkout` — S1.6 (prototype/pages/checkout/index.html, `<body class="browse-page utility-page
+ * commerce-page">`). Imported by src/app/(public)/checkout/page.tsx only, after the layout's storefront.css, home.css
+ * and utility.css and after commerce.css, which already carry the commerce page scope, `.utility-main`,
+ * `.flow-layout`, `.flow-panel`, `.flow-fine`, `.field-error`, the utility form fields (S1.3), the heading's margin,
+ * `.flow-section-title`, `.flow-summary`, `.flow-totals` and the commerce bag rows (S1.5). This sheet adds the rest
+ * of the frozen checkout's cascade, as effective values — pending.css:1, 3 → storefront-r7.css:27–28, 31–32 →
+ * gallery-r8.css:72–76, 140–141 → revision-r9.css:48–52, 64 — every rule scoped with `:where(.site)` (no added
+ * specificity) and its source cited.
+ *
+ * Where a frozen rule outweighs one the app already has only by its place in the frozen cascade (equal specificity,
+ * later sheet), the selector here carries the page's own ancestor (`.utility-page`, `.commerce-page`) so the result
+ * does not depend on the order two page sheets load in.
+ *
+ * Not ported: the prototype's sample-details button (`.flow-sample`), the delivery line of the PIN field
+ * (`.delivery-line`), the E10 intake rules and the payment-policy line (`.payment-policy`, NS-15), and the stepped
+ * checkout the frozen page no longer uses (`.checkout-steps`, `.checkout-step`, `.checkout-actions`, `.flow-pin`,
+ * `.checkout-review-block`, `.checkout-summary-disclosure`).
+ */
+
+/* ---------- the heading (revision-r9.css:48) ---------- */
+:where(.site) .checkout-heading h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+/* ---------- the two panels of the form column (revision-r9.css:49) ---------- */
+:where(.site) .checkout-fields-panel {
+  display: grid;
+  gap: 20px;
+}
+:where(.site) .checkout-fields-panel .flow-panel {
+  margin: 0;
+}
+
+/* ---------- the summary (revision-r9.css:50, 52, 64) ---------- */
+body :where(.site) #checkout-form .flow-summary {
+  align-self: start;
+  position: sticky;
+  top: 110px;
+}
+body :where(.site) #checkout-form [data-checkout-next] {
+  width: 100%;
+  margin: 8px 0;
+}
+
+/* ---------- the fields (storefront-r7.css:28; gallery-r8.css:72, 74; revision-r9.css:51) ---------- */
+:where(.site) .flow-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+body :where(.site) #checkout-form .flow-fields {
+  gap: 16px;
+}
+:where(.site) .flow-fields label {
+  font-size: 14px;
+  font-weight: 500;
+  display: grid;
+  gap: 8px;
+  color: var(--fine-print);
+}
+/* storefront-r7.css:28 over pending.css:1 (`.utility-page input`); the radius and the height stay gallery-r8.css:72's */
+:where(.site) .utility-page .flow-fields input {
+  border: 1px solid #bcb7b0;
+}
+/* storefront-r7.css:28 over pending.css:3 (`.utility-page input[aria-invalid=true]`) */
+:where(.site) .utility-page .flow-fields input[aria-invalid="true"] {
+  border-color: var(--crimson);
+}
+:where(.site) .flow-fields label:has([name="address"]),
+:where(.site) .flow-fields label:has([name="address2"]) {
+  grid-column: 1 / -1;
+}
+/* NS (no prototype source): the fields of an order that is waiting for its payment cannot be edited — the look of
+   the utility pages' disabled fields (utility.css, `.utility-page input:disabled`) */
+:where(.site) .utility-page .flow-fields input[readonly] {
+  cursor: not-allowed;
+  background: #f7f6f2;
+  color: #605b55;
+}
+
+/* ---------- the payment choices (storefront-r7.css:28; gallery-r8.css:74) ---------- */
+:where(.site) .payment-choices {
+  border: 0;
+  padding: 0;
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+}
+:where(.site) .payment-choices label {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #dedbd5;
+  border-radius: 8px;
+  padding: 18px;
+  cursor: pointer;
+}
+:where(.site) .payment-choices label:has(input:checked) {
+  border-color: var(--crimson);
+  background: #b9192d03;
+  box-shadow: inset 0 0 0 1px var(--crimson);
+}
+/* NS (no prototype source): the choices of an order that is waiting for its payment are fixed */
+:where(.site) .payment-choices label:has(input:disabled) {
+  cursor: not-allowed;
+}
+:where(.site) .payment-choices input {
+  width: 18px !important;
+  min-height: 18px !important;
+  accent-color: var(--crimson);
+}
+:where(.site) .payment-choices strong {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+}
+:where(.site) .payment-choices small {
+  font-size: 14px;
+  color: var(--fine-print);
+  display: block;
+  margin-top: 4px;
+}
+
+/* ---------- the summary's rows (storefront-r7.css:27 over the commerce rows of the same line; the title keeps
+   gallery-r8.css:76's 26px, which outweighs storefront-r7.css:27's 21px in the frozen cascade) ---------- */
+:where(.site) .commerce-page .flow-summary .bag-row {
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 16px;
+}
+:where(.site) .commerce-page .flow-summary .bag-row img {
+  width: 70px;
+  height: 100px;
+}
+/* the picture is the image's wrapper only: the image itself stays the row's first grid item, as in the prototype */
+:where(.site) .flow-summary .bag-row picture {
+  display: contents;
+}
+
+/* ---------- NS (no prototype source): the test total row, the security check and a neutral status ---------- */
+:where(.site) .flow-totals > .checkout-test-total {
+  border-top: 1px solid #e5e3e0;
+  font-weight: 600;
+  color: var(--ink);
+}
+:where(.site) .checkout-challenge {
+  margin: 16px 0 8px;
+  max-width: 100%;
+  overflow: hidden;
+}
+:where(.site) .checkout-challenge:empty {
+  display: none;
+}
+:where(.site) .checkout-notice {
+  font-size: 14px !important;
+  line-height: 1.6;
+  color: var(--ink);
+  display: block;
+}
+:where(.site) .checkout-notice:empty {
+  display: none;
+}
+:where(.site) #checkout-status a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- responsive (storefront-r7.css:31–32; gallery-r8.css:140–141; revision-r9.css:64) ---------- */
+@media (max-width: 900px) {
+  :where(.site) .flow-fields {
+    grid-template-columns: 1fr;
+  }
+  :where(.site) .commerce-page .flow-summary .bag-row {
+    grid-template-columns: 1fr;
+  }
+  :where(.site) .commerce-page .flow-summary .bag-row img {
+    width: 100%;
+    height: 150px;
+  }
+}
+@media (max-width: 700px) {
+  body :where(.site) #checkout-form .flow-summary {
+    position: static;
+  }
+  :where(.site) .commerce-page .flow-summary .bag-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+  :where(.site) .commerce-page .flow-summary .bag-row img {
+    width: 70px;
+    height: 100px;
+  }
+}
+@media (max-width: 599px) {
+  :where(.site) .commerce-page .flow-summary .bag-row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 14px;
+  }
+  :where(.site) .commerce-page .flow-summary .bag-row img {
+    width: 76px;
+    height: 106px;
+  }
+}

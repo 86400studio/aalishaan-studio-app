@@ -11,7 +11,7 @@ import type { BagRow } from "./rows";
  * validation"). The request carries the rows' variant codes and quantities only — every persisted or displayed field
  * is left behind — and the answer is parsed with the shared schema (src/lib/schemas/bag.ts). Anything but a 200
  * whose body parses and adds up is `failed`: a network error, a timeout, a 4xx/5xx (the 503 `unavailable` of a
- * catalogue that cannot be read included), a body that is not JSON or does not match. A failure never empties the
+ * catalogue or a rate limit that cannot be read and the 429 `throttled` of S1.6's rate limit included), a body that is not JSON or does not match. A failure never empties the
  * bag; the caller keeps the rows and shows the pending or failed state. An answer must also cover exactly the rows
  * asked about (`answersRows`). An aborted request (a newer revision, a cleared bag, an unmounted page) is `aborted`,
  * so the caller can ignore it.
@@ -23,7 +23,7 @@ import type { BagRow } from "./rows";
 export const BAG_ENDPOINT = "/api/bag";
 
 export type BagValidationFailure =
-  "network" | "unavailable" | "rejected" | "invalid_response";
+  "network" | "unavailable" | "throttled" | "rejected" | "invalid_response";
 
 export type BagValidationOutcome =
   | { status: "ok"; result: BagValidationResult }
@@ -75,7 +75,12 @@ export async function requestBagValidation(
     if (signal?.aborted) return { status: "aborted" };
     return {
       status: "failed",
-      reason: response.status === 503 ? "unavailable" : "rejected",
+      reason:
+        response.status === 503
+          ? "unavailable"
+          : response.status === 429
+            ? "throttled"
+            : "rejected",
     };
   }
   let body: unknown;

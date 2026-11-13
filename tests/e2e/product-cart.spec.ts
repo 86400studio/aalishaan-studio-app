@@ -14,7 +14,8 @@ import type { ResolvedTarget } from "./harness/target";
  * blocked and full storage recover honestly; prices stored in the browser never reach the subtotal; an outage or a
  * late answer never empties the bag or brings a row back. `POST /api/bag` rejects tampered and malformed bodies and
  * every other method, and answers `no-store`. The PIN form validates syntax only and shows that the estimate is pending;
- * the checkout control is disabled and nothing links to a checkout. Keyboard: the drawer's focus trap with rows, the
+ * the checkout control is a link to the checkout where checkout is open (the Preview, since S1.6) and the disabled
+ * button with its line where it is closed (a sealed local run). Keyboard: the drawer's focus trap with rows, the
  * lightbox and the thumbnails' roving tabindex; the phone purchase bar; reduced motion; no JavaScript.
  *
  * Data: the 22-artwork, 66-variant TEST catalogue as seeded (scripts/testing/seed.mjs: every variant made to order at
@@ -27,8 +28,8 @@ import type { ResolvedTarget } from "./harness/target";
  *
  * Not proved here (unit or integration tests, or the manual evidence of the record): hidden, draft and retired
  * variants and a changed price on the real projection (tests/integration/bag.test.ts — they need a TEST mutation);
- * axe (no axe package is installed and none is added); 200 % zoom; the checkout Back / Forward round-trip (S1.6, owner
- * amendment H.1 #4). No server write happens anywhere in this file — `POST /api/bag` reads only; the only state touched
+ * axe (no axe package is installed and none is added); 200 % zoom. The checkout Back / Forward round-trip (owner
+ * amendment H.1 #4) is tests/e2e/checkout.spec.ts since S1.6. No server write happens anywhere in this file — `POST /api/bag` reads only; the only state touched
  * is this browser context's storage. In local mode every request that leaves the target origin is aborted. Every test
  * runs on both projects (the required-projects reporter counts a skip as a failure).
  */
@@ -1634,7 +1635,7 @@ test.describe("S1.5 — honest storage and validation states", () => {
 
 // ---------------------------------------------------------------------------------------------------------------
 
-test.describe("S1.5 — delivery PIN and checkout (no estimate, no checkout yet)", () => {
+test.describe("S1.5 — delivery PIN and the checkout control (no estimate)", () => {
   test("the PIN form checks syntax only and shows the estimate pending, never a date; the PIN never leaves the browser", async ({
     page,
   }) => {
@@ -1718,40 +1719,66 @@ test.describe("S1.5 — delivery PIN and checkout (no estimate, no checkout yet)
     ).toBe(JSON.stringify({ v: 1, pin: "110001" }));
   });
 
-  test("the checkout control is disabled with its line in the drawer and on the cart; nothing links to a checkout", async ({
+  test("the checkout control: a link to the checkout where checkout is open and the bag is checked; the disabled button with its line where it is closed", async ({
     page,
+    target,
   }) => {
+    // S1.6: the verified Preview has checkout open (D-63: SALES_MODE=test in the Preview scope); a sealed local run
+    // is built without the checkout's values, so checkout is closed there, as on Production. The checkout itself is
+    // tests/e2e/checkout.spec.ts.
+    const open = target.mode === "preview";
     await page.goto(`/artworks/${LANTERN.slug}`);
     await addSelected(page);
     // The prototype's "Continue to Checkout" link after an add is not rendered (H.2 "Checkout handoff").
-    await expect(page.getByRole("link", { name: /checkout/i })).toHaveCount(0);
-    await expect(page.locator('a[href*="checkout"]')).toHaveCount(0);
+    await expect(page.locator('#main a[href*="checkout"]')).toHaveCount(0);
+    if (!open) await expect(page.locator('a[href*="checkout"]')).toHaveCount(0);
     const drawer = await openCart(page);
     await expect(drawerRows(page)).toHaveCount(1);
-    const drawerButton = drawer.getByRole("button", {
-      name: "Continue to checkout",
-      exact: true,
-    });
-    await expect(drawerButton).toBeDisabled();
-    await expect(drawerButton).toHaveAccessibleDescription(
-      "Checkout is not yet available.",
-    );
-    await expect(drawer.locator('a[href*="checkout"]')).toHaveCount(0);
+    if (open) {
+      // A link only once the bag's check has answered for the bag as it is.
+      const drawerLink = drawer.getByRole("link", {
+        name: "Continue to checkout",
+        exact: true,
+      });
+      await expect(drawerLink).toBeVisible();
+      await expect(drawerLink).toHaveAttribute("href", "/checkout");
+      await expect(drawer).not.toContainText("Checkout is not yet available.");
+    } else {
+      const drawerButton = drawer.getByRole("button", {
+        name: "Continue to checkout",
+        exact: true,
+      });
+      await expect(drawerButton).toBeDisabled();
+      await expect(drawerButton).toHaveAccessibleDescription(
+        "Checkout is not yet available.",
+      );
+      await expect(drawer.locator('a[href*="checkout"]')).toHaveCount(0);
+    }
     await drawer.getByRole("link", { name: "Edit your bag" }).click();
     await expect(page).toHaveURL(/\/cart$/);
     const control = page.locator("#checkout-link");
     await expect(control).toBeVisible();
-    const cartButton = control.getByRole("button", {
-      name: "Continue to checkout →",
-    });
-    await expect(cartButton).toBeDisabled();
-    await expect(cartButton).toHaveAccessibleDescription(
-      "Checkout is not yet available.",
-    );
-    await cartButton.dispatchEvent("click");
-    await page.waitForTimeout(300);
-    await expect(page).toHaveURL(/\/cart$/);
-    await expect(page.locator('a[href*="checkout"]')).toHaveCount(0);
+    if (open) {
+      const cartLink = control.getByRole("link", {
+        name: "Continue to checkout →",
+      });
+      await expect(cartLink).toBeVisible();
+      await expect(cartLink).toHaveAttribute("href", "/checkout");
+      await expect(control).not.toContainText("Checkout is not yet available.");
+      await expect(control.getByRole("button")).toHaveCount(0);
+    } else {
+      const cartButton = control.getByRole("button", {
+        name: "Continue to checkout →",
+      });
+      await expect(cartButton).toBeDisabled();
+      await expect(cartButton).toHaveAccessibleDescription(
+        "Checkout is not yet available.",
+      );
+      await cartButton.dispatchEvent("click");
+      await page.waitForTimeout(300);
+      await expect(page).toHaveURL(/\/cart$/);
+      await expect(page.locator('a[href*="checkout"]')).toHaveCount(0);
+    }
     // The pending terms, never an invented charge.
     await expect(page.locator(".flow-totals")).toContainText("Delivery charge");
     await expect(page.locator(".flow-totals")).toContainText("To be confirmed");
@@ -1788,7 +1815,8 @@ test.describe("S1.5 — keyboard, dialogs and the phone bar", () => {
     await expect(
       drawer.getByRole("link", { name: WARM_WALL.title }),
     ).toBeFocused();
-    // The disabled checkout button is skipped; every focus stays in the drawer.
+    // The checkout control (a link where checkout is open, a disabled button that is skipped where it is closed) and
+    // every other stop stay in the drawer.
     for (let i = 0; i < 8; i += 1) {
       await page.keyboard.press("Tab");
       expect(

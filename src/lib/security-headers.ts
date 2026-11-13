@@ -2,7 +2,8 @@
  * Response headers applied to every path by next.config.ts (S0.1; docs/SECURITY-CHECKLIST.md §6,
  * docs/TECH-ARCHITECTURE.md §9). The policy allows only what this scaffold loads: its own Next.js
  * runtime and, when configured, the Sentry ingest origin of the browser DSN. Provider origins are added
- * by the sprint that first loads them (Razorpay at S1.6), never speculatively.
+ * by the sprint that first loads them, never speculatively: since S1.6 the two origins each of Cloudflare
+ * Turnstile and Razorpay Checkout, and only in a deployment whose public checkout values are configured.
  */
 
 import { storageOriginFromUrl } from "./site-images";
@@ -20,7 +21,29 @@ export type SecurityHeaderOptions = {
   supabaseUrl?: string;
   /** True only for `next dev`, which needs `'unsafe-eval'` for React's development tooling. */
   isDevelopment?: boolean;
+  /**
+   * The public Turnstile site key (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`). Present: the checkout's challenge may load
+   * its script and its frame from Cloudflare's one challenge origin (S1.6). Absent: neither is allowed.
+   */
+  turnstileSiteKey?: string;
+  /**
+   * The public Razorpay key id (`NEXT_PUBLIC_RAZORPAY_KEY_ID`). Present: Checkout.js may load from Razorpay's
+   * checkout origin and open its payment frame from Razorpay's API origin (S1.6). Absent — Production until live
+   * providers are configured at S3.3 — neither is allowed.
+   */
+  razorpayKeyId?: string;
 };
+
+/** Cloudflare Turnstile: the script and the challenge frame come from this one origin (Cloudflare's CSP reference). */
+export const TURNSTILE_ORIGIN = "https://challenges.cloudflare.com";
+/** Razorpay Standard Checkout: `checkout.js` is served from here … */
+export const RAZORPAY_SCRIPT_ORIGIN = "https://checkout.razorpay.com";
+/** … and the payment window it opens is a frame of Razorpay's API origin. */
+export const RAZORPAY_FRAME_ORIGIN = "https://api.razorpay.com";
+
+function configured(value: string | undefined): boolean {
+  return typeof value === "string" && value.trim() !== "";
+}
 
 /**
  * Every request path, including `/`, API routes, static files and paths that do not exist. (`/:path*` is not
@@ -51,9 +74,22 @@ export function contentSecurityPolicy({
   sentryDsn,
   supabaseUrl,
   isDevelopment = false,
+  turnstileSiteKey,
+  razorpayKeyId,
 }: SecurityHeaderOptions = {}): string {
   const sentryOrigin = sentryIngestOrigin(sentryDsn);
   const imageOrigin = storageOrigin(supabaseUrl);
+  // S1.6: the checkout's two providers, each named by exact origin and only where its public value is configured.
+  // `frame-src` exists only then; without it `default-src 'self'` governs frames. Allowing a provider's frame
+  // inside this site is not permission to frame this site: `frame-ancestors 'none'` is unchanged.
+  const scriptOrigins = [
+    ...(configured(turnstileSiteKey) ? [TURNSTILE_ORIGIN] : []),
+    ...(configured(razorpayKeyId) ? [RAZORPAY_SCRIPT_ORIGIN] : []),
+  ];
+  const frameOrigins = [
+    ...(configured(turnstileSiteKey) ? [TURNSTILE_ORIGIN] : []),
+    ...(configured(razorpayKeyId) ? [RAZORPAY_FRAME_ORIGIN] : []),
+  ];
   const directives: [string, ...string[]][] = [
     ["default-src", "'self'"],
     // The App Router streams its React Server Components payload through inline <script> tags. Without a
@@ -64,6 +100,7 @@ export function contentSecurityPolicy({
       "'self'",
       "'unsafe-inline'",
       ...(isDevelopment ? ["'unsafe-eval'"] : []),
+      ...scriptOrigins,
     ],
     ["style-src", "'self'", "'unsafe-inline'"],
     // `data:` for one use: the TOTP enrolment QR (S1.2) is a `data:image/svg+xml` returned by Supabase Auth and
@@ -73,6 +110,9 @@ export function contentSecurityPolicy({
     ["img-src", "'self'", "data:", ...(imageOrigin ? [imageOrigin] : [])],
     ["font-src", "'self'"],
     ["connect-src", "'self'", ...(sentryOrigin ? [sentryOrigin] : [])],
+    ...(frameOrigins.length > 0
+      ? [["frame-src", ...frameOrigins] as [string, ...string[]]]
+      : []),
     ["object-src", "'none'"],
     ["base-uri", "'self'"],
     ["form-action", "'self'"],

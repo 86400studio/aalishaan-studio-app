@@ -39,10 +39,12 @@ const USE_CLIENT = '"use client";\n';
 
 /**
  * Every way a source file can read one of the server-only names from process.env — the names of eslint.config.mjs
- * `SERVER_ONLY_NAMES` (since S1.4 the catalogue's revalidation secret too; a test below checks each is covered).
+ * `SERVER_ONLY_NAMES` (since S1.4 the catalogue's revalidation secret too; since S1.6 the checkout's four — the
+ * sales mode, the Razorpay key secret, the order-link secret and the Turnstile secret; a test below checks each is
+ * covered).
  */
 const SERVER_ONLY_NAMES =
-  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)|CATALOGUE_REVALIDATION_SECRET";
+  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)|CATALOGUE_REVALIDATION_SECRET|SALES_MODE|RAZORPAY_KEY_SECRET|ORDER_TOKEN_SECRET|TURNSTILE_SECRET_KEY";
 const SERVER_ONLY_READ = new RegExp(
   `process\\.env(?:\\.|\\[\\s*["'\`])(?:${SERVER_ONLY_NAMES})\\b|\\{[^}]*\\b(?:${SERVER_ONLY_NAMES})\\b[^}]*\\}\\s*=\\s*process\\.env`,
 );
@@ -447,6 +449,14 @@ describe(
       ).not.toBeNull();
       const names = listed![1]!.split("|");
       expect(names).toContain("CATALOGUE_REVALIDATION_SECRET");
+      // S1.6: the checkout's server-only names.
+      for (const name of [
+        "SALES_MODE",
+        "RAZORPAY_KEY_SECRET",
+        "ORDER_TOKEN_SECRET",
+        "TURNSTILE_SECRET_KEY",
+      ])
+        expect(names).toContain(name);
       const mirrored = new RegExp(`^(?:${SERVER_ONLY_NAMES})$`);
       for (const name of names) {
         expect(name, "mirrored by the sweep").toMatch(mirrored);
@@ -474,17 +484,49 @@ describe("transitive protection — the marker the bundler enforces", () => {
 
   it("has the expected server modules", () => {
     expect(serverFiles.sort()).toEqual([
+      "bag-throttle.ts",
       "bag.ts",
       "catalogue-revalidation.ts",
       "catalogue.ts",
+      "checkout-throttle.ts",
       "health.ts",
       "login-throttle.ts",
+      "razorpay.ts",
       "staff-access.ts",
       "staff-audit.ts",
       "staff-session.ts",
       "supabase.ts",
+      "turnstile.ts",
     ]);
   });
+
+  // S1.6: the checkout's own folder — the gate, the tokens, the database adapter and the flow.
+  const checkoutDir = path.join(serverDir, "checkout");
+  const checkoutFiles = readdirSync(checkoutDir).filter((name) =>
+    name.endsWith(".ts"),
+  );
+
+  it("has the expected checkout server modules, and no other folder", () => {
+    expect(checkoutFiles.sort()).toEqual([
+      "flow.ts",
+      "gate.ts",
+      "store.ts",
+      "tokens.ts",
+    ]);
+    expect(
+      readdirSync(serverDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name),
+    ).toEqual(["checkout"]);
+  });
+
+  it.each(checkoutFiles)(
+    'checkout/%s starts with import "server-only"',
+    (name) => {
+      const source = readFileSync(path.join(checkoutDir, name), "utf8");
+      expect(source.trimStart().startsWith('import "server-only";')).toBe(true);
+    },
+  );
 
   it("only the staff session module imports the cookie session package", () => {
     const importers: string[] = [];

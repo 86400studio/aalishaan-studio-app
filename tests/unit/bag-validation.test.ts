@@ -22,6 +22,9 @@ import {
   CART_ROW_SIZES,
   DRAWER_ROW_SIZES,
 } from "@/components/commerce/bag-row";
+import { BagProvider } from "@/components/commerce/bag-provider";
+import { CheckoutAvailabilityProvider } from "@/components/commerce/checkout-availability";
+import { CheckoutControl } from "@/components/commerce/checkout-control";
 import { OverlayErrorBoundary } from "@/components/shell/overlay-error-boundary";
 import { PublicShell } from "@/components/shell/public-shell";
 import { loadPlan } from "@/components/shell/reload-on-path-change";
@@ -75,6 +78,7 @@ import type {
   CatalogueRead,
   CatalogueUnavailableReason,
 } from "@/lib/server/catalogue";
+import type { ThrottleOutcome } from "@/lib/server/login-throttle";
 
 /**
  * Bag validation — S1.5 (src/lib/server/bag.ts, src/lib/schemas/bag.ts, src/lib/bag/validate.ts; docs/sprint-prompts/
@@ -179,6 +183,10 @@ function deps(
   return {
     read: vi.fn(typeof read === "function" ? read : async () => read),
     report: vi.fn<(message: string) => void>(),
+    // S1.6 (D-58 #3): the rate limit, allowing by default; tests/unit/bag-throttle.test.ts covers the limiter itself.
+    limit: vi.fn<(address: string) => Promise<ThrottleOutcome>>(async () => ({
+      ok: true,
+    })),
   } satisfies BagRequestDependencies;
 }
 
@@ -234,6 +242,8 @@ async function expectDenied(
   expect(bagErrorResponseSchema.safeParse(json).success).toBe(true);
   expect(dependencies.read).not.toHaveBeenCalled();
   expect(dependencies.report).not.toHaveBeenCalled();
+  // A request refused for its shape or size never reaches the rate limiter either (no Redis call).
+  expect(dependencies.limit).not.toHaveBeenCalled();
 }
 
 beforeEach(() => {
@@ -722,10 +732,21 @@ describe("the default path reads the projection afresh — no-store, no data-cac
     vi.stubEnv("SUPABASE_TEST_PROJECT_REF", TEST_REF);
     vi.stubEnv("SUPABASE_PROD_PROJECT_REF", PROD_REF);
     vi.stubEnv("VERCEL_ENV", "preview");
+    // S1.6 (D-58 #3): the default path counts the check first, in Upstash (placeholder names; the pipeline answers
+    // "first request in the window"), and only then reads the projection.
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example-redis.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "placeholder-token");
+    const limiterCalls: Array<{ url: string; body: string }> = [];
     const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(input) === "https://example-redis.upstash.io/pipeline") {
+          // The limiter is asked before the projection is read.
+          expect(calls).toHaveLength(0);
+          limiterCalls.push({ url: String(input), body: String(init?.body) });
+          return Response.json([{ result: 1 }, { result: 1 }]);
+        }
         calls.push({ url: String(input), init });
         return new Response(JSON.stringify([sampleRow()]), {
           status: 200,
@@ -743,6 +764,10 @@ describe("the default path reads the projection afresh — no-store, no data-cac
     } finally {
       log.mockRestore();
     }
+    // One limiter request in the bag's own namespace, the address only as a hash …
+    expect(limiterCalls).toHaveLength(1);
+    expect(limiterCalls[0].body).toMatch(/\["INCR","bag:ip:[0-9a-f]{64}"\]/);
+    // … then exactly one read of the projection.
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toContain(
       `https://${TEST_REF}.supabase.co/rest/v1/public_catalogue`,
@@ -1250,7 +1275,7 @@ describe("the shared commerce UI", () => {
     });
   });
 
-  describe("the checkout control — an honest disabled state until S1.6", () => {
+  describe("the checkout control — guarded navigation since S1.6", () => {
     const commerceSources = () => {
       const files: string[] = [];
       const walk = (dir: string) => {
@@ -1268,23 +1293,96 @@ describe("the shared commerce UI", () => {
       return files;
     };
 
-    it("denied: no link, route or navigation to /checkout anywhere in the bag, shell or cart code", () => {
-      for (const file of commerceSources())
-        expect(source(file), file).not.toMatch(/["'`]\/checkout/);
+    it("the one path to /checkout in the bag, shell and cart code is the control's own guarded link", () => {
+      const naming = commerceSources()
+        .filter((file) => /["'`]\/checkout/.test(source(file)))
+        .map((file) => file.split(path.sep).join("/"));
+      expect(naming).toEqual(["src/components/commerce/checkout-control.tsx"]);
     });
 
-    it("is a disabled button described by the prototype's own line, and S1.6 replaces exactly that file", () => {
+    it("is a link only when checkout is open and the bag's current answer says every item can be bought; otherwise the disabled button with its line", () => {
       const control = source("src/components/commerce/checkout-control.tsx");
+      // The link's four conditions, together: open here, an answer for the bag as it is, rows, every item available.
+      expect(control).toMatch(
+        /const ready =\s*open &&\s*answer !== null &&\s*answer\.items\.length > 0 &&\s*answer\.items\.every\(\(item\) => item\.available\);/,
+      );
+      // One link, to the checkout route, never prefetched (a prefetch would be a request nobody asked for).
+      expect(control.match(/<Link\b/g)).toHaveLength(1);
+      expect(control).toMatch(
+        /<Link\s+className="button button--primary"\s+href=\{CHECKOUT_HREF\}\s+prefetch=\{false\}\s*>/,
+      );
+      expect(control).toContain('const CHECKOUT_HREF = "/checkout";');
+      // Every other case is the disabled button, described by a line.
       expect(control).toMatch(
         /<button[\s\S]*?disabled[\s\S]*?aria-describedby/,
       );
-      expect(control).not.toMatch(/<a\b|<Link\b|href=/);
-      expect(control).toContain("**S1.6 replaces exactly this file**");
+      // Closed keeps the approved line; nothing navigates by script.
+      expect(control).toContain(
+        "{ text: CHECKOUT_CONTROL.unavailable, visible: true }",
+      );
+      expect(control).not.toMatch(
+        /useRouter|router\.push|location\.(assign|href|replace)|window\.open/,
+      );
       expect(CHECKOUT_CONTROL).toEqual({
         drawer: "Continue to checkout",
         cart: "Continue to checkout →",
         unavailable: "Checkout is not yet available.",
       });
+    });
+
+    it("renders the disabled button on the server whatever the deployment says: closed shows the approved line, open waits for the bag's check", () => {
+      const Availability = CheckoutAvailabilityProvider as ComponentType<{
+        open: boolean;
+        children?: ReactNode;
+      }>;
+      const Bag = BagProvider as ComponentType<{ children?: ReactNode }>;
+      const render = (open: boolean, placement: "drawer" | "cart") =>
+        renderToStaticMarkup(
+          createElement(
+            Availability,
+            { open },
+            createElement(
+              Bag,
+              null,
+              createElement(CheckoutControl, { placement }),
+            ),
+          ),
+        );
+      for (const placement of ["drawer", "cart"] as const) {
+        const closed = render(false, placement);
+        expect(closed).toMatch(
+          /<button type="button" class="button button--primary" disabled="" aria-describedby="[^"]+">Continue to checkout/,
+        );
+        expect(closed).toContain(CHECKOUT_CONTROL.unavailable);
+        expect(closed).not.toContain("<a ");
+        // Open, but the bag is not read yet (the server render and no JavaScript): still no link — the bag's
+        // "checking" line describes the button for assistive technology only.
+        const open = render(true, placement);
+        expect(open).toMatch(
+          /<button type="button" class="button button--primary" disabled="" aria-describedby="[^"]+">Continue to checkout/,
+        );
+        expect(open).not.toContain("<a ");
+        expect(open).not.toContain('href="/checkout');
+        expect(open).not.toContain(CHECKOUT_CONTROL.unavailable);
+        expect(open).toMatch(
+          new RegExp(
+            `<p class="visually-hidden" id="[^"]+">${BAG_STATUS.pending}</p>`,
+          ),
+        );
+      }
+    });
+
+    it("outside the provider the answer is closed", () => {
+      const Bag = BagProvider as ComponentType<{ children?: ReactNode }>;
+      const html = renderToStaticMarkup(
+        createElement(
+          Bag,
+          null,
+          createElement(CheckoutControl, { placement: "cart" }),
+        ),
+      );
+      expect(html).toContain(CHECKOUT_CONTROL.unavailable);
+      expect(html).not.toContain("<a ");
     });
   });
 

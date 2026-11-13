@@ -143,6 +143,8 @@ export const BAG_ERROR_STATUSES = [
   "invalid_request",
   "method_not_allowed",
   "too_large",
+  /** S1.6 (D-58 #3): too many bag checks from this address in the window — 429. */
+  "throttled",
   "unavailable",
 ] as const;
 export type BagErrorStatus = (typeof BAG_ERROR_STATUSES)[number];

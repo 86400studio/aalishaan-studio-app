@@ -185,6 +185,9 @@ describe("validateBag on TEST's projection (S1.5) — read-only", () => {
     const handlerDeps = {
       read: () => readPublicCatalogueFresh(deps),
       report: (message: string) => reports.push(message),
+      // S1.6 (D-58 #3): the limiter is injected as allowing, so this test's effect on TEST stays the read alone;
+      // the limiter's own behaviour is proven hermetically (tests/unit/bag-throttle.test.ts) and on the Preview.
+      limit: async () => ({ ok: true as const }),
     };
     const request = (body: unknown) =>
       new Request("https://studio.example.invalid/api/bag", {
