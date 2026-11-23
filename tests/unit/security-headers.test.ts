@@ -59,12 +59,16 @@ describe(
   "next.config.ts applies the headers to every response",
   { timeout: 30_000 },
   () => {
-    it("has one rule whose source Next.js matches for pages, APIs, static files and missing paths", async () => {
+    it("has one rule for every path, whose source Next.js matches for pages, APIs, static files and missing paths", async () => {
       const config = await loadNextConfig({
         NEXT_PUBLIC_SENTRY_DSN: EXAMPLE_DSN,
       });
       const rules = (await config.headers?.()) ?? [];
-      expect(rules).toHaveLength(1);
+      // The rule for every path, then (S1.7) the order pages' own three headers — nothing else.
+      expect(rules.map((rule) => rule.source)).toEqual([
+        "/(.*)",
+        "/order/:path*",
+      ]);
 
       // The matcher and options Next.js itself uses for custom headers (server/lib/router-utils/filesystem.js).
       const matches = getPathMatch(rules[0].source, {
@@ -101,12 +105,57 @@ describe(
       expect(connect).toEqual(["'self'", EXAMPLE_INGEST_ORIGIN]);
     });
 
+    // S1.7: an order page's address is a private link.
+    it("gives the order pages — and only them — no-referrer, no-store and their own noindex, after the general rule", async () => {
+      const config = await loadNextConfig({});
+      const rules = (await config.headers?.()) ?? [];
+      const order = rules[1];
+      expect(order.has).toBeUndefined();
+      expect(order.missing).toBeUndefined();
+      expect(order.headers).toEqual([
+        { key: "Referrer-Policy", value: "no-referrer" },
+        { key: "Cache-Control", value: "no-store" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      ]);
+      // It never touches the policy or the other security headers: those stay the general rule's.
+      const general = rules[0].headers.map((header) => header.key);
+      for (const header of order.headers)
+        if (header.key !== "Cache-Control")
+          expect(general).toContain(header.key);
+      expect(order.headers.map((header) => header.key)).not.toContain(
+        "Content-Security-Policy",
+      );
+
+      const matches = getPathMatch(order.source, {
+        strict: true,
+        removeUnnamedParams: true,
+      });
+      for (const path of [
+        "/order/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "/order/anything",
+        "/order/a/b",
+      ])
+        expect(matches(path), path).not.toBe(false);
+      for (const path of [
+        "/",
+        "/orders",
+        "/orders/x",
+        "/checkout",
+        "/track",
+        "/api/webhooks/razorpay",
+        "/admin/order/x",
+      ])
+        expect(matches(path), path).toBe(false);
+      // Next.js applies the rules in order and the later value of a header wins: the order rule is the last.
+      expect(rules.indexOf(order)).toBe(rules.length - 1);
+    });
+
     // S1.6: the deployed policy names the provider origins only where the two public checkout values are set.
     it("serves the provider origins from the two public checkout values, and none without them", async () => {
       const cspOf = async (env: Record<string, string | undefined>) => {
         const config = await loadNextConfig(env);
         const rules = (await config.headers?.()) ?? [];
-        expect(rules).toHaveLength(1);
+        expect(rules[0].source).toBe("/(.*)");
         return parsePolicy(
           rules[0].headers.find(
             (h) => h.key.toLowerCase() === "content-security-policy",

@@ -11,6 +11,8 @@ import {
   type FlowDependencies,
 } from "@/lib/server/checkout/flow";
 import type { CheckoutConfig, SalesGate } from "@/lib/server/checkout/gate";
+import type { PaymentsGate } from "@/lib/server/payments/config";
+import type { PaymentStore } from "@/lib/server/payments/store";
 import {
   createCheckoutStore,
   pendingOrderRequestBody,
@@ -25,6 +27,7 @@ import { attemptHash, providerReceipt } from "@/lib/server/checkout/tokens";
 import type {
   CreateOrderOutcome,
   FindOrdersOutcome,
+  OrderPaymentsOutcome,
   RazorpayOrder,
 } from "@/lib/server/razorpay";
 
@@ -106,6 +109,21 @@ type Doubles = {
   findOrders: ReturnType<typeof vi.fn<FlowDependencies["findOrders"]>>;
   issueToken: ReturnType<typeof vi.fn<FlowDependencies["issueToken"]>>;
   report: ReturnType<typeof vi.fn<(message: string) => void>>;
+  paymentsGate: ReturnType<typeof vi.fn<() => PaymentsGate>>;
+  fetchPayments: ReturnType<typeof vi.fn<FlowDependencies["fetchPayments"]>>;
+  deriveToken: ReturnType<typeof vi.fn<FlowDependencies["deriveToken"]>>;
+  payments: {
+    recordEvent: ReturnType<typeof vi.fn<PaymentStore["recordEvent"]>>;
+    processEvent: ReturnType<typeof vi.fn<PaymentStore["processEvent"]>>;
+    returnState: ReturnType<typeof vi.fn<PaymentStore["returnState"]>>;
+    recordProviderCheck: ReturnType<
+      typeof vi.fn<PaymentStore["recordProviderCheck"]>
+    >;
+    confirmationView: ReturnType<
+      typeof vi.fn<PaymentStore["confirmationView"]>
+    >;
+  };
+  paymentsFactory: ReturnType<typeof vi.fn<() => PaymentStore | null>>;
   store: {
     createPendingOrder: ReturnType<
       typeof vi.fn<CheckoutStore["createPendingOrder"]>
@@ -125,8 +143,49 @@ type Doubles = {
   deps: FlowDependencies;
 };
 
-/** The happy path by default: an open gate, an allowed and verified request, a fresh order that links at once. */
+/**
+ * The happy path by default: an open gate, an allowed and verified request, a fresh order that links at once. The
+ * S1.7 dependencies default to "nothing at the provider, nothing recorded": the provider lists no payment for the
+ * order (so a linked order may be launched again) and the payments adapter knows no detail of an attempt (so an order
+ * that is not payable is simply `held`). What S1.7 does with them is tests/unit/payment-reconciliation.test.ts and
+ * tests/unit/payment-verification.test.ts.
+ */
 function doubles(): Doubles {
+  const payments = {
+    recordEvent: vi.fn<PaymentStore["recordEvent"]>(async () => ({
+      ok: false,
+      refusal: "unavailable",
+    })),
+    processEvent: vi.fn<PaymentStore["processEvent"]>(async () => ({
+      ok: false,
+      refusal: "unavailable",
+    })),
+    // Where an attempt's order stands, as 0005 answers it for a linked attempt nobody has paid yet: pending, no
+    // review, no payment on record. (An attempt that exists always has an answer here.)
+    returnState: vi.fn<PaymentStore["returnState"]>(async () => ({
+      ok: true,
+      value: {
+        orderNumber: "AS-1001",
+        paymentStatus: "pending",
+        fulfilmentStatus: "pending_payment",
+        needsReview: false,
+        paymentHold: null,
+        expiresAt: new Date(NOW.getTime() + 60 * 60 * 1000),
+        tokenSalt: null,
+        tokenHash: null,
+        payments: { reported: 0, authorized: 0, captured: 0, failed: 0 },
+        recorded: false,
+        serverTime: NOW,
+      },
+    })),
+    recordProviderCheck: vi.fn<PaymentStore["recordProviderCheck"]>(
+      async () => ({ ok: false, refusal: "unavailable" }),
+    ),
+    confirmationView: vi.fn<PaymentStore["confirmationView"]>(async () => ({
+      ok: true,
+      value: null,
+    })),
+  };
   const store = {
     createPendingOrder: vi.fn<CheckoutStore["createPendingOrder"]>(async () =>
       ok({ ...state(), replayed: false }),
@@ -178,6 +237,26 @@ function doubles(): Doubles {
       hash: "b".repeat(64),
     })),
     report: vi.fn<(message: string) => void>(),
+    paymentsGate: vi.fn<() => PaymentsGate>(() => ({
+      open: true,
+      config: {
+        context: "preview",
+        projectRef: CONFIG.projectRef,
+        razorpayKeyId: CONFIG.razorpayKeyId,
+        razorpayKeySecret: CONFIG.razorpayKeySecret,
+        razorpayWebhookSecret: "placeholder-webhook-secret",
+        orderTokenSecret: CONFIG.orderTokenSecret,
+      },
+    })),
+    fetchPayments: vi.fn<FlowDependencies["fetchPayments"]>(
+      async (): Promise<OrderPaymentsOutcome> => ({
+        outcome: "found",
+        payments: [],
+      }),
+    ),
+    deriveToken: vi.fn<FlowDependencies["deriveToken"]>(() => "t".repeat(43)),
+    payments,
+    paymentsFactory: vi.fn<() => PaymentStore | null>(() => payments),
     store,
     storeFactory: vi.fn<() => CheckoutStore | null>(() => store),
   };
@@ -191,6 +270,10 @@ function doubles(): Doubles {
       createOrder: d.createOrder,
       findOrders: d.findOrders,
       issueToken: d.issueToken,
+      paymentsGate: d.paymentsGate,
+      payments: d.paymentsFactory,
+      fetchPayments: d.fetchPayments,
+      deriveToken: d.deriveToken,
       report: d.report,
     },
   };
@@ -343,7 +426,7 @@ describe("submitCheckout — the allowed path", () => {
     ]);
   });
 
-  it("a repeated submission of a linked attempt returns the same order and makes no provider call", async () => {
+  it("a repeated submission of a linked attempt returns the same order and creates nothing at the provider — S1.7's one read asks what it holds first", async () => {
     d.store.createPendingOrder.mockResolvedValue(
       ok({ ...LINKED, replayed: true }),
     );
@@ -352,6 +435,18 @@ describe("submitCheckout — the allowed path", () => {
     expect(d.createOrder).not.toHaveBeenCalled();
     expect(d.findOrders).not.toHaveBeenCalled();
     expect(d.store.linkProviderOrder).not.toHaveBeenCalled();
+    // The order was linked before this request: its window may have been open, so the provider is asked once.
+    expect(d.fetchPayments).toHaveBeenCalledTimes(1);
+    expect(d.fetchPayments).toHaveBeenCalledWith("order_PLACEHOLDER001", {
+      keyId: CONFIG.razorpayKeyId,
+      keySecret: CONFIG.razorpayKeySecret,
+    });
+  });
+
+  it("the launch that follows the link of a brand-new provider order asks the provider nothing more", async () => {
+    expect(await submitCheckout(SUBMISSION, CONTEXT, d.deps)).toEqual(LAUNCH);
+    expect(d.fetchPayments).not.toHaveBeenCalled();
+    expect(d.paymentsFactory).not.toHaveBeenCalled();
   });
 });
 
@@ -666,14 +761,27 @@ describe("resumeCheckout — by the attempt key alone", () => {
   it("the remaining time is the database's deadline minus the database's own time — no other clock is involved", async () => {
     // The database answers "ten minutes remain" with a clock that is nowhere near this machine's.
     const serverTime = new Date("2031-03-04T05:06:07.000Z");
-    d.store.attemptState.mockResolvedValue(
-      ok({
-        ...LINKED,
-        placedAt: new Date(serverTime.getTime() - 50 * 60 * 1000),
-        serverTime,
-        expiresAt: new Date(serverTime.getTime() + 10 * 60 * 1000),
-      }),
-    );
+    const expiresAt = new Date(serverTime.getTime() + 10 * 60 * 1000);
+    /** Both reads are the one database's: the attempt's, and the order's after the provider check (S1.7). */
+    const databaseSays = (now: Date) => {
+      d.store.attemptState.mockResolvedValue(
+        ok({
+          ...LINKED,
+          placedAt: new Date(serverTime.getTime() - 50 * 60 * 1000),
+          serverTime: now,
+          expiresAt,
+        }),
+      );
+      d.payments.returnState.mockImplementation(async () => {
+        const read = await doubles().payments.returnState("", null);
+        if (!read.ok || read.value === null) throw new Error("the double");
+        return {
+          ok: true,
+          value: { ...read.value, expiresAt, serverTime: now },
+        };
+      });
+    };
+    databaseSays(serverTime);
     const result = await resume();
     expect(result.status).toBe("launch");
     if (result.status === "launch") {
@@ -681,15 +789,7 @@ describe("resumeCheckout — by the attempt key alone", () => {
       expect(result.launch.expires_at).toBe("2031-03-04T05:16:07.000Z");
     }
     // A later resume reports less time left for the same deadline: the deadline itself never moves.
-    const later = new Date(serverTime.getTime() + 4 * 60 * 1000);
-    d.store.attemptState.mockResolvedValue(
-      ok({
-        ...LINKED,
-        placedAt: new Date(serverTime.getTime() - 50 * 60 * 1000),
-        serverTime: later,
-        expiresAt: new Date(serverTime.getTime() + 10 * 60 * 1000),
-      }),
-    );
+    databaseSays(new Date(serverTime.getTime() + 4 * 60 * 1000));
     const again = await resume();
     expect(
       again.status === "launch" && [

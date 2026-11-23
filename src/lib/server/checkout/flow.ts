@@ -7,19 +7,28 @@ import {
   checkoutSubmissionSchema,
   normaliseCheckoutFields,
   type CheckoutActionResult,
+  type CheckoutReturnResult,
 } from "@/lib/schemas/checkout";
+import { checkoutReturnSchema, orderPathOf } from "@/lib/schemas/payments";
 
 import {
   consumeCheckoutAttempt,
   type CheckoutThrottleKind,
 } from "../checkout-throttle";
 import type { ThrottleOutcome } from "../login-throttle";
+import { privilegedPaymentStore } from "../payments/client";
+import { paymentsGate, type PaymentsGate } from "../payments/config";
+import { checkProviderPayments } from "../payments/reconcile";
+import { verifyCheckoutSignature } from "../payments/signature";
+import type { PaymentStore, ReturnState } from "../payments/store";
 import {
   createRazorpayOrder,
+  fetchRazorpayOrderPayments,
   findRazorpayOrdersByReceipt,
   type CreateOrderInput,
   type CreateOrderOutcome,
   type FindOrdersOutcome,
+  type OrderPaymentsOutcome,
   type RazorpayCredentials,
   type RazorpayOrder,
 } from "../razorpay";
@@ -38,6 +47,8 @@ import {
 } from "./store";
 import {
   attemptHash,
+  confirmationTokenHash,
+  deriveConfirmationToken,
   issueConfirmationToken,
   payloadMac,
   providerReceipt,
@@ -69,9 +80,30 @@ import {
  *   - `linked` → launch data, only while the order is pending, not under review and not past its deadline. The
  *     deadline is never extended: a resume returns the same order with the same `expires_at`.
  *   - `failed` → `start_failed`: the customer starts again as a new order under a new attempt key.
- * No step here marks anything paid, failed-as-payment or confirmed: that is S1.7's, after its signature check.
+ * No step here marks anything paid, failed-as-payment or confirmed: only a verified captured event does (the
+ * webhook — src/lib/server/payments/webhook.ts).
  *
- * The confirmation token is issued with the order (salt and hash, D-61) and is not returned to anyone here.
+ * **S1.7 — before a payment window opens AGAIN** (docs/sprint-prompts/S1.7-razorpay-verification.md §H.3
+ * "Uncertainty"). The launch that directly follows the link of a brand-new provider order needs no question: no
+ * payment can exist for it. Every other launch of a linked order — a reload, a second press, a return to the page —
+ * first asks Razorpay what it holds for that order (`relaunch`):
+ *   - nothing, or only failed payments → the launch (the same provider order is continued);
+ *   - a captured or an authorised payment → no launch. The order is flagged with a hold the signed captured event
+ *     clears (D-68), and the answer is `confirming`;
+ *   - a payment still in flight, or no usable answer → no launch: `uncertain`. Not known is never "not paid".
+ * An order that is not payable from here says what it is: `confirmed` (a verified captured payment), `confirming`
+ * (a hold stands), otherwise `held`.
+ *
+ * **S1.7 — the verified return** (`verifyCheckoutReturn`). Razorpay's window hands the page a payment id and a
+ * signature. The server verifies that signature against the provider order id IT stored for the attempt the caller
+ * proves with the attempt key — never an order id from the browser — and records the payment as *reported*. That
+ * changes nothing about the order: it answers the order's page, which shows what the database holds. It stands on
+ * the payment gate (src/lib/server/payments/config.ts), not on the sales gate: a payment already made is verified
+ * whether or not new orders are being taken.
+ *
+ * The confirmation token is issued with the order (salt and hash, D-61). It leaves the server only as the path of
+ * the order's page, and only once a verified signature stands on record for the order: the verified return, or a
+ * signed event that recorded a payment. It is derived again each time — never stored, never logged.
  * Logs receive enumerated codes only — never a field, a key, a token, an id or an upstream body.
  */
 
@@ -103,6 +135,17 @@ export type FlowDependencies = {
     credentials: RazorpayCredentials,
   ) => Promise<FindOrdersOutcome>;
   issueToken: (secret: string) => IssuedConfirmation;
+  /** S1.7: the deployment's provider half — the verified return stands on it, never on the sales gate. */
+  paymentsGate: () => PaymentsGate;
+  /** S1.7: the payments' database adapter, or null when the privileged client cannot be made. */
+  payments: () => PaymentStore | null;
+  /** S1.7: what the provider holds for one of our orders — asked before a payment window may open again. */
+  fetchPayments: (
+    providerOrderId: string,
+    credentials: RazorpayCredentials,
+  ) => Promise<OrderPaymentsOutcome>;
+  /** S1.7: the order's confirmation token from its stored salt (D-61). */
+  deriveToken: (secret: string, saltHex: string) => string;
   /** Where a sanitised reason code goes. */
   report: (message: string) => void;
 };
@@ -126,6 +169,11 @@ export function defaultFlowDependencies(): FlowDependencies {
     findOrders: (receipt, credentials) =>
       findRazorpayOrdersByReceipt(receipt, credentials),
     issueToken: (secret) => issueConfirmationToken(secret),
+    paymentsGate: () => paymentsGate(),
+    payments: () => privilegedPaymentStore(),
+    fetchPayments: (providerOrderId, credentials) =>
+      fetchRazorpayOrderPayments(providerOrderId, credentials),
+    deriveToken: (secret, saltHex) => deriveConfirmationToken(secret, saltHex),
     report: (message) => console.error(message),
   };
 }
@@ -134,9 +182,82 @@ type Step = {
   config: CheckoutConfig;
   store: CheckoutStore;
   deps: FlowDependencies;
+  /** The SHA-256 of the attempt key the caller presented: the only handle on the order. */
+  attemptHash: string;
 };
 
 const UNAVAILABLE: CheckoutActionResult = { status: "unavailable" };
+
+/**
+ * The path of the order's page — or null. Given only once a verified signature stands on record for the order (it
+ * is confirmed, or one of its payments was reported by a verified return or recorded by a signed event), and only
+ * when the token derived now is the one the order was issued with (the stored hash): a deployment whose order-link
+ * secret is not the issuing one gives no link rather than a dead one.
+ */
+function orderPathFor(
+  order: ReturnState,
+  orderTokenSecret: string,
+  deps: Pick<FlowDependencies, "deriveToken">,
+): string | null {
+  const { reported, authorized, captured } = order.payments;
+  const verified =
+    order.paymentStatus === "captured" || reported + authorized + captured > 0;
+  if (!verified || order.tokenSalt === null || order.tokenHash === null)
+    return null;
+  try {
+    const token = deps.deriveToken(orderTokenSecret, order.tokenSalt);
+    return confirmationTokenHash(token) === order.tokenHash
+      ? orderPathOf(token)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** What an order that is not payable from here is — or null when it is neither confirmed nor on a hold. */
+function standingOfOrder(
+  order: ReturnState,
+  step: Step,
+): CheckoutActionResult | null {
+  if (order.paymentStatus === "captured")
+    return {
+      status: "confirmed",
+      order_number: order.orderNumber,
+      order_path: orderPathFor(order, step.config.orderTokenSecret, step.deps),
+    };
+  if (
+    order.paymentStatus === "pending" &&
+    order.needsReview &&
+    order.paymentHold !== null
+  )
+    return {
+      status: "confirming",
+      order_number: order.orderNumber,
+      order_path: orderPathFor(order, step.config.orderTokenSecret, step.deps),
+    };
+  return null;
+}
+
+/**
+ * An order that is no longer pending, or is under review: `confirmed`, `confirming` (a hold a signed capture
+ * clears), otherwise `held`. Never a launch. When its detail cannot be read, a pending order may be on a hold — a
+ * payment known and being confirmed — so it is `uncertain` (no new payment from the page); an order no longer
+ * pending is `held`.
+ */
+async function notPayable(
+  state: AttemptState,
+  step: Step,
+): Promise<CheckoutActionResult> {
+  const unread: CheckoutActionResult =
+    state.paymentStatus === "pending"
+      ? { status: "uncertain" }
+      : { status: "held" };
+  const payments = step.deps.payments();
+  if (!payments) return unread;
+  const found = await payments.returnState(step.attemptHash, null);
+  if (!found.ok || found.value === null) return unread;
+  return standingOfOrder(found.value, step) ?? { status: "held" };
+}
 
 function credentialsOf(config: CheckoutConfig): RazorpayCredentials {
   return { keyId: config.razorpayKeyId, keySecret: config.razorpayKeySecret };
@@ -285,16 +406,105 @@ async function start(
   return { status: "start_unknown" };
 }
 
+/**
+ * S1.7 — a linked order whose payment window may have been open before: launch data only after Razorpay has said
+ * that no payment for it is captured, authorised or still in flight, and only while no payment reported by a
+ * verified Checkout return stands on record for it. Past its deadline the same question is asked first — a payment
+ * may have been taken before the deadline passed, or be on its way — and only a clear answer is `expired`. The
+ * provider is asked once, with a bounded wait; an answer that cannot be had or trusted is `uncertain`: never a
+ * launch, and never "the time has passed".
+ */
+async function relaunch(
+  state: AttemptState,
+  step: Step,
+): Promise<CheckoutActionResult> {
+  const launch = launchOf(state, step);
+  // Not payable here for another reason (held): nothing to ask the provider.
+  if (
+    (launch.status !== "launch" && launch.status !== "expired") ||
+    state.providerOrderId === null
+  )
+    return launch;
+  const payments = step.deps.payments();
+  if (!payments) {
+    step.deps.report("[checkout] privileged client unavailable");
+    return UNAVAILABLE;
+  }
+  const standing = await checkProviderPayments(
+    {
+      paymentAttemptId: state.paymentAttemptId,
+      providerOrderId: state.providerOrderId,
+    },
+    credentialsOf(step.config),
+    {
+      fetchPayments: step.deps.fetchPayments,
+      store: payments,
+      report: step.deps.report,
+    },
+  );
+  switch (standing.standing) {
+    case "clear": {
+      // Razorpay knows of no live payment. A payment this database holds as reported by a verified Checkout return
+      // is not forgotten for that: until its own event settles it, the order is being confirmed — never offered
+      // again, never "expired".
+      const found = await payments.returnState(step.attemptHash, null);
+      if (!found.ok || found.value === null) return { status: "uncertain" };
+      const order = found.value;
+      if (order.payments.reported > 0)
+        return {
+          status: "confirming",
+          order_number: order.orderNumber,
+          order_path: orderPathFor(
+            order,
+            step.config.orderTokenSecret,
+            step.deps,
+          ),
+        };
+      // The answer is judged by this read — the database's own, made after the provider's — never by the attempt
+      // read before both: the order may have been confirmed or held meanwhile, and its deadline may have passed.
+      const standing = standingOfOrder(order, step);
+      if (standing !== null) return standing;
+      if (
+        order.paymentStatus !== "pending" ||
+        order.needsReview ||
+        order.expiresAt === null
+      )
+        return { status: "held" };
+      if (order.expiresAt.getTime() <= order.serverTime.getTime())
+        return { status: "expired" };
+      if (launch.status !== "launch") return launch;
+      return {
+        status: "launch",
+        launch: {
+          ...launch.launch,
+          expires_at: order.expiresAt.toISOString(),
+          expires_in_ms: order.expiresAt.getTime() - order.serverTime.getTime(),
+        },
+      };
+    }
+    case "captured":
+    case "authorized": {
+      // The hold is recorded (or another review already stood): say what the order is now — never a launch.
+      const found = await payments.returnState(step.attemptHash, null);
+      if (!found.ok || found.value === null) return { status: "uncertain" };
+      return standingOfOrder(found.value, step) ?? { status: "held" };
+    }
+    case "in_flight":
+    case "unavailable":
+      return { status: "uncertain" };
+  }
+}
+
 /** Every state except `intent` — the half of `advance` that can never start a provider create. */
 async function settle(
   state: AttemptState,
   step: Step,
 ): Promise<CheckoutActionResult> {
   if (state.paymentStatus !== "pending" || state.needsReview)
-    return { status: "held" };
+    return notPayable(state, step);
   switch (state.providerOrderState) {
     case "linked":
-      return launchOf(state, step);
+      return relaunch(state, step);
     case "failed":
       return { status: "start_failed" };
     case "unknown":
@@ -332,7 +542,7 @@ function advance(
   step: Step,
 ): Promise<CheckoutActionResult> {
   if (state.paymentStatus !== "pending" || state.needsReview)
-    return Promise.resolve({ status: "held" });
+    return notPayable(state, step);
   return state.providerOrderState === "intent"
     ? start(state, step)
     : settle(state, step);
@@ -404,8 +614,9 @@ export async function submitCheckout(
     return UNAVAILABLE;
   }
   const token = deps.issueToken(config.orderTokenSecret);
+  const hash = attemptHash(submission.attempt_key);
   const created = await store.createPendingOrder({
-    attemptHash: attemptHash(submission.attempt_key),
+    attemptHash: hash,
     payloadMac: payloadMac(
       submission.attempt_key,
       canonicalCheckoutPayload(submission.items, fields.fields),
@@ -417,7 +628,7 @@ export async function submitCheckout(
     items: submission.items,
   });
   if (!created.ok) return createRefusal(created.refusal, deps.report);
-  return advance(created.value, { config, store, deps });
+  return advance(created.value, { config, store, deps, attemptHash: hash });
 }
 
 /** Where an attempt stands, by its key alone. Creates no business row. */
@@ -441,7 +652,8 @@ export async function resumeCheckout(
     deps.report("[checkout] privileged client unavailable");
     return UNAVAILABLE;
   }
-  const found = await store.attemptState(attemptHash(parsed.data.attempt_key));
+  const hash = attemptHash(parsed.data.attempt_key);
+  const found = await store.attemptState(hash);
   if (!found.ok) {
     deps.report(`[checkout] attempt read refused (${found.refusal})`);
     return UNAVAILABLE;
@@ -453,5 +665,98 @@ export async function resumeCheckout(
     ATTEMPT_HONOURED_MS
   )
     return { status: "not_found" };
-  return advance(state, { config, store, deps });
+  return advance(state, { config, store, deps, attemptHash: hash });
+}
+
+const RETURN_REJECTED: CheckoutReturnResult = { status: "rejected" };
+const RETURN_UNAVAILABLE: CheckoutReturnResult = { status: "unavailable" };
+
+/**
+ * S1.7 — the report Razorpay's window made to the page, verified. In order, each step stopping the flow:
+ *   1. the payment gate (configuration only) — NOT the sales gate: a payment already made is verified whether or
+ *      not new orders are being taken;
+ *   2. the strict parse: the attempt key, a payment id and a signature — nothing else is accepted, and no order id,
+ *      order number, amount or status from the browser exists to be trusted;
+ *   3. the rate limit (the resume quota; fails closed);
+ *   4. the attempt, read by the key's hash: it must exist, be honoured still, and be linked to a provider order;
+ *   5. the signature, verified with the API key secret over `<the STORED provider order id>|<payment id>`;
+ *   6. the payment recorded as reported (`payment_return_state`) — never as authorised, captured or paid;
+ *   7. the order's page.
+ * A wrong signature, a foreign payment id, a malformed report and an unknown attempt are one answer: `rejected`.
+ * Nothing here confirms an order, queues a message or says a payment was received.
+ */
+export async function verifyCheckoutReturn(
+  input: unknown,
+  context: FlowContext,
+  deps: FlowDependencies = defaultFlowDependencies(),
+): Promise<CheckoutReturnResult> {
+  const gate = deps.paymentsGate();
+  if (!gate.open) {
+    deps.report(`[return] closed (${gate.reason})`);
+    return RETURN_UNAVAILABLE;
+  }
+  const { config } = gate;
+
+  const parsed = checkoutReturnSchema.safeParse(input);
+  if (!parsed.success) return RETURN_REJECTED;
+
+  const limited = await deps.throttle("resume", context.address);
+  if (!limited.ok)
+    return limited.reason === "rate_limited"
+      ? { status: "throttled" }
+      : RETURN_UNAVAILABLE;
+
+  const store = deps.store();
+  const payments = deps.payments();
+  if (!store || !payments) {
+    deps.report("[return] privileged client unavailable");
+    return RETURN_UNAVAILABLE;
+  }
+
+  const hash = attemptHash(parsed.data.attempt_key);
+  const found = await store.attemptState(hash);
+  if (!found.ok) {
+    deps.report(`[return] attempt read refused (${found.refusal})`);
+    return RETURN_UNAVAILABLE;
+  }
+  const state = found.value;
+  if (
+    state === null ||
+    state.serverTime.getTime() - state.placedAt.getTime() >
+      ATTEMPT_HONOURED_MS ||
+    state.providerOrderState !== "linked" ||
+    state.providerOrderId === null
+  )
+    return RETURN_REJECTED;
+
+  if (
+    !verifyCheckoutSignature(
+      state.providerOrderId,
+      parsed.data.razorpay_payment_id,
+      parsed.data.razorpay_signature,
+      config.razorpayKeySecret,
+    )
+  ) {
+    deps.report("[return] signature refused");
+    return RETURN_REJECTED;
+  }
+
+  const recorded = await payments.returnState(
+    hash,
+    parsed.data.razorpay_payment_id,
+  );
+  if (!recorded.ok) {
+    deps.report(`[return] not recorded (${recorded.refusal})`);
+    return recorded.refusal === "unavailable"
+      ? RETURN_UNAVAILABLE
+      : RETURN_REJECTED;
+  }
+  if (recorded.value === null) return RETURN_REJECTED;
+
+  const path = orderPathFor(recorded.value, config.orderTokenSecret, deps);
+  if (path === null) {
+    deps.report("[return] order link unavailable");
+    return RETURN_UNAVAILABLE;
+  }
+  return { status: "verified", order_path: path };
 }

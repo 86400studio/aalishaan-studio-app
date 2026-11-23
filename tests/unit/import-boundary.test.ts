@@ -40,11 +40,11 @@ const USE_CLIENT = '"use client";\n';
 /**
  * Every way a source file can read one of the server-only names from process.env — the names of eslint.config.mjs
  * `SERVER_ONLY_NAMES` (since S1.4 the catalogue's revalidation secret too; since S1.6 the checkout's four — the
- * sales mode, the Razorpay key secret, the order-link secret and the Turnstile secret; a test below checks each is
- * covered).
+ * sales mode, the Razorpay key secret, the order-link secret and the Turnstile secret; since S1.7 the Razorpay
+ * webhook secret; a test below checks each is covered).
  */
 const SERVER_ONLY_NAMES =
-  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)|CATALOGUE_REVALIDATION_SECRET|SALES_MODE|RAZORPAY_KEY_SECRET|ORDER_TOKEN_SECRET|TURNSTILE_SECRET_KEY";
+  "SUPABASE_SECRET_KEY|S0_2_PROOF_TOKEN|SUPABASE_(?:TEST|PROD)_PROJECT_REF|UPSTASH_REDIS_REST_(?:URL|TOKEN)|CATALOGUE_REVALIDATION_SECRET|SALES_MODE|RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|ORDER_TOKEN_SECRET|TURNSTILE_SECRET_KEY";
 const SERVER_ONLY_READ = new RegExp(
   `process\\.env(?:\\.|\\[\\s*["'\`])(?:${SERVER_ONLY_NAMES})\\b|\\{[^}]*\\b(?:${SERVER_ONLY_NAMES})\\b[^}]*\\}\\s*=\\s*process\\.env`,
 );
@@ -457,6 +457,8 @@ describe(
         "TURNSTILE_SECRET_KEY",
       ])
         expect(names).toContain(name);
+      // S1.7: the webhook's own secret — never the API key secret, and never read outside src/lib/server.
+      expect(names).toContain("RAZORPAY_WEBHOOK_SECRET");
       const mirrored = new RegExp(`^(?:${SERVER_ONLY_NAMES})$`);
       for (const name of names) {
         expect(name, "mirrored by the sweep").toMatch(mirrored);
@@ -491,6 +493,8 @@ describe("transitive protection — the marker the bundler enforces", () => {
       "checkout-throttle.ts",
       "health.ts",
       "login-throttle.ts",
+      // S1.7: the order behind a confirmation link, and the proxy's answer for an unknown token.
+      "order-confirmation.ts",
       "razorpay.ts",
       "staff-access.ts",
       "staff-audit.ts",
@@ -506,18 +510,34 @@ describe("transitive protection — the marker the bundler enforces", () => {
     name.endsWith(".ts"),
   );
 
-  it("has the expected checkout server modules, and no other folder", () => {
+  // S1.7: the payments' folder — the payment gate, the two signatures, the database adapter and its client, the
+  // provider check and the webhook.
+  const paymentsDir = path.join(serverDir, "payments");
+  const paymentsFiles = readdirSync(paymentsDir).filter((name) =>
+    name.endsWith(".ts"),
+  );
+
+  it("has the expected checkout and payments server modules, and no other folder", () => {
     expect(checkoutFiles.sort()).toEqual([
       "flow.ts",
       "gate.ts",
       "store.ts",
       "tokens.ts",
     ]);
+    expect(paymentsFiles.sort()).toEqual([
+      "client.ts",
+      "config.ts",
+      "reconcile.ts",
+      "signature.ts",
+      "store.ts",
+      "webhook.ts",
+    ]);
     expect(
       readdirSync(serverDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name),
-    ).toEqual(["checkout"]);
+        .map((entry) => entry.name)
+        .sort(),
+    ).toEqual(["checkout", "payments"]);
   });
 
   it.each(checkoutFiles)(
@@ -527,6 +547,29 @@ describe("transitive protection — the marker the bundler enforces", () => {
       expect(source.trimStart().startsWith('import "server-only";')).toBe(true);
     },
   );
+
+  it.each(paymentsFiles)(
+    'payments/%s starts with import "server-only"',
+    (name) => {
+      const source = readFileSync(path.join(paymentsDir, name), "utf8");
+      expect(source.trimStart().startsWith('import "server-only";')).toBe(true);
+    },
+  );
+
+  it("the webhook secret is read in one place — the sales gate's reader — and the payments folder reads no environment itself", () => {
+    const reads = (file: string) =>
+      /process.env/.test(readFileSync(file, "utf8"));
+    for (const name of paymentsFiles)
+      expect(reads(path.join(paymentsDir, name)), `payments/${name}`).toBe(
+        false,
+      );
+    expect(
+      readFileSync(path.join(checkoutDir, "gate.ts"), "utf8").match(
+        /process.env.RAZORPAY_WEBHOOK_SECRET/g,
+      ),
+    ).toHaveLength(1);
+    expect(reads(path.join(serverDir, "order-confirmation.ts"))).toBe(false);
+  });
 
   it("only the staff session module imports the cookie session package", () => {
     const importers: string[] = [];

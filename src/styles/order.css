@@ -1,0 +1,73 @@
+/*
+ * The order page `/order/[token]` — S1.7 (prototype/pages/order/demo/index.html, `<body class="browse-page
+ * utility-page commerce-page">`). Imported by src/app/(public)/order/[token]/page.tsx only, after the layout's
+ * storefront.css, home.css and utility.css and after commerce.css and checkout.css, which already carry the commerce
+ * page scope, `.utility-main`, `.flow-panel`, `.flow-summary`, `.flow-totals`, `.flow-fine`, `.flow-help`, the
+ * commerce bag rows and the summary's row sizes. This sheet adds the frozen order page's own rules that S1.7's
+ * markup uses, as effective values, every rule scoped with `:where(.site)` (no added specificity) and its source
+ * cited.
+ *
+ * Not ported here — they arrive with the receipt (S1.8): the receipt printer, slot, output and paper
+ * (revision-r9.css:57–60, 73–80), the paper feed (revision-r9.css:77–79), `.receipt-meta` and `.receipt-thanks`
+ * (revision-r9.css:60) and the commerce journey section (revision-r11.css:33–38, 42). Never ported: the 1.2 s
+ * `receipt-print` animation and the print rules (docs/DESIGN.md §6).
+ */
+
+/* ---------- the heading (storefront-r7.css:29) ---------- */
+:where(.site) .confirmation-heading {
+  text-align: center;
+  padding: 50px 0 0;
+}
+:where(.site) .confirmation-heading h1 {
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  margin: 12px 0;
+}
+:where(.site) .confirmation-heading > p {
+  margin-bottom: 22px;
+}
+
+/* ---------- the actions row (revision-r9.css:60; revision-r11.css:42) ---------- */
+:where(.site) .receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin: 28px auto;
+}
+
+/* ---------- the help line (revision-r11.css:32) ---------- */
+body :where(.site) .receipt-help .flow-help {
+  text-align: center;
+}
+
+/* ---------- NS (no prototype source): the order's panel stands where the frozen page's receipt does — the same
+   column (revision-r9.css:57, 73: `max-width: 700px; margin: 0 auto`); the page's status sentence is the heading's
+   own paragraph, in the ink of a neutral status (checkout.css `.checkout-notice`) ---------- */
+:where(.site) .order-panel {
+  max-width: 700px;
+  margin: 0 auto;
+}
+:where(.site) .confirmation-heading > #order-status {
+  max-width: 700px;
+  margin-inline: auto;
+  color: var(--ink);
+}
+:where(.site) .confirmation-heading > .flow-fine {
+  max-width: 700px;
+  margin-inline: auto;
+}
+/* NS: the two late lines are live regions that are in the page from the start; empty, they take no room. */
+:where(.site) .order-waiting:empty,
+:where(.site) .order-bag-note:empty {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  /* revision-r11.css:42 */
+  :where(.site) .receipt-actions {
+    padding-inline: 20px;
+  }
+  :where(.site) .receipt-actions .button {
+    min-width: 190px;
+  }
+}

@@ -30,9 +30,12 @@ describe("supabase/migrations — forward discovery", () => {
     // S1.6 (D-60): the checkout's atomic write. The number is the next free one at the sprint that needed it;
     // the roadmap's later numbers moved with it (docs/ROADMAP.md, docs/TECH-ARCHITECTURE.md §4).
     ["0004_checkout.sql", "0004", "checkout"],
+    // S1.7 (D-67): the atomic confirmation of a captured payment. The roadmap first said "Migrations: none"; the
+    // one-transaction rule needs a database function, as D-60 found for the checkout. The next free number again.
+    ["0005_payment_finalization.sql", "0005", "payment_finalization"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration and the S1.6 migration under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the S1.7 migration under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

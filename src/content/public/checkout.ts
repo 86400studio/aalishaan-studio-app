@@ -203,6 +203,20 @@ export const CHECKOUT_NOTICES = {
   /** NS-PROPOSED — Razorpay's checkout script could not load. */
   scriptUnavailable:
     "The payment window could not load, so payment cannot start. Check your connection and reload the page.",
+  /**
+   * NS-41 — NS-PROPOSED (technical, D-24), S1.7: the server knows of a payment for this order that is not confirmed
+   * yet (reported to it, or seen at the payment provider) and could not give the order's page. No pay button is
+   * offered while it shows, and the checkout does not ask again by itself: a reload asks, and leads to the order's
+   * page once the payment is confirmed (the builder's review, round 2).
+   */
+  confirming: (orderNumber: string) =>
+    `A payment for order ${orderNumber} is being confirmed. Please do not pay again. Reload this page in a few minutes to see where it stands.`,
+  /**
+   * NS-42 — NS-PROPOSED (technical, D-24), S1.7: the payment provider could not say whether the last payment
+   * finished — it could not be reached, or that payment is still in progress. No pay button is offered.
+   */
+  uncertain:
+    "We could not check whether your last payment went through. Please do not pay again. Wait a few minutes, then reload this page.",
 } as const;
 
 /**

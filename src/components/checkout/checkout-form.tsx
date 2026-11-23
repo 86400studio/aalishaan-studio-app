@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type ChangeEvent,
@@ -13,6 +14,7 @@ import {
 import {
   resumeCheckoutAction,
   submitCheckoutAction,
+  verifyCheckoutReturnAction,
 } from "@/app/(public)/checkout/actions";
 import { subtotalText } from "@/components/commerce/bag-lines";
 import { BagStatus } from "@/components/commerce/bag-status";
@@ -42,9 +44,11 @@ import {
   type CheckoutLaunch,
   type CheckoutPaymentMethod,
   type CheckoutResume,
+  type CheckoutReturnResult,
   type CheckoutSubmission,
   type NormalisedCheckoutFields,
 } from "@/lib/schemas/checkout";
+import { isOrderPath, type CheckoutReturn } from "@/lib/schemas/payments";
 
 import {
   attemptKeys,
@@ -63,18 +67,25 @@ import {
   type HeldOrder,
 } from "./held-order";
 import {
+  afterWindowStep,
   fieldMessage,
   firstRefusedField,
   isNeutralNotice,
   noticeText,
   SCRIPT_UNAVAILABLE_STEP,
   settleResume,
+  settleReturn,
   settleSubmit,
   UNAVAILABLE_STEP,
+  UNCERTAIN_STEP,
   type CheckoutNotice,
   type CheckoutStep,
 } from "./outcome";
-import { loadRazorpayCheckout, openPaymentWindow } from "./razorpay";
+import {
+  loadRazorpayCheckout,
+  openPaymentWindow,
+  type PaymentReport,
+} from "./razorpay";
 import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
 
 /**
@@ -100,10 +111,23 @@ import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
  *   same submission); anything changed is a new key. A key read from storage only ever asks where an attempt
  *   stands — once, when the page loads.
  * - Razorpay's window (./razorpay.ts) opens only with a `launch` the server answered. From then on that order holds
- *   the page: the fields are read-only and the button re-opens the same window — never a new submission — until
- *   the page is reloaded or the order's deadline passes. The window's callbacks call no server action, write
- *   nothing to storage, never empty the bag and never navigate: a reported payment shows the unverified state
- *   (NS-05), a closed window and a failed payment show their lines.
+ *   the page: the fields are read-only and the button is for that order's window — never a new submission — until
+ *   the page is reloaded or the order's deadline passes. No callback of the window writes to storage or empties the
+ *   bag, and a closed window and a failed payment only show their lines.
+ * - **S1.7 — the report.** A reported payment shows the unverified state (NS-05) at once, exactly as before — the
+ *   report is not proof. The payment id and signature Razorpay handed over are then sent to the server
+ *   (`verifyReport`), which checks the signature against the order id IT stored. Only a verified report changes
+ *   anything here: the page leaves for the order's own page, which shows what the database holds. A report that is
+ *   rejected, or whose verification cannot be reached, leaves the unverified line as it is.
+ * - **S1.7 — opening the window again.** The first opening follows the server's launch directly. Every later one
+ *   (after the window was closed, or a payment failed) first asks the server where the attempt stands (`reopen`):
+ *   it asks Razorpay what it holds for the order, and answers a launch only when no payment is captured, authorised
+ *   or still in flight. A payment that is known, or an answer that cannot be had, offers no payment.
+ * - **S1.7 — the order's page.** When the server says the order has a page it may give (`order`), the checkout's
+ *   part is over: the page leaves for exactly that path — the only navigation this page makes, and only to a path
+ *   of that shape. The stored attempt key is left where it is: the order's page recognises the browser that placed
+ *   the order by it and drops it once the order is settled (src/components/commerce/purchased-bag.tsx). The bag is
+ *   never emptied here.
  * - While an order holds the page, the summary is that order's (./held-order.ts): the rows its pay press submitted
  *   (without prices when the order's stored amount is not that press's subtotal) — none after a reload, which keeps
  *   only the key — and its stored amount, never the bag as it is now; a line says when the bag differs from it, or
@@ -117,12 +141,25 @@ import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
 export type CheckoutActions = {
   submit: (input: CheckoutSubmission) => Promise<CheckoutActionResult>;
   resume: (input: CheckoutResume) => Promise<CheckoutActionResult>;
+  /** S1.7: what Razorpay's window reported, for the server to verify. */
+  confirmReturn: (input: CheckoutReturn) => Promise<CheckoutReturnResult>;
 };
 
 const SERVER_ACTIONS: CheckoutActions = {
   submit: submitCheckoutAction,
   resume: resumeCheckoutAction,
+  confirmReturn: verifyCheckoutReturnAction,
 };
+
+/**
+ * S1.7 — leaves for an order's own page. A full load, so the page that opens is the server's; nothing is carried
+ * over. The order's page takes this checkout's place in the history: Back from it goes to the page before the
+ * checkout, never to a checkout that would only send the browser forward again. Called only with a path the server
+ * answered, and only when it is exactly an order's page.
+ */
+function leaveForOrder(path: string): void {
+  if (isOrderPath(path)) window.location.replace(path);
+}
 
 export type CheckoutProps = (
   | { open: true; turnstileSiteKey: string }
@@ -374,6 +411,8 @@ function OpenCheckout({
   const turnstile = useRef<TurnstileHandle>(null);
   const pressing = useRef(false);
   const mounted = useRef(false);
+  /** S1.7 — the question the page asks when it loads about an attempt key found in storage, while it is unanswered. */
+  const storedQuestion = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -405,12 +444,14 @@ function OpenCheckout({
 
   // A key found in storage asks once where its attempt stands — unless this page session already has an attempt
   // of its own. The key is used for nothing else; a launch it yields holds the page but opens no window by itself.
+  // S1.7: until it is answered, a pay press sends nothing (its order may have been paid for), and an answer that
+  // cannot be had is "could not be checked", never a usable form.
   useEffect(() => {
     if (attemptKeys.held() !== null || attemptKeys.slot() !== null) return;
     const key = attemptKeys.storedKey();
     if (key === null) return;
     let left = false;
-    void settleResume(
+    const question = settleResume(
       () => actions.resume({ attempt_key: key }),
       () => left,
     ).then((step) => {
@@ -440,6 +481,11 @@ function OpenCheckout({
         case "close":
           onClosed();
           return;
+        case "order":
+          // The stored attempt's order has a page: this checkout's part in it is over. The stored key is kept —
+          // the order's page recognises this browser by it, and drops it once the order is settled.
+          leaveForOrder(step.path);
+          return;
         case "notice":
           if (step.forget) attemptKeys.forget();
           if (step.block) setBlocked(true);
@@ -452,25 +498,15 @@ function OpenCheckout({
           return;
       }
     });
+    storedQuestion.current = question;
+    const settled = () => {
+      if (storedQuestion.current === question) storedQuestion.current = null;
+    };
+    void question.then(settled, settled);
     return () => {
       left = true;
     };
   }, [actions, onClosed]);
-
-  // The hold ends when the order's deadline passes — never because a browser callback fired. An order Razorpay
-  // reported complete to this page is not released at all: the page keeps the unverified state and offers no
-  // payment until it is reloaded, when the server says where the order stands.
-  useEffect(() => {
-    if (hold === null || hold.reported) return;
-    const remaining = millisecondsToDeadline(hold, Date.now());
-    if (remaining > MAX_TIMER_MS) return;
-    const timer = setTimeout(() => {
-      attemptKeys.forget();
-      setHold(null);
-      setNotice({ id: "expired" });
-    }, remaining);
-    return () => clearTimeout(timer);
-  }, [hold]);
 
   const unavailableItem =
     answer !== null && answer.items.some((item) => !item.available);
@@ -536,6 +572,28 @@ function OpenCheckout({
     announce({ id: "expired" });
   };
 
+  /**
+   * S1.7 — what Razorpay's window handed over for the payment it reported, verified by the server. The report itself
+   * changed nothing but the line on the page; only the server's `verified` answer does: the page leaves for the
+   * order's own page. Anything else leaves the unverified line as it is. Asked with the hold's own attempt key.
+   */
+  const verifyReport = (target: CheckoutHold, report: PaymentReport) => {
+    const key = target.attemptKey;
+    if (key === null) return;
+    void settleReturn(
+      () =>
+        actions.confirmReturn({
+          attempt_key: key,
+          razorpay_payment_id: report.paymentId,
+          razorpay_signature: report.signature,
+        }),
+      () => !mounted.current,
+    ).then((path) => {
+      if (path === null || !mounted.current) return;
+      leaveForOrder(path);
+    });
+  };
+
   /** Opens Razorpay's window for the order that holds the page — with the launch the server answered, as it is. */
   const openWindow = (target: CheckoutHold) => {
     if (holdExpired(target, Date.now())) {
@@ -547,8 +605,9 @@ function OpenCheckout({
     const stillOffered = () =>
       sameOrder(attemptKeys.held(), target) && !attemptKeys.held()?.reported;
     const opened = openPaymentWindow(target.launch, target.prefill, {
-      // Razorpay's report to the browser is not proof: nothing is sent, stored, emptied or navigated.
-      onReported: () => {
+      // Razorpay's report to the browser is not proof: the page only says "not confirmed yet" and hands what it
+      // was given to the server for verification.
+      onReported: (report) => {
         const current = attemptKeys.held();
         if (current !== null && !sameOrder(current, target)) return;
         // A report after this order's hold ended (its deadline passed while the window was open): the page shows
@@ -559,10 +618,12 @@ function OpenCheckout({
             target.prefill,
             Date.now(),
             target.order,
+            target.attemptKey,
           );
         attemptKeys.markReported();
         setHold(attemptKeys.held());
         announce({ id: "unverified", orderNumber });
+        if (report !== null) verifyReport(target, report);
       },
       onFailed: () => {
         if (!stillOffered()) return;
@@ -573,8 +634,12 @@ function OpenCheckout({
         announce({ id: "dismissed", orderNumber });
       },
     });
-    if (opened) setNotice(null);
-    else {
+    if (opened) {
+      // From now on the window may have taken a payment: opening it again asks the server first.
+      attemptKeys.markOpened();
+      setHold(attemptKeys.held());
+      setNotice(null);
+    } else {
       setScriptDown(true);
       announce({ id: "scriptUnavailable" });
     }
@@ -582,8 +647,8 @@ function OpenCheckout({
 
   const carryOut = (
     step: CheckoutStep,
-    prefill: CheckoutPrefill,
-    order: HeldOrder,
+    prefill: CheckoutPrefill | null,
+    order: HeldOrder | null,
   ) => {
     switch (step.do) {
       case "launch": {
@@ -596,7 +661,7 @@ function OpenCheckout({
           step.launch,
           prefill,
           Date.now(),
-          orderForLaunch(order, step.launch),
+          order === null ? null : orderForLaunch(order, step.launch),
         );
         const held = attemptKeys.held();
         setHold(held);
@@ -606,6 +671,10 @@ function OpenCheckout({
       }
       case "close":
         onClosed();
+        return;
+      case "order":
+        // The order has a page the server may give: the checkout's part is over (the stored key is kept for it).
+        if (mounted.current) leaveForOrder(step.path);
         return;
       case "fields":
         refuse(step.errors);
@@ -664,11 +733,145 @@ function OpenCheckout({
     carryOut(step, prefill, order);
   };
 
+  /**
+   * S1.7 — one question about the order that holds the page, after its window was opened: a resume, by the hold's
+   * own key; `in_progress` is waited out as for a pay press. An answer that cannot be had is "could not be checked"
+   * (never "Nothing was charged"), and the attempt is kept. Null when there is no key to ask with.
+   */
+  const askAfterWindow = async (
+    target: CheckoutHold,
+  ): Promise<CheckoutStep | null> => {
+    const key = target.attemptKey;
+    if (key === null) return null;
+    pressing.current = true;
+    setBusy(true);
+    setNotice(null);
+    const ask = () => actions.resume({ attempt_key: key });
+    let step: CheckoutStep;
+    try {
+      step = afterWindowStep(await settleSubmit(ask, ask));
+    } catch {
+      step = UNCERTAIN_STEP;
+    }
+    pressing.current = false;
+    setBusy(false);
+    return step;
+  };
+
+  /** Nothing to ask the server with: no window is opened, and nothing is said, on the page's own word. */
+  const cannotAsk = () => {
+    setBlocked(true);
+    announce({ id: "uncertain" });
+  };
+
+  /**
+   * True when the answer to a question about `target` is no longer the page's to carry out: Razorpay's window
+   * reported a payment for it while the question was out (that report outranks the answer — it is being verified),
+   * or another order holds the page now, or the page was left.
+   */
+  const overtaken = (target: CheckoutHold): boolean => {
+    if (!mounted.current) return true;
+    const current = attemptKeys.held();
+    return (
+      current !== null && (current.reported || !sameOrder(current, target))
+    );
+  };
+
+  /**
+   * S1.7 — the order's deadline has passed on this page. A window that was never opened for this hold took no
+   * payment: the hold ends here. One that was opened may have: the server is asked first — it asks Razorpay — and
+   * its answer is carried out: the order's page, "being confirmed", "could not be checked", or "the time to pay has
+   * passed" only when the server says so. A launch it still gives (its deadline is the database's, not this page's)
+   * holds the page again for that launch and opens nothing by itself.
+   */
+  const endHold = async (target: CheckoutHold) => {
+    if (!target.opened) {
+      releaseExpired();
+      return;
+    }
+    const step = await askAfterWindow(target);
+    if (step === null) {
+      cannotAsk();
+      return;
+    }
+    if (overtaken(target)) return;
+    if (step.do === "launch") {
+      attemptKeys.hold(
+        step.launch,
+        target.prefill,
+        Date.now(),
+        target.order,
+        target.attemptKey,
+      );
+      attemptKeys.markOpened();
+      setHold(attemptKeys.held());
+      return;
+    }
+    carryOut(step, target.prefill, target.order);
+  };
+
+  /**
+   * S1.7 — the window of the order that holds the page, opened AGAIN: the server is asked first where the attempt
+   * stands, and the window opens only on its `launch` — which it gives only after Razorpay has said that no payment
+   * for the order is captured, authorised or still in flight. Every other answer is carried out as it is: no window.
+   * Past the deadline the question is the deadline's (`endHold`).
+   */
+  const reopen = async (target: CheckoutHold) => {
+    if (holdExpired(target, Date.now())) {
+      await endHold(target);
+      return;
+    }
+    const step = await askAfterWindow(target);
+    if (step === null) {
+      cannotAsk();
+      return;
+    }
+    if (overtaken(target)) return;
+    carryOut(step, target.prefill, target.order);
+  };
+
+  // The hold ends when the order's deadline passes — never because a browser callback fired. An order Razorpay
+  // reported complete to this page is not released at all: the page keeps the unverified state and offers no
+  // payment until it is reloaded, when the server says where the order stands. S1.7: once a window has been
+  // opened for the hold, the deadline only asks the server (`endHold`).
+  const onDeadline = useEffectEvent((target: CheckoutHold) => {
+    // One question at a time: a press already asking about this order decides — its answer re-holds the order
+    // (and re-arms this timer) or ends the hold; a press after the deadline asks through endHold itself.
+    if (pressing.current) return;
+    const current = attemptKeys.held();
+    if (current === null || current.reported || !sameOrder(current, target))
+      return;
+    void endHold(current);
+  });
+  useEffect(() => {
+    if (hold === null || hold.reported) return;
+    const remaining = millisecondsToDeadline(hold, Date.now());
+    if (remaining > MAX_TIMER_MS) return;
+    const timer = setTimeout(() => onDeadline(hold), remaining);
+    return () => clearTimeout(timer);
+  }, [hold]);
+
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (pressing.current || blocked || reported) return;
+    const asking = storedQuestion.current;
+    if (asking !== null) {
+      // S1.7 — the page is still asking where this browser's earlier attempt stands, and its order may have been
+      // paid for: nothing is sent until that answer has been carried out. The press ends there; if the form is
+      // still the customer's to send afterwards, they press again.
+      pressing.current = true;
+      setBusy(true);
+      const release = () => {
+        pressing.current = false;
+        setBusy(false);
+      };
+      void asking.then(release, release);
+      return;
+    }
     if (hold !== null) {
-      openWindow(hold);
+      // The first opening follows the server's launch; a later one asks the server before it opens anything.
+      if (hold.opened) void reopen(hold);
+      else openWindow(hold);
       return;
     }
     if (answer === null || !payable || scriptDown) return;

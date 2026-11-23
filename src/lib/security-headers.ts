@@ -145,6 +145,25 @@ export function securityHeaders(
 }
 
 /**
+ * The order pages — S1.7 (docs/sprint-prompts/S1.7-razorpay-verification.md §H.3 "Order page"). `/order/<token>` is
+ * a private link: its address is the capability. next.config.ts applies these to that path family only, after the
+ * headers every path gets, so the three below take the place of the general ones there and every other route keeps
+ * exactly what it had:
+ *   - `Referrer-Policy: no-referrer` — the address is never sent as a referrer, to this site or any other;
+ *   - `Cache-Control: no-store` — nothing along the way keeps a copy (the framework already answers a per-request
+ *     page that way; this states it for the path's every answer, the 404 included);
+ *   - `X-Robots-Tag: noindex, nofollow` — its own, so it stays when the site's holding noindex is removed at S3.4.
+ * The Content-Security-Policy and the other security headers are untouched.
+ */
+export const PRIVATE_ORDER_PATHS = "/order/:path*";
+
+export const PRIVATE_ORDER_HEADERS: HttpHeader[] = [
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "Cache-Control", value: "no-store" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+];
+
+/**
  * Keeps every response out of search indexes while the site is a closed holding page (D-03). Removed
  * when sales open at S3.4, together with the page metadata and robots.txt rules.
  */

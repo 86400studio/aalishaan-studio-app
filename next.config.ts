@@ -5,6 +5,8 @@ import { ALIAS_REDIRECTS } from "./src/lib/redirects";
 import {
   ALL_PATHS,
   HOLDING_NOINDEX_HEADER,
+  PRIVATE_ORDER_HEADERS,
+  PRIVATE_ORDER_PATHS,
   securityHeaders,
 } from "./src/lib/security-headers";
 
@@ -53,6 +55,9 @@ const nextConfig: NextConfig = {
           HOLDING_NOINDEX_HEADER,
         ],
       },
+      // S1.7: the order pages are private links. Listed after the rule above, so for this path family alone these
+      // three take the place of the general referrer policy and noindex; nothing else changes anywhere.
+      { source: PRIVATE_ORDER_PATHS, headers: PRIVATE_ORDER_HEADERS },
     ];
   },
   // The manifest aliases of the S1.3 routes (docs/TECH-ARCHITECTURE.md §3d): duplicates → 301 to the

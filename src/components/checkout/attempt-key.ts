@@ -30,6 +30,10 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   A hold made in answer to a pay press also keeps the order's rows as that press submitted them (./held-order.ts),
  *   so the summary shows the order being paid for, not the bag as it is now; a hold found after a reload has none.
  *   They are kept in memory with the hold and never stored.
+ * - **S1.7.** The hold also keeps the key of its own attempt (the slot's after a pay press, the stored one after a
+ *   reload) — the page presents it when it asks the server to verify what Razorpay's window reported, and when it
+ *   asks whether the window may open again — and whether a window was opened for this launch (`opened`): the first
+ *   opening follows the server's launch directly; every later one asks the server first (./checkout-form.tsx).
  */
 
 export { ATTEMPT_STORAGE_KEY };
@@ -57,6 +61,10 @@ export type CheckoutHold = {
   readonly deadlineMs: number;
   /** The order's rows as the pay press submitted them; null for a hold found after a reload (not known here). */
   readonly order: HeldOrder | null;
+  /** The key of this hold's own attempt, for the questions the page asks the server about it; null when unknown. */
+  readonly attemptKey: string | null;
+  /** True once a payment window was opened for this launch: opening one again asks the server first (S1.7). */
+  readonly opened: boolean;
 };
 
 export type AttemptEnvironment = {
@@ -79,16 +87,20 @@ export type AttemptKeys = {
   forget: () => void;
   /**
    * Records the launch that now holds the page; `receivedMs` is this device's time when the answer arrived, `order`
-   * the order's rows as the pay press submitted them (none after a reload).
+   * the order's rows as the pay press submitted them (none after a reload). The hold's attempt key is `attemptKey`
+   * when given (a hold that is put back), otherwise the submit slot's, otherwise the stored one.
    */
   hold: (
     launch: CheckoutLaunch,
     prefill: CheckoutPrefill | null,
     receivedMs: number,
     order?: HeldOrder | null,
+    attemptKey?: string | null,
   ) => void;
   /** Marks the hold as reported complete by the browser (unverified). */
   markReported: () => void;
+  /** Marks that a payment window was opened for the hold's launch. */
+  markOpened: () => void;
   /** The hold, or null. Expiry is the caller's check (`holdExpired`). */
   held: () => CheckoutHold | null;
 };
@@ -207,17 +219,23 @@ export function createAttemptKeys(
       hold = null;
       removeStored();
     },
-    hold(launch, prefill, receivedMs, order = null) {
+    hold(launch, prefill, receivedMs, order = null, attemptKey) {
       hold = {
         launch,
         prefill,
         reported: false,
         deadlineMs: launchDeadline(launch, receivedMs),
         order,
+        attemptKey:
+          attemptKey !== undefined ? attemptKey : (slot?.key ?? readStored()),
+        opened: false,
       };
     },
     markReported() {
       if (hold !== null) hold = { ...hold, reported: true };
+    },
+    markOpened() {
+      if (hold !== null) hold = { ...hold, opened: true };
     },
     held: () => hold,
   };
