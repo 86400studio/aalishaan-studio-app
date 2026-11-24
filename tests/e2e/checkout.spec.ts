@@ -821,8 +821,9 @@ test.describe("S1.6 — the checkout page", () => {
     // S1.7 — a report that is not Razorpay's: a well-formed payment id under a signature nobody signed, for this
     // very order. The page hands exactly that to the server's verification, once; the server refuses it; and the
     // page stays where it was — the same line, no payment offered, no order page. Nothing was confirmed by a report.
-    // The server's answer is read where the request is sent and handed to the page unchanged: the browser's own
-    // record of a response body can be gone by the time it is asked for (seen on the mobile project).
+    // The server's answer is read where the request is sent, before it is handed to the page unchanged: the
+    // browser's own record of a response body can be gone by the time it is asked for (seen on the mobile project).
+    // The page is checked only once the browser has received the whole answer.
     const answers: Array<{ status: number; body: string }> = [];
     await page.route("**/checkout", async (route) => {
       const request = route.request();
@@ -836,12 +837,22 @@ test.describe("S1.6 — the checkout page", () => {
       answers.push({ status: response.status(), body: await response.text() });
       return route.fulfill({ response });
     });
+    const refusal = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        Boolean(response.request().headers()["next-action"]),
+      { timeout: 30_000 },
+    );
     await reportPayment(page, {
       razorpay_payment_id: "pay_E2EForged000001",
       razorpay_order_id: first.order_id,
       razorpay_signature: "0".repeat(64),
     });
-    await expect.poll(() => answers.length, { timeout: 30_000 }).toBe(1);
+    const refused = await refusal;
+    // The browser has the whole answer (its body is not asked of the browser).
+    expect(await refused.finished()).toBeNull();
+    expect(refused.status()).toBe(200);
+    expect(answers).toHaveLength(1);
     expect(answers[0].status).toBe(200);
     expect(answers[0].body).toContain('"status":"rejected"');
     expect(actionCalls, "the report is verified once").toEqual([page.url()]);
