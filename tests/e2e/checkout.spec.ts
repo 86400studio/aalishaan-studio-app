@@ -821,20 +821,29 @@ test.describe("S1.6 — the checkout page", () => {
     // S1.7 — a report that is not Razorpay's: a well-formed payment id under a signature nobody signed, for this
     // very order. The page hands exactly that to the server's verification, once; the server refuses it; and the
     // page stays where it was — the same line, no payment offered, no order page. Nothing was confirmed by a report.
-    const refusal = page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" &&
-        Boolean(response.request().headers()["next-action"]),
-      { timeout: 30_000 },
-    );
+    // The server's answer is read where the request is sent and handed to the page unchanged: the browser's own
+    // record of a response body can be gone by the time it is asked for (seen on the mobile project).
+    const answers: Array<{ status: number; body: string }> = [];
+    await page.route("**/checkout", async (route) => {
+      const request = route.request();
+      if (
+        request.method() !== "POST" ||
+        !request.headers()["next-action"] ||
+        !(request.postData() ?? "").includes("razorpay_payment_id")
+      )
+        return route.continue();
+      const response = await route.fetch();
+      answers.push({ status: response.status(), body: await response.text() });
+      return route.fulfill({ response });
+    });
     await reportPayment(page, {
       razorpay_payment_id: "pay_E2EForged000001",
       razorpay_order_id: first.order_id,
       razorpay_signature: "0".repeat(64),
     });
-    const refused = await refusal;
-    expect(refused.status()).toBe(200);
-    expect(await refused.text()).toContain('"status":"rejected"');
+    await expect.poll(() => answers.length, { timeout: 30_000 }).toBe(1);
+    expect(answers[0].status).toBe(200);
+    expect(answers[0].body).toContain('"status":"rejected"');
     expect(actionCalls, "the report is verified once").toEqual([page.url()]);
     expect(actionBodies[0]).toContain(
       '"razorpay_payment_id":"pay_E2EForged000001"',
@@ -847,6 +856,7 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(page.locator("#main")).not.toContainText(
       /successful|payment received|order confirmed|is confirmed/i,
     );
+    await page.unroute("**/checkout");
 
     // The checkout never wrote to the bag: it holds what the customer made it.
     expect(
