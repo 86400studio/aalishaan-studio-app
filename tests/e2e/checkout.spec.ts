@@ -823,7 +823,8 @@ test.describe("S1.6 — the checkout page", () => {
     // page stays where it was — the same line, no payment offered, no order page. Nothing was confirmed by a report.
     // The server's answer is read where the request is sent, before it is handed to the page unchanged: the
     // browser's own record of a response body can be gone by the time it is asked for (seen on the mobile project).
-    // The page is checked only once the browser has received the whole answer.
+    // The page is checked only once the browser has received the whole answer. The server has the step's 30 s to
+    // answer, as before: given no timeout, the fetch would have the 10 s an action gets.
     const answers: Array<{ status: number; body: string }> = [];
     await page.route("**/checkout", async (route) => {
       const request = route.request();
@@ -833,7 +834,7 @@ test.describe("S1.6 — the checkout page", () => {
         !(request.postData() ?? "").includes("razorpay_payment_id")
       )
         return route.continue();
-      const response = await route.fetch();
+      const response = await route.fetch({ timeout: 30_000 });
       answers.push({ status: response.status(), body: await response.text() });
       return route.fulfill({ response });
     });
