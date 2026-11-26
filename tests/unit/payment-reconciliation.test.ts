@@ -1409,7 +1409,7 @@ describe("a review beside money is a payment being checked — never a usable fo
     },
   );
 
-  // The re-review of round 1's fixes (2026-11-26, blocking): the provider check's review records its payments as
+  // The builder's second check of round 1's fixes (2026-11-26 — the S1.7 record → H.14): the provider check's review records its payments as
   // known, never as verified, so no payment stands on record and the order's own read cannot say that money moved.
   // Every later load of that order asks Razorpay again — read-only — and answers by what it lists now.
   it.each<[string, () => unknown, CheckoutActionResult]>([

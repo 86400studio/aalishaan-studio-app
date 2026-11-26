@@ -263,8 +263,8 @@ function standingOfOrder(
  * the listing's standing alone, nothing recorded (0006's provider check would write nothing for such an order
  * either: it never touches a review that is not a hold). A captured or an authorised payment is `confirming` (the
  * order's link only under `orderPathFor`'s evidence rule); a payment in flight, or no usable answer, is
- * `uncertain`; no live payment is `held` (the re-review of round 1's fixes, 2026-11-26: never "held" beside a
- * usable form while the provider lists a payment for the order).
+ * `uncertain`; no live payment is `held` (the builder's second check of round 1's fixes, 2026-11-26 — the S1.7
+ * record → H.14: never "held" beside a usable form while the provider lists a payment for the order).
  */
 async function notPayable(
   state: AttemptState,
