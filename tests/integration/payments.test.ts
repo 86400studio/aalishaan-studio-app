@@ -19,13 +19,16 @@ import { buildSeedPlan } from "../../scripts/testing/lib/catalogue.mjs";
 import { readStaffFixtures } from "../../scripts/testing/lib/staff.mjs";
 import { resolveTestTarget } from "../../scripts/testing/lib/supabase-target.mjs";
 
+import { orderPageState } from "@/lib/schemas/order-confirmation";
 import {
   createCheckoutStore,
   type PendingOrderRequest,
   type RpcCall,
 } from "@/lib/server/checkout/store";
 import {
+  byteaHex,
   createPaymentStore,
+  type ObservedPayment,
   type RecordedEvent,
 } from "@/lib/server/payments/store";
 
@@ -43,6 +46,13 @@ import {
  * provider check recording, holding and never confirming; the order view answering by the token's hash with no
  * contact and no address. The server's own adapters (src/lib/server/payments/store.ts over the same client as
  * src/lib/server/checkout/store.ts) make the calls, so their parsing is proven against the database's real answers.
+ *
+ * Since 0006_payment_evidence (the independent review's round 1; docs/database-changes/S1.7-0006-payment-evidence.md)
+ * the suite needs 0006 applied as well, and also proves: the ledger keeps the verified bytes exactly and immutably
+ * (finding 7); the provider check over every live payment and its money — two live payments, or money that is not the
+ * stored intent, are a review no capture clears, with the observed values kept (findings 3 and 4); a signed event
+ * that contradicts a payment's recorded money is a review, and a later matching capture never confirms (finding 6);
+ * the two replaced signatures are gone and the new ones denied to anon and authenticated.
  *
  * Orders are made through 0004's own functions, so the suite needs the effective business rule to be OPEN and
  * SYNTHETIC (the S1.6 test rule on TEST). While the rule is CLOSED only the access cases and the migration-text case
@@ -125,6 +135,15 @@ const probe = await privileged.rpc("payment_return_state", {
 if (probe.error)
   throw new Error(
     `0005_payment_finalization is not applied on TEST (payment_return_state: ${probe.error.code}) — apply it first (docs/database-changes/S1.7-0005-payment-finalization.md)`,
+  );
+// 0006's provider check refuses an empty list itself (ZP001); without 0006 PostgREST finds no such signature.
+const probe6 = await privileged.rpc("payment_record_provider_check", {
+  p_payment_attempt_id: NIL_UUID,
+  p_payments: [],
+});
+if (probe6.error?.code !== "ZP001")
+  throw new Error(
+    `0006_payment_evidence is not applied on TEST (payment_record_provider_check: ${probe6.error?.code ?? "no refusal"}) — apply it first (docs/database-changes/S1.7-0006-payment-evidence.md)`,
   );
 
 // One purchasable variant of the first seeded artwork — the one the checkout suite never changes.
@@ -365,6 +384,19 @@ const pay = (order: Order, overrides: Partial<PaymentFields> = {}) => ({
   ...overrides,
 });
 
+/** One live payment as the provider listed it: the order's own total in INR unless said otherwise. */
+const live = (
+  o: Order,
+  id: string,
+  status: ObservedPayment["status"],
+  money: { amount?: bigint; currency?: string } = {},
+): ObservedPayment => ({
+  id,
+  status,
+  amountPaise: money.amount ?? o.total,
+  currency: money.currency ?? "INR",
+});
+
 type Delivery = {
   eventId: string;
   /** The ledger row's id. */
@@ -373,15 +405,25 @@ type Delivery = {
   outcome: string;
   replayed: boolean;
   payload: Row;
+  /** The bytes the delivery arrived as (0006: kept in the ledger exactly). */
+  raw: Uint8Array;
 };
 
-/** Records, then processes, one verified delivery — the two calls the webhook makes, through the server's adapter. */
+/** The bytes of a payload as a sender writes it compactly. */
+const bytesOf = (payload: Row) =>
+  new TextEncoder().encode(JSON.stringify(payload));
+
+/**
+ * Records, then processes, one verified delivery — the two calls the webhook makes, through the server's adapter.
+ * `raw` is the delivery's bytes (by default the payload written compactly); the payload is their parse.
+ */
 async function deliverPayload(
   type: string,
   payload: Row,
   eventId = eventIdOf(),
+  raw: Uint8Array = bytesOf(payload),
 ): Promise<Delivery> {
-  const recorded = await payments.recordEvent(eventId, type, payload);
+  const recorded = await payments.recordEvent(eventId, type, payload, raw);
   if (!recorded.ok) throw new Error(`record refused: ${recorded.refusal}`);
   const row = recorded.value.eventRowId;
   const processed = await payments.processEvent(row);
@@ -392,6 +434,7 @@ async function deliverPayload(
     recorded: recorded.value,
     ...processed.value,
     payload,
+    raw,
   };
 }
 const deliver = (type: string, fields: PaymentFields, eventId?: string) =>
@@ -498,6 +541,13 @@ const eventRow = async (rowId: string) =>
       { id: rowId },
     )
   )[0];
+/** A ledger row's verified bytes as PostgREST answers a bytea (`\x` and hex), or null. */
+const rawBodyOf = async (rowId: string) =>
+  (
+    await select<{ raw_body: string | null }>("provider_events", "raw_body", {
+      id: rowId,
+    })
+  )[0]?.raw_body ?? null;
 
 const COUNTED = [
   "provider_events",
@@ -624,6 +674,7 @@ afterAll(async () => {
 });
 
 const DENIED_EVENT = `evt_it_${runId}_denied`;
+/** The five functions as the server calls them since 0006 — the ledger step with its bytes, the check with a list. */
 const CALLS: Array<[string, Row]> = [
   [
     "payment_record_event",
@@ -631,6 +682,7 @@ const CALLS: Array<[string, Row]> = [
       p_event_id: DENIED_EVENT,
       p_event_type: CAPTURED,
       p_payload: { entity: "event" },
+      p_raw_body: byteaHex(bytesOf({ entity: "event" })),
     },
   ],
   ["payment_process_event", { p_event: NIL_UUID }],
@@ -642,8 +694,14 @@ const CALLS: Array<[string, Row]> = [
     "payment_record_provider_check",
     {
       p_payment_attempt_id: NIL_UUID,
-      p_payment_id: "pay_PLACEHOLDER001",
-      p_provider_status: "captured",
+      p_payments: [
+        {
+          id: "pay_PLACEHOLDER001",
+          status: "captured",
+          amount_paise: "100",
+          currency: "INR",
+        },
+      ],
     },
   ],
   ["order_confirmation_view", { p_token_hash: ZERO_HASH }],
@@ -731,22 +789,29 @@ describe("0005_payment_finalization — a confirmation never depends on the sale
   // Preview), so the case is proven here by reading: the function that confirms does not read business_rules at
   // all. The server's own half — the webhook processes payments whatever SALES_MODE says — is
   // tests/unit/payment-verification.test.ts ("paymentsGate").
-  it("payment_process_event's body never names business_rules", () => {
-    const file = "../../supabase/migrations/0005_payment_finalization.sql";
-    const sql = readFileSync(
-      fileURLToPath(new URL(file, import.meta.url)),
-      "utf8",
-    );
-    const head = "create or replace function public.payment_process_event";
-    const start = sql.indexOf(head);
-    expect(start).toBeGreaterThan(-1);
-    const end = sql.indexOf("create or replace function", start + head.length);
-    expect(end).toBeGreaterThan(start);
-    const body = sql.slice(start, end);
-    // The slice is the function that confirms, and nothing in it reads the rule.
-    expect(body).toContain("'payment.captured.confirmed'");
-    expect(body).toContain("'send_confirmation'");
-    expect(body).not.toContain("business_rules");
+  it("payment_process_event's body never names business_rules — as 0005 wrote it, and as 0006 re-creates it", () => {
+    for (const file of [
+      "../../supabase/migrations/0005_payment_finalization.sql",
+      "../../supabase/migrations/0006_payment_evidence.sql",
+    ]) {
+      const sql = readFileSync(
+        fileURLToPath(new URL(file, import.meta.url)),
+        "utf8",
+      );
+      const head = "create or replace function public.payment_process_event";
+      const start = sql.indexOf(head);
+      expect(start, file).toBeGreaterThan(-1);
+      const end = sql.indexOf(
+        "create or replace function",
+        start + head.length,
+      );
+      expect(end, file).toBeGreaterThan(start);
+      const body = sql.slice(start, end);
+      // The slice is the function that confirms, and nothing in it reads the rule.
+      expect(body, file).toContain("'payment.captured.confirmed'");
+      expect(body, file).toContain("'send_confirmation'");
+      expect(body, file).not.toContain("business_rules");
+    }
   });
 });
 
@@ -849,7 +914,7 @@ open("0005 — a captured payment confirms its order exactly once", () => {
         ok({ outcome: "confirmed", replayed: true }),
       );
       expect(
-        await payments.recordEvent(d.eventId, CAPTURED, d.payload),
+        await payments.recordEvent(d.eventId, CAPTURED, d.payload, d.raw),
       ).toEqual(ok(again));
     }
     // No new ledger, audit, outbox or payment row, and the order's version did not move.
@@ -861,10 +926,12 @@ open("0005 — a captured payment confirms its order exactly once", () => {
 
   it("the publishable key cannot process a real recorded capture or read a real order: nothing moves — the server role then confirms it", async () => {
     const o = await newOrder();
+    const payload = eventPayload(CAPTURED, pay(o));
     const recorded = await payments.recordEvent(
       eventIdOf(),
       CAPTURED,
-      eventPayload(CAPTURED, pay(o)),
+      payload,
+      bytesOf(payload),
     );
     if (!recorded.ok) throw new Error(`record refused: ${recorded.refusal}`);
     const row = recorded.value.eventRowId;
@@ -1324,6 +1391,15 @@ open("0005 — the deadline (D-20)", () => {
     const d = await deliver(CAPTURED, fields);
     await expectReview(o, "late_capture", before, d, fields.id);
     expect(await standing(o.id)).toEqual(FLAGGED);
+    // What the checkout reads for this order (the review of 2026-11-26, finding 1): pending, flagged, no hold — and a
+    // captured payment on record, so the checkout answers "being confirmed", never "held" beside a usable form.
+    const read = await payments.returnState(o.attemptHash, null);
+    expect(read.ok && read.value).toMatchObject({
+      paymentStatus: "pending",
+      needsReview: true,
+      paymentHold: null,
+      payments: { reported: 0, authorized: 0, captured: 1, failed: 0 },
+    });
   });
 
   it("a linked order with no deadline is never payable without limit: its capture is a review", async () => {
@@ -1395,10 +1471,12 @@ open("0005 — atomicity, by a real forced failure", () => {
       const before = await snapshot(o);
       expect(before.outbox).toMatchObject([{ kind: "other_work" }]);
       const fields = pay(o);
+      const payload = eventPayload(CAPTURED, fields);
       const recorded = await payments.recordEvent(
         eventIdOf(),
         CAPTURED,
-        eventPayload(CAPTURED, fields),
+        payload,
+        bytesOf(payload),
       );
       if (!recorded.ok) throw new Error(`record refused: ${recorded.refusal}`);
       const row = recorded.value.eventRowId;
@@ -1477,7 +1555,7 @@ open("0005 — event identity", () => {
       processingStatus: "processed",
     };
     expect(
-      await payments.recordEvent(eventId, CAPTURED, second.payload),
+      await payments.recordEvent(eventId, CAPTURED, second.payload, second.raw),
     ).toEqual(ok(again));
   });
 });
@@ -1640,8 +1718,10 @@ open("0005 — payment_return_state: the verified Checkout return", () => {
 open("0005 — payment_record_provider_check: a hold, no more", () => {
   type Answer = "captured" | "authorized";
   /** What the adapter answers: whether a hold was raised now, the payment status, the review flag and the hold. */
-  const check = async (paId: string, id: string, status: Answer) => {
-    const result = await payments.recordProviderCheck(paId, id, status);
+  const check = async (o: Order, id: string, status: Answer) => {
+    const result = await payments.recordProviderCheck(o.paId, [
+      live(o, id, status),
+    ]);
     if (!result.ok) throw new Error(`check refused: ${result.refusal}`);
     const { paymentStatus, needsReview, paymentHold } = result.value;
     return [result.value.held, paymentStatus, needsReview, paymentHold];
@@ -1651,10 +1731,15 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
     const o = await newOrder();
     const id = paymentId();
     const hold = "capture_unverified";
-    const first = await check(o.paId, id, "captured");
+    const first = await check(o, id, "captured");
     expect(first).toEqual([true, "pending", true, hold]);
     expect(await standing(o.id)).toEqual(held(hold));
-    const payment = { status: "captured" };
+    // The audit row carries the money the provider observed (0006).
+    const payment = {
+      status: "captured",
+      amount_paise: Number(o.total),
+      currency: "INR",
+    };
     expect(await audits(o.id)).toEqual([
       {
         actor_type: "system",
@@ -1683,7 +1768,7 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
     expect(await stages(o.id)).toEqual([0]);
 
     // The same answer again changes nothing.
-    const second = await check(o.paId, id, "captured");
+    const second = await check(o, id, "captured");
     expect(second).toEqual([false, "pending", true, hold]);
     expect(await audits(o.id)).toHaveLength(1);
     expect(await paymentRowCount(o.id)).toBe(2);
@@ -1694,7 +1779,7 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
 
     // A confirmed order is never held.
     const before = await counts();
-    const third = await check(o.paId, id, "captured");
+    const third = await check(o, id, "captured");
     expect(third).toEqual([false, "captured", false, null]);
     expect(await counts()).toEqual(before);
   });
@@ -1703,7 +1788,7 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
     const o = await newOrder();
     const id = paymentId();
     const answer = async (status: Answer) => {
-      const [raised, , , hold] = await check(o.paId, id, status);
+      const [raised, , , hold] = await check(o, id, status);
       return [raised, hold];
     };
     expect(await answer("authorized")).toEqual([true, "authorized_only"]);
@@ -1723,7 +1808,7 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
   it("a hold raised for one payment is never cleared by the capture of another: that capture is an extra payment, and the hold's own capture then meets an order under review", async () => {
     const o = await newOrder();
     const shown = paymentId();
-    expect(await check(o.paId, shown, "captured")).toEqual([
+    expect(await check(o, shown, "captured")).toEqual([
       true,
       "pending",
       true,
@@ -1750,7 +1835,9 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
     const o = await newOrder();
     const before = { counts: await counts(), order: await orderRow(o.id) };
     expect(
-      await payments.recordProviderCheck(o.paId, taken.id, "captured"),
+      await payments.recordProviderCheck(o.paId, [
+        live(o, taken.id, "captured"),
+      ]),
     ).toEqual(refused("payment_conflict"));
     expect(await counts()).toEqual(before.counts);
     expect(await orderRow(o.id)).toEqual(before.order);
@@ -1762,10 +1849,12 @@ open("0005 — payment_record_provider_check: a hold, no more", () => {
     const wrong = pay(o, { amount: o.total - BigInt(1) });
     expect(await outcomeOf(CAPTURED, wrong)).toBe("review:amount_mismatch");
     const before = { counts: await counts(), order: await orderRow(o.id) };
-    const answer = await check(o.paId, paymentId(), "captured");
+    const answer = await check(o, paymentId(), "captured");
     expect(answer).toEqual([false, "pending", true, null]);
     expect(
-      await payments.recordProviderCheck(randomUUID(), paymentId(), "captured"),
+      await payments.recordProviderCheck(randomUUID(), [
+        live(o, paymentId(), "captured"),
+      ]),
     ).toEqual(refused("attempt_not_found"));
     expect(await counts()).toEqual(before.counts);
     expect(await orderRow(o.id)).toEqual(before.order);
@@ -1859,3 +1948,604 @@ open("0005 — order_confirmation_view: the read path of /order/[token]", () => 
     expect(confirmed.ok && confirmed.value?.confirmed_at).toBeInstanceOf(Date);
   });
 });
+
+// --- 0006_payment_evidence (the independent review's round 1) ----------------------------------------------------
+
+describe("0006_payment_evidence — the replaced signatures are gone", () => {
+  it("the three-argument ledger step and provider check answer no function — to the server role too — and write nothing", async () => {
+    const before = await counts();
+    const ledger = await privileged.rpc("payment_record_event", {
+      p_event_id: eventIdOf(),
+      p_event_type: CAPTURED,
+      p_payload: { entity: "event" },
+    });
+    expect(ledger.error?.code).toBe("PGRST202");
+    const check = await privileged.rpc("payment_record_provider_check", {
+      p_payment_attempt_id: NIL_UUID,
+      p_payment_id: "pay_PLACEHOLDER001",
+      p_provider_status: "captured",
+    });
+    expect(check.error?.code).toBe("PGRST202");
+    expect(await counts()).toEqual(before);
+  });
+});
+
+open(
+  "0006 — the ledger keeps the verified bytes, exactly and for good (finding 7)",
+  () => {
+    it("stores the delivery's bytes byte for byte beside their parse — spacing, escapes and a 20-digit integer included — and processes it as before", async () => {
+      const o = await newOrder();
+      const payload = eventPayload(CAPTURED, pay(o));
+      // Bytes no re-serialisation reproduces: spaces and a line break, escapes, the sender's key order and an integer
+      // beyond 2^53 that a parse rounds.
+      const text = `{ "entity" : "event",\n  "account_id":"acc_ITPLACEHOLDER01", "event": "${CAPTURED}", "note":"\\u20b9 a\\/b", "big": 12345678901234567890,\n  "contains": ["payment"], "payload": ${JSON.stringify(payload.payload)}, "created_at": ${String(payload.created_at)} }`;
+      const raw = new TextEncoder().encode(text);
+      const d = await deliverPayload(
+        CAPTURED,
+        JSON.parse(text) as Row,
+        eventIdOf(),
+        raw,
+      );
+      expect([d.outcome, d.replayed]).toEqual(["confirmed", false]);
+      expect(await standing(o.id)).toEqual(CONFIRMED);
+      // The bytes, exactly; PostgREST answers a bytea as `\x` and lower-case hex.
+      expect(await rawBodyOf(d.row)).toBe(byteaHex(raw));
+      // The parse is the processing copy: it keeps neither the spacing nor the 20 digits.
+      const event = await eventRow(d.row);
+      expect(event.payload).toMatchObject({ event: CAPTURED, note: "₹ a/b" });
+      expect(JSON.stringify(event.payload)).not.toContain(
+        "12345678901234567890",
+      );
+    });
+
+    it("keeps them immutable: changing or clearing raw_body is refused with the row unchanged; the same event in other bytes keeps the first bytes; other content keeps its own", async () => {
+      const o = await newOrder();
+      const d = await confirm(o);
+      const stored = await rawBodyOf(d.row);
+      expect(stored).toBe(byteaHex(d.raw));
+      for (const change of [byteaHex(bytesOf({ entity: "forged" })), null]) {
+        const update = await privileged
+          .from("provider_events")
+          .update({ raw_body: change })
+          .eq("id", d.row)
+          .select("id");
+        // The server role holds UPDATE here, so the change reaches the trigger: its own message, not a grant's.
+        expect(update.error?.code).toBe("42501");
+        expect(update.error?.message ?? "").toContain(
+          "ledger fields are immutable",
+        );
+        expect(await rawBodyOf(d.row)).toBe(stored);
+      }
+      // The same id, type and content in other bytes is the same event again: the first delivery's bytes stay.
+      const respaced = new TextEncoder().encode(
+        `${JSON.stringify(d.payload, null, 2)}\n`,
+      );
+      expect(
+        await payments.recordEvent(d.eventId, CAPTURED, d.payload, respaced),
+      ).toEqual(
+        ok({
+          eventRowId: d.row,
+          inserted: false,
+          derived: false,
+          processingStatus: "processed",
+        }),
+      );
+      expect(await rawBodyOf(d.row)).toBe(stored);
+      // The same id with other content is stored beside it, with its own bytes.
+      const b = await newOrder();
+      const beside = await deliver(CAPTURED, pay(b), d.eventId);
+      expect(beside.recorded).toMatchObject({ inserted: true, derived: true });
+      expect(await rawBodyOf(beside.row)).toBe(byteaHex(beside.raw));
+    });
+
+    it("refuses a delivery without its bytes, with too few to be one or with more than the webhook accepts, and stores nothing", async () => {
+      const before = await counts();
+      for (const [label, raw] of [
+        ["no bytes", null],
+        ["an empty body", "\\x"],
+        ["one byte", "\\x7b"],
+        // One byte over 0006's bound — 262144, the webhook's own limit.
+        ["262145 bytes", byteaHex(new Uint8Array(262_145).fill(0x20))],
+      ] as const) {
+        const result = await privileged.rpc("payment_record_event", {
+          p_event_id: eventIdOf(),
+          p_event_type: CAPTURED,
+          p_payload: { entity: "event" },
+          p_raw_body: raw,
+        });
+        expect(result.error?.code, label).toBe("ZP001");
+      }
+      expect(await counts()).toEqual(before);
+    });
+  },
+);
+
+open(
+  "0006 — a signed event that contradicts a payment's recorded money is a review (finding 6)",
+  () => {
+    it("a matching authorisation, then a signed one for other money, then the matching capture: flagged and audited, never confirmed", async () => {
+      const o = await newOrder();
+      const fields = pay(o);
+      expect(await outcomeOf(AUTHORIZED, fields)).toBe("hold:authorized_only");
+      const before = await snapshot(o);
+      const recorded = await payRow(fields.id);
+      const more = o.total + BigInt(100);
+      const contradicting = await deliver(AUTHORIZED, {
+        ...fields,
+        amount: more,
+      });
+      await expectReview(
+        o,
+        "amount_mismatch",
+        before,
+        contradicting,
+        fields.id,
+      );
+      // The payment's row is left exactly as the first event wrote it; the audit row keeps what the event said.
+      expect(await payRow(fields.id)).toEqual(recorded);
+      expect(
+        (await audits(o.id, "payment.review.amount_mismatch"))[0].next,
+      ).toMatchObject({
+        payment: {
+          status: "authorized",
+          amount_paise: Number(more),
+          currency: "INR",
+        },
+      });
+      // The matching capture meets an order under a review that is not a hold: still no confirmation.
+      expect(await outcomeOf(CAPTURED, fields)).toBe(
+        "review:order_under_review",
+      );
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await outbox(o.id)).toEqual([]);
+      expect(await stages(o.id)).toEqual([0]);
+      expect(await audits(o.id, "payment.captured.%")).toEqual([]);
+      expect(await payRow(fields.id)).toMatchObject({ status: "captured" });
+    });
+
+    it("another currency on a repeated authorisation is currency_mismatch, with the row unchanged; the reverse order of arrival is never confirmed either", async () => {
+      const o = await newOrder();
+      const fields = pay(o);
+      await deliver(AUTHORIZED, fields);
+      const before = await snapshot(o);
+      const recorded = await payRow(fields.id);
+      const usd = await deliver(AUTHORIZED, { ...fields, currency: "USD" });
+      await expectReview(o, "currency_mismatch", before, usd, fields.id);
+      expect(await payRow(fields.id)).toEqual(recorded);
+      expect(await outcomeOf(CAPTURED, fields)).toBe(
+        "review:order_under_review",
+      );
+
+      const r = await newOrder();
+      const right = pay(r);
+      expect(
+        await outcomeOf(AUTHORIZED, {
+          ...right,
+          amount: r.total + BigInt(500),
+        }),
+      ).toBe("review:amount_mismatch");
+      expect(await outcomeOf(AUTHORIZED, right)).toBe("review:amount_mismatch");
+      expect(await outcomeOf(CAPTURED, right)).toBe(
+        "review:order_under_review",
+      );
+      expect(await standing(r.id)).toEqual(FLAGGED);
+      expect(await outbox(r.id)).toEqual([]);
+    });
+
+    it("a confirmed order meeting a capture of its payment for other money stays confirmed, is flagged, and keeps its one outbox row", async () => {
+      const o = await newOrder();
+      const fields = pay(o);
+      await confirm(o, fields);
+      const before = await snapshot(o);
+      const recorded = await payRow(fields.id);
+      const less = await deliver(CAPTURED, {
+        ...fields,
+        amount: o.total - BigInt(1),
+      });
+      await expectReview(o, "amount_mismatch", before, less, fields.id);
+      expect(await standing(o.id)).toEqual([
+        "captured",
+        "confirmed",
+        true,
+        null,
+        true,
+      ]);
+      expect(await outbox(o.id)).toHaveLength(1);
+      expect(await payRow(fields.id)).toEqual(recorded);
+    });
+
+    it("a failed event's money is judged on neither path: it stays stale and changes nothing; same-money repeats stay silent", async () => {
+      const o = await newOrder();
+      const fields = pay(o);
+      await deliver(AUTHORIZED, fields);
+      const before = await snapshot(o);
+      expect(
+        await outcomeOf(FAILED, { ...fields, amount: o.total + BigInt(7) }),
+      ).toBe("stale_failed");
+      expect(await snapshot(o)).toEqual(before);
+
+      const c = await newOrder();
+      const paid = pay(c);
+      await confirm(c, paid);
+      const audited = await actions(c.id);
+      expect(await outcomeOf(CAPTURED, paid)).toBe("duplicate_capture");
+      expect(await outcomeOf(AUTHORIZED, paid)).toBe("stale_authorized");
+      expect(await outcomeOf(FAILED, paid)).toBe("stale_failed");
+      expect(await actions(c.id)).toEqual(audited);
+    });
+  },
+);
+
+open(
+  "0006 — the provider check sees every live payment and its money (findings 3 and 4)",
+  () => {
+    const checked = async (o: Order, shown: ObservedPayment[]) => {
+      const result = await payments.recordProviderCheck(o.paId, shown);
+      if (!result.ok) throw new Error(`check refused: ${result.refusal}`);
+      return result.value;
+    };
+    /** A review no capture clears: the flag without a hold, no hold raised now. */
+    const REVIEWED = {
+      held: false,
+      paymentStatus: "pending",
+      needsReview: true,
+      paymentHold: null,
+    };
+    /** A payment the provider showed, recorded as known: created, never verified, the observed amount. */
+    const known = (o: Order, amount: bigint) => ({
+      order_id: o.id,
+      provider_order_id: o.providerOrderId,
+      amount_paise: Number(amount),
+      currency: "INR",
+      status: "created",
+      signature_verified: false,
+      provider_order_state: null,
+    });
+
+    it("two live payments are a review no capture clears: both recorded as known, one audit row with both as observed — and every signed event of either stays a review", async () => {
+      const o = await newOrder();
+      const [a, b] = [paymentId(), paymentId()];
+      expect(
+        await checked(o, [live(o, a, "captured"), live(o, b, "authorized")]),
+      ).toEqual(REVIEWED);
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await audits(o.id)).toEqual([
+        {
+          actor_type: "system",
+          action: "payment.review.extra_payment",
+          entity_type: "order",
+          entity_id: o.id,
+          previous: {
+            payment_status: "pending",
+            needs_review: false,
+            payment_hold: null,
+          },
+          next: {
+            payment_status: "pending",
+            needs_review: true,
+            payment_hold: null,
+            payments: [
+              {
+                id: a,
+                status: "captured",
+                amount_paise: Number(o.total),
+                currency: "INR",
+              },
+              {
+                id: b,
+                status: "authorized",
+                amount_paise: Number(o.total),
+                currency: "INR",
+              },
+            ],
+          },
+          reason: "provider_check",
+          external_ref: a,
+        },
+      ]);
+      for (const id of [a, b])
+        expect(await payRow(id)).toEqual(known(o, o.total));
+      expect(await outbox(o.id)).toEqual([]);
+      // The same answer again changes nothing.
+      const before = await counts();
+      expect(
+        await checked(o, [live(o, a, "captured"), live(o, b, "authorized")]),
+      ).toEqual(REVIEWED);
+      expect(await counts()).toEqual(before);
+      // The signed events, all in time: none confirms, none queues work.
+      expect(await outcomeOf(CAPTURED, pay(o, { id: a }))).toBe(
+        "review:extra_payment",
+      );
+      expect(await outcomeOf(AUTHORIZED, pay(o, { id: b }))).toBe(
+        "review:extra_payment",
+      );
+      expect(await outcomeOf(CAPTURED, pay(o, { id: b }))).toBe(
+        "review:extra_payment",
+      );
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await outbox(o.id)).toEqual([]);
+      expect(await stages(o.id)).toEqual([0]);
+    });
+
+    it("over a hold raised for one of them, the review replaces the hold — and the hold's own capture no longer confirms", async () => {
+      const o = await newOrder();
+      const [a, b] = [paymentId(), paymentId()];
+      expect(await checked(o, [live(o, a, "captured")])).toEqual({
+        held: true,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: "capture_unverified",
+      });
+      expect(
+        await checked(o, [live(o, a, "captured"), live(o, b, "authorized")]),
+      ).toEqual(REVIEWED);
+      expect(await actions(o.id)).toEqual([
+        "payment.hold.capture_unverified",
+        "payment.review.extra_payment",
+      ]);
+      expect((await audits(o.id, "payment.review.%"))[0].previous).toEqual({
+        payment_status: "pending",
+        needs_review: true,
+        payment_hold: "capture_unverified",
+      });
+      expect(await paymentRowCount(o.id)).toBe(3);
+      expect(await outcomeOf(CAPTURED, pay(o, { id: a }))).toBe(
+        "review:extra_payment",
+      );
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await outbox(o.id)).toEqual([]);
+    });
+
+    it("a payment id another order holds is refused, and nothing of the call is kept — not even the row of a payment listed before it", async () => {
+      const holder = await newOrder();
+      // Made before the held id, so it sorts first: its row would be written before the conflict is found.
+      const listedFirst = paymentId();
+      const taken = pay(holder);
+      await deliver(AUTHORIZED, taken);
+      const o = await newOrder();
+      const before = { counts: await counts(), order: await orderRow(o.id) };
+      expect(
+        await payments.recordProviderCheck(o.paId, [
+          live(o, listedFirst, "captured"),
+          live(o, taken.id, "authorized"),
+        ]),
+      ).toEqual(refused("payment_conflict"));
+      expect(await counts()).toEqual(before.counts);
+      expect(await orderRow(o.id)).toEqual(before.order);
+      expect(await payRow(listedFirst)).toBeNull();
+      expect(await payRow(taken.id)).toMatchObject({ order_id: holder.id });
+    });
+
+    it("one authorised payment for one paisa less is amount_mismatch: the observed money kept on its row and in its audit row — and a later matching capture is still a review", async () => {
+      const o = await newOrder();
+      const id = paymentId();
+      const short = o.total - BigInt(1);
+      expect(
+        await checked(o, [live(o, id, "authorized", { amount: short })]),
+      ).toEqual(REVIEWED);
+      expect(await audits(o.id)).toMatchObject([
+        {
+          action: "payment.review.amount_mismatch",
+          reason: "provider_check",
+          external_ref: id,
+          next: {
+            payments: [
+              {
+                id,
+                status: "authorized",
+                amount_paise: Number(short),
+                currency: "INR",
+              },
+            ],
+          },
+        },
+      ]);
+      expect(await payRow(id)).toEqual(known(o, short));
+      expect(await outcomeOf(CAPTURED, pay(o, { id }))).toBe(
+        "review:order_under_review",
+      );
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await outbox(o.id)).toEqual([]);
+      expect(await stages(o.id)).toEqual([0]);
+    });
+
+    it("a payment a verified return recorded keeps its row's amount when the check observes one paisa less for it: a review, and its audit row is the evidence", async () => {
+      const o = await newOrder();
+      const id = paymentId();
+      const returned = await payments.returnState(o.attemptHash, id);
+      expect(returned.ok && returned.value?.recorded).toBe(true);
+      const recorded = await payRow(id);
+      expect(recorded).toMatchObject({
+        amount_paise: Number(o.total),
+        status: "created",
+        signature_verified: true,
+      });
+      const short = o.total - BigInt(1);
+      expect(
+        await checked(o, [live(o, id, "authorized", { amount: short })]),
+      ).toEqual(REVIEWED);
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      // The row the verified return wrote is left exactly as it was; the observed amount is in the audit row only.
+      expect(await payRow(id)).toEqual(recorded);
+      expect(await audits(o.id, "payment.review.%")).toMatchObject([
+        {
+          action: "payment.review.amount_mismatch",
+          reason: "provider_check",
+          external_ref: id,
+          next: {
+            payments: [
+              {
+                id,
+                status: "authorized",
+                amount_paise: Number(short),
+                currency: "INR",
+              },
+            ],
+          },
+        },
+      ]);
+      expect(await paymentRowCount(o.id)).toBe(2);
+      expect(await outbox(o.id)).toEqual([]);
+    });
+
+    it("a captured payment in another currency is currency_mismatch: no payment row — its audit row keeps the currency", async () => {
+      const o = await newOrder();
+      const id = paymentId();
+      expect(
+        await checked(o, [live(o, id, "captured", { currency: "USD" })]),
+      ).toEqual(REVIEWED);
+      expect(await audits(o.id)).toMatchObject([
+        {
+          action: "payment.review.currency_mismatch",
+          next: {
+            payments: [
+              {
+                id,
+                status: "captured",
+                amount_paise: Number(o.total),
+                currency: "USD",
+              },
+            ],
+          },
+        },
+      ]);
+      expect(await payRow(id)).toBeNull();
+      expect(await paymentRowCount(o.id)).toBe(1);
+    });
+
+    it("one matching payment is still 0005's hold, its audit row now carrying the observed money; a mismatch over that hold replaces it", async () => {
+      const o = await newOrder();
+      const first = paymentId();
+      expect(await checked(o, [live(o, first, "authorized")])).toEqual({
+        held: true,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: "authorized_only",
+      });
+      expect(await audits(o.id)).toMatchObject([
+        {
+          action: "payment.hold.authorized_only",
+          reason: "provider_check",
+          external_ref: first,
+          next: {
+            needs_review: true,
+            payment_hold: "authorized_only",
+            payment: {
+              status: "authorized",
+              amount_paise: Number(o.total),
+              currency: "INR",
+            },
+          },
+        },
+      ]);
+      expect(
+        await checked(o, [
+          live(o, first, "authorized"),
+          live(o, paymentId(), "authorized", { amount: o.total + BigInt(1) }),
+        ]),
+      ).toEqual(REVIEWED);
+      // The money's reason comes before the count's.
+      expect(await actions(o.id)).toEqual([
+        "payment.hold.authorized_only",
+        "payment.review.amount_mismatch",
+      ]);
+    });
+
+    it("an order under another review, a confirmed order and an order no longer awaiting payment are left exactly as they are", async () => {
+      const reviewed = await newOrder();
+      expect(
+        await outcomeOf(
+          CAPTURED,
+          pay(reviewed, { amount: reviewed.total - BigInt(1) }),
+        ),
+      ).toBe("review:amount_mismatch");
+      const done = await newOrder();
+      await confirm(done);
+      const cancelled = await newOrder();
+      const cut = await privileged
+        .from("orders")
+        .update({ fulfilment_status: "cancelled" })
+        .eq("id", cancelled.id);
+      expect(cut.error).toBeNull();
+      for (const order of [reviewed, done, cancelled]) {
+        const before = {
+          counts: await counts(),
+          order: await orderRow(order.id),
+        };
+        const answer = await checked(order, [
+          live(order, paymentId(), "captured"),
+          live(order, paymentId(), "authorized"),
+        ]);
+        expect(answer.held).toBe(false);
+        expect(await counts()).toEqual(before.counts);
+        expect(await orderRow(order.id)).toEqual(before.order);
+      }
+    });
+
+    it("refuses an answer of the wrong shape before anything is read — and writes nothing", async () => {
+      const o = await newOrder();
+      const good = {
+        id: paymentId(),
+        status: "captured",
+        amount_paise: String(o.total),
+        currency: "INR",
+      };
+      const shapes: Array<[string, unknown]> = [
+        ["no payment", []],
+        ["an object, not a list", good],
+        ["a fifth key", [{ ...good, method: "upi" }]],
+        ["a failed payment", [{ ...good, status: "failed" }]],
+        ["an amount as a number", [{ ...good, amount_paise: Number(o.total) }]],
+        ["a zero amount", [{ ...good, amount_paise: "0" }]],
+        ["a lower-case currency", [{ ...good, currency: "inr" }]],
+        ["the same id twice", [good, { ...good, status: "authorized" }]],
+      ];
+      const before = await counts();
+      for (const [label, list] of shapes) {
+        const result = await privileged.rpc("payment_record_provider_check", {
+          p_payment_attempt_id: o.paId,
+          p_payments: list,
+        });
+        expect(result.error?.code, label).toBe("ZP001");
+      }
+      expect(await counts()).toEqual(before);
+      expect(await standing(o.id)).toEqual(PAYABLE);
+    });
+  },
+);
+
+open(
+  "0006 — what the customer-facing rules read from a cancelled order (finding 5)",
+  () => {
+    it("an order cancelled before it was paid for, its deadline ahead, reads as failed/closed — never the retry that offers checkout again", async () => {
+      const o = await newOrder();
+      const cut = await privileged
+        .from("orders")
+        .update({ fulfilment_status: "cancelled" })
+        .eq("id", o.id);
+      expect(cut.error).toBeNull();
+      const view = await payments.confirmationView(o.tokenHash);
+      if (!view.ok || view.value === null)
+        throw new Error("the order's view could not be read");
+      expect(view.value).toMatchObject({
+        payment_status: "pending",
+        fulfilment_status: "cancelled",
+        needs_review: false,
+      });
+      expect(view.value.expires_at).not.toBeNull();
+      expect(view.value.server_time.getTime()).toBeLessThan(
+        view.value.expires_at?.getTime() ?? 0,
+      );
+      expect(orderPageState(view.value)).toEqual({
+        state: "failed",
+        reason: "closed",
+      });
+      const read = await payments.returnState(o.attemptHash, null);
+      expect(read.ok && read.value).toMatchObject({
+        paymentStatus: "pending",
+        fulfilmentStatus: "cancelled",
+        needsReview: false,
+      });
+    });
+  },
+);

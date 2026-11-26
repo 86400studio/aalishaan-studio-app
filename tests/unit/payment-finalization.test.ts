@@ -34,8 +34,10 @@ import {
   privilegedPaymentStore,
 } from "@/lib/server/payments/client";
 import {
+  byteaHex,
   createPaymentStore,
   PAYMENT_REFUSALS,
+  type ObservedPayment,
 } from "@/lib/server/payments/store";
 
 /**
@@ -62,6 +64,8 @@ const read = (relative: string) =>
 const up = read("supabase/migrations/0005_payment_finalization.sql");
 const down = read("supabase/rollbacks/0005_payment_finalization.down.sql");
 const downLower = down.toLowerCase();
+/** 0006 replaces two of the five signatures and re-creates a third (tests/unit/payment-evidence.test.ts guards it). */
+const up6 = read("supabase/migrations/0006_payment_evidence.sql");
 
 /** The SQL without its comments; lines split on LF or CRLF. */
 function statementsOnly(sql: string): string {
@@ -654,6 +658,15 @@ describe("createPaymentStore — the database adapter", () => {
   const EVENT_ROW = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
   const PA_ID = "9b2d6c1e-5f44-4c0a-8a51-0c7f1e9d2a10";
   const HASH = "a".repeat(64);
+  /** A verified delivery's bytes: what the webhook hands the ledger step beside their parse. */
+  const BYTES = new TextEncoder().encode('{"entity":"event"}');
+  /** One live payment as the provider check hands it on: the provider's id, status and observed money. */
+  const LIVE: ObservedPayment = {
+    id: "pay_PLACEHOLDER0001",
+    status: "captured",
+    amountPaise: BigInt(4200000),
+    currency: "INR",
+  };
 
   const RETURN_STATE = {
     order_number: "AS-1001",
@@ -720,11 +733,24 @@ describe("createPaymentStore — the database adapter", () => {
   it("calls one function per method, with the migration's own argument names", async () => {
     const rpc = answering(null);
     const store = createPaymentStore(rpc);
-    await store.recordEvent("evt_1", "payment.captured", { entity: "event" });
+    await store.recordEvent(
+      "evt_1",
+      "payment.captured",
+      { entity: "event" },
+      BYTES,
+    );
     await store.processEvent(EVENT_ROW);
     await store.returnState(HASH, "pay_PLACEHOLDER0001");
     await store.returnState(HASH, null);
-    await store.recordProviderCheck(PA_ID, "pay_PLACEHOLDER0001", "captured");
+    await store.recordProviderCheck(PA_ID, [
+      LIVE,
+      {
+        id: "pay_PLACEHOLDER0002",
+        status: "authorized",
+        amountPaise: BigInt(4199999),
+        currency: "USD",
+      },
+    ]);
     await store.confirmationView(HASH);
     expect(rpc.mock.calls).toEqual([
       [
@@ -733,6 +759,8 @@ describe("createPaymentStore — the database adapter", () => {
           p_event_id: "evt_1",
           p_event_type: "payment.captured",
           p_payload: { entity: "event" },
+          // bytea's hex input: exactly the bytes given, never their parse re-serialised.
+          p_raw_body: `\\x${Buffer.from(BYTES).toString("hex")}`,
         },
       ],
       ["payment_process_event", { p_event: EVENT_ROW }],
@@ -748,15 +776,60 @@ describe("createPaymentStore — the database adapter", () => {
         "payment_record_provider_check",
         {
           p_payment_attempt_id: PA_ID,
-          p_payment_id: "pay_PLACEHOLDER0001",
-          p_provider_status: "captured",
+          // Every live payment, in the order given, its money as observed — exact paise as decimal strings.
+          p_payments: [
+            {
+              id: "pay_PLACEHOLDER0001",
+              status: "captured",
+              amount_paise: "4200000",
+              currency: "INR",
+            },
+            {
+              id: "pay_PLACEHOLDER0002",
+              status: "authorized",
+              amount_paise: "4199999",
+              currency: "USD",
+            },
+          ],
         },
       ],
       ["order_confirmation_view", { p_token_hash: HASH }],
     ]);
-    // The argument names are the ones the SQL declares.
-    for (const [, args] of rpc.mock.calls)
-      for (const name of Object.keys(args)) expect(code).toContain(name);
+    // The argument names are the ones the function's latest definition declares: 0006 replaced the ledger step and
+    // the provider check, 0005 holds the rest.
+    const latest: Record<string, string> = {
+      payment_record_event: up6,
+      payment_process_event: up6,
+      payment_record_provider_check: up6,
+      payment_return_state: up,
+      order_confirmation_view: up,
+    };
+    for (const [name, args] of rpc.mock.calls) {
+      const sql = latest[name];
+      const head = sql.indexOf(`create or replace function public.${name}(`);
+      expect(head, name).toBeGreaterThan(0);
+      const signature = sql.slice(head, sql.indexOf(")", head));
+      expect(Object.keys(args).sort(), name).toEqual(
+        [...signature.matchAll(/\b(p_\w+)\s+\w+/g)].map((m) => m[1]).sort(),
+      );
+    }
+  });
+
+  it("hands the ledger step exactly the bytes it was given — a view into a larger buffer included — as bytea hex", async () => {
+    const backing = new TextEncoder().encode('xx{"a": 1,\n "b":"\\u20b9"}yy');
+    const view = backing.subarray(2, backing.length - 2);
+    expect(byteaHex(view)).toBe(
+      `\\x${Buffer.from('{"a": 1,\n "b":"\\u20b9"}', "utf8").toString("hex")}`,
+    );
+    expect(byteaHex(new Uint8Array([0, 15, 255]))).toBe("\\x000fff");
+    const rpc = answering(null);
+    await createPaymentStore(rpc).recordEvent(
+      "evt_1",
+      "payment.captured",
+      { a: 1 },
+      view,
+    );
+    expect(rpc.mock.calls[0][1].p_raw_body).toBe(byteaHex(view));
   });
 
   it("parses each answer into the server's own shape — exact paise and the database's timestamps", async () => {
@@ -768,7 +841,7 @@ describe("createPaymentStore — the database adapter", () => {
           derived: true,
           processing_status: "received",
         }),
-      ).recordEvent("evt_1", "payment.captured", {}),
+      ).recordEvent("evt_1", "payment.captured", {}, BYTES),
     ).toEqual({
       ok: true,
       value: {
@@ -817,7 +890,7 @@ describe("createPaymentStore — the database adapter", () => {
           needs_review: true,
           payment_hold: "authorized_only",
         }),
-      ).recordProviderCheck(PA_ID, "pay_PLACEHOLDER0001", "authorized"),
+      ).recordProviderCheck(PA_ID, [{ ...LIVE, status: "authorized" }]),
     ).toEqual({
       ok: true,
       value: {
@@ -851,7 +924,9 @@ describe("createPaymentStore — the database adapter", () => {
       value: null,
     });
     // These three functions never answer NULL: a NULL is not a guess at success.
-    expect(await store.recordEvent("evt_1", "payment.captured", {})).toEqual({
+    expect(
+      await store.recordEvent("evt_1", "payment.captured", {}, BYTES),
+    ).toEqual({
       ok: false,
       refusal: "unavailable",
     });
@@ -859,9 +934,10 @@ describe("createPaymentStore — the database adapter", () => {
       ok: false,
       refusal: "unavailable",
     });
-    expect(
-      await store.recordProviderCheck(PA_ID, "pay_PLACEHOLDER0001", "captured"),
-    ).toEqual({ ok: false, refusal: "unavailable" });
+    expect(await store.recordProviderCheck(PA_ID, [LIVE])).toEqual({
+      ok: false,
+      refusal: "unavailable",
+    });
   });
 
   it.each([
@@ -882,14 +958,10 @@ describe("createPaymentStore — the database adapter", () => {
     async (sqlstate, refusal) => {
       const store = createPaymentStore(failing(sqlstate));
       const results = [
-        await store.recordEvent("evt_1", "payment.captured", {}),
+        await store.recordEvent("evt_1", "payment.captured", {}, BYTES),
         await store.processEvent(EVENT_ROW),
         await store.returnState(HASH, null),
-        await store.recordProviderCheck(
-          PA_ID,
-          "pay_PLACEHOLDER0001",
-          "captured",
-        ),
+        await store.recordProviderCheck(PA_ID, [LIVE]),
         await store.confirmationView(HASH),
       ];
       for (const result of results)
@@ -923,7 +995,7 @@ describe("createPaymentStore — the database adapter", () => {
   >([
     [
       "an unknown processing status",
-      (store) => store.recordEvent("evt_1", "payment.captured", {}),
+      (store) => store.recordEvent("evt_1", "payment.captured", {}, BYTES),
       {
         event: EVENT_ROW,
         inserted: true,
@@ -933,7 +1005,7 @@ describe("createPaymentStore — the database adapter", () => {
     ],
     [
       "an event id that is not a uuid",
-      (store) => store.recordEvent("evt_1", "payment.captured", {}),
+      (store) => store.recordEvent("evt_1", "payment.captured", {}, BYTES),
       {
         event: "1",
         inserted: true,
@@ -981,8 +1053,7 @@ describe("createPaymentStore — the database adapter", () => {
     ],
     [
       "a held flag that is not a boolean",
-      (store) =>
-        store.recordProviderCheck(PA_ID, "pay_PLACEHOLDER0001", "captured"),
+      (store) => store.recordProviderCheck(PA_ID, [LIVE]),
       {
         held: "yes",
         payment_status: "pending",
@@ -1014,12 +1085,22 @@ describe("privilegedPaymentStore — only the order page's read is bounded (src/
     if (store === null) return;
     const uuid = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
     await store.confirmationView("a".repeat(64));
-    await store.recordEvent("evt_placeholder001", "payment.captured", {
-      entity: "event",
-    });
+    await store.recordEvent(
+      "evt_placeholder001",
+      "payment.captured",
+      { entity: "event" },
+      new TextEncoder().encode('{"entity":"event"}'),
+    );
     await store.processEvent(uuid);
     await store.returnState("b".repeat(64), "pay_PLACEHOLDER0001");
-    await store.recordProviderCheck(uuid, "pay_PLACEHOLDER0001", "captured");
+    await store.recordProviderCheck(uuid, [
+      {
+        id: "pay_PLACEHOLDER0001",
+        status: "captured",
+        amountPaise: BigInt(4200000),
+        currency: "INR",
+      },
+    ]);
     expect(
       fakeClient.calls.map((call) => [call.name, call.signal !== null]),
     ).toEqual([

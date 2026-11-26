@@ -181,7 +181,9 @@ export function resumeStep(result: CheckoutActionResult): CheckoutStep {
     case "expired":
       return notice("expired", { forget: true });
     // The line only: the customer has not asked to pay for that order on this page, so the form stays usable — a
-    // pay press is a new attempt with a new key, never that order.
+    // pay press is a new attempt with a new key, never that order. (S1.7: an order under review beside a payment on
+    // record, or one the provider has just shown a live payment for, is never `held` — it is `confirming`, which
+    // takes the button away.)
     case "held":
       return notice("held");
     case "invalid":

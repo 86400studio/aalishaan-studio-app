@@ -1400,12 +1400,14 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
     expect(timer).toContain("void endHold(current);");
     expect(timer).toContain("setTimeout(() => onDeadline(hold), remaining)");
     expect(timer).not.toMatch(/forget\(|setNotice|announce|releaseExpired/);
-    // endHold: only a hold whose window was never opened is released on the page's own clock; any other asks.
+    // endHold asks the server first, whether or not this page opened a window for the hold: a hold found after a
+    // reload starts unopened though its order's window may have taken a payment (the review of 2026-11-26, finding
+    // 2). Nothing is released on the page's own clock.
     const end = between("const endHold = async (", "const reopen = async (");
     expect(end).toMatch(
-      /if \(!target\.opened\) \{\s*releaseExpired\(\);\s*return;\s*\}\s*const step = await askAfterWindow\(target\);/,
+      /const endHold = async \(target: CheckoutHold\) => \{\s*const step = await askAfterWindow\(target\);/,
     );
-    expect(end).not.toMatch(/forget\(|openWindow\(/);
+    expect(end).not.toMatch(/forget\(|openWindow\(|releaseExpired|\.opened/);
     // A launch the server still gives holds the page again and opens nothing.
     expect(end).toContain("attemptKeys.markOpened();");
     // A re-open past the deadline is the deadline's question.
@@ -1421,8 +1423,13 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
     );
     expect(ask).toContain("step = UNCERTAIN_STEP;");
     expect(ask).not.toContain("UNAVAILABLE_STEP");
-    // releaseExpired is called only where no window was opened for the hold.
-    expect(form.match(/releaseExpired\(\)/g)).toHaveLength(2);
+    // releaseExpired is called in one place only: a launch the server has just given that is already past its
+    // deadline as its first window is to open (openWindow) — never at a deadline, a re-open or a press.
+    expect(form.match(/releaseExpired\(\)/g)).toHaveLength(1);
+    const open = between("const openWindow = (", "const carryOut = (");
+    expect(open).toMatch(
+      /const openWindow = \(target: CheckoutHold\) => \{\s*if \(holdExpired\(target, Date\.now\(\)\)\) \{\s*releaseExpired\(\);\s*return;\s*\}/,
+    );
     // One question at a time: the deadline asks nothing while a press is asking (round 2 of the builder's review).
     expect(timer.indexOf("if (pressing.current) return;")).toBeGreaterThan(0);
     expect(timer.indexOf("if (pressing.current) return;")).toBeLessThan(
@@ -1457,6 +1464,95 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
     expect(press.slice(guard, press.indexOf("if (hold !== null)"))).toMatch(
       /if \(asking !== null\) \{[\s\S]*void asking\.then\(release, release\);\s*return;\s*\}/,
     );
+    // A press on a held order: past its deadline — opened or not — it is the deadline's question (reopen →
+    // endHold); before it, the first opening follows the server's launch directly (pinned on the Preview by
+    // tests/e2e/checkout.spec.ts: "re-opening sends nothing to the server" after a reload).
+    expect(press).toMatch(
+      /if \(hold\.opened \|\| holdExpired\(hold, Date\.now\(\)\)\) void reopen\(hold\);\s*else openWindow\(hold\);/,
+    );
+    expect(press).not.toContain("releaseExpired");
+    // The hold a reload restores is not marked opened: its first press still opens the window without a question.
+    const restore = between(
+      "const question = settleResume(",
+      "storedQuestion.current = question;",
+    );
+    expect(restore).toContain(
+      "attemptKeys.hold(step.launch, null, Date.now());",
+    );
+    expect(restore).not.toContain("markOpened");
+  });
+
+  it("pins the answer mappings of the reviewer's case: after a reload's launch, a deadline answer of confirming — with or without the order's link — keeps the key and the hold and leaves no pay button (S1.7, finding 2)", async () => {
+    // A pin of the answer mappings only, built from the page's own framework-free parts in the order
+    // ./checkout-form.tsx runs them: the stored key, the load-time question, the restored hold, the deadline's
+    // question. It is not finding 2's regression test: the wiring where finding 2 was — endHold asking the server at
+    // the deadline, and a press after it going through the same question (onSubmit → reopen → endHold) — is proved
+    // by the source pins above and by tests/e2e/checkout.spec.ts ("S1.7 — the page's own clock decides nothing: …").
+    const stored = "s".repeat(43);
+    const ORDER_PAGE = `/order/${"t".repeat(43)}`;
+    const { storage, data } = fakeStorage({ [ATTEMPT_STORAGE_KEY]: stored });
+    const keys = createAttemptKeys({
+      storage: () => storage,
+      fillRandom: counterRandom(),
+    });
+    const asked: string[] = [];
+    const answers: CheckoutActionResult[] = [
+      // On load: Razorpay listed nothing live — the order is offered again (clear).
+      { status: "launch", launch: LAUNCH },
+      // At the deadline: a payment from the window opened before the reload has been captured meanwhile.
+      {
+        status: "confirming",
+        order_number: "AS-1001",
+        order_path: ORDER_PAGE,
+      },
+      { status: "confirming", order_number: "AS-1001", order_path: null },
+    ];
+    const resume = (key: string) => async () => {
+      asked.push(key);
+      const answer = answers.shift();
+      if (answer === undefined) throw new Error("asked once too often");
+      return answer;
+    };
+
+    // The load: the question by the stored key; its launch holds the page — unopened, as a reload leaves it.
+    const key = keys.storedKey();
+    expect(key).toBe(stored);
+    const onLoad = await settleResume(
+      resume(stored),
+      () => false,
+      async () => {},
+    );
+    expect(onLoad).toEqual({ do: "launch", launch: LAUNCH });
+    const received = 1_000;
+    keys.hold(LAUNCH, null, received);
+    const restored = keys.held();
+    expect(restored).toMatchObject({ attemptKey: stored, opened: false });
+
+    // The deadline passes on the page's clock. The page asks — it never ends the hold on its own clock.
+    if (restored === null) throw new Error("no hold");
+    expect(holdExpired(restored, received + LAUNCH.expires_in_ms)).toBe(true);
+    const ask = resume(restored.attemptKey ?? "");
+    for (const expected of [
+      { do: "order", path: ORDER_PAGE },
+      {
+        do: "notice",
+        notice: { id: "confirming", orderNumber: "AS-1001" },
+        forget: false,
+        recheckBag: false,
+        block: true,
+      },
+    ]) {
+      const step = afterWindowStep(await settleSubmit(ask, ask));
+      expect(step).toEqual(expected);
+      // Neither answer forgets the attempt or offers a payment: the key and the hold stay, and nothing can mint a
+      // new key — a pay press needs the hold gone (the form is locked while it stands).
+      expect(step.do === "notice" && step.forget).toBe(false);
+      expect(data.get(ATTEMPT_STORAGE_KEY)).toBe(stored);
+      expect(keys.held()).toEqual(restored);
+      expect(keys.slot()).toBeNull();
+    }
+    // Every question was the attempt's own key, and nothing was submitted.
+    expect(asked).toEqual([stored, stored, stored]);
   });
 
   it("without JavaScript the form is hidden behind the no-JavaScript line, as the frozen page's <noscript> style does", () => {

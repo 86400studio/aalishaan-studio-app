@@ -883,7 +883,7 @@ test.describe("S1.6 — the checkout page", () => {
     expect(policyRefusals(consoleErrors)).toEqual([]);
   });
 
-  test("S1.7 — once a window was opened, the page's own clock decides nothing: at the hold's deadline it asks the server once, and a press while a reload's question is out sends nothing", async ({
+  test("S1.7 — the page's own clock decides nothing: at a hold's deadline — opened on this page or restored by a reload — it asks the server once, and a press while a reload's question is out sends nothing", async ({
     page,
     target,
   }, testInfo) => {
@@ -903,7 +903,8 @@ test.describe("S1.6 — the checkout page", () => {
       await expect(razorpayFrame(page)).toBeHidden();
       return;
     }
-    test.setTimeout(150_000);
+    // One submission, a reload with its question, and two deadline questions (S1.7, the review's finding 2).
+    test.setTimeout(180_000);
     const { pageErrors, consoleErrors } = watchErrors(page);
     const bodies: string[] = [];
     page.on("request", (request) => {
@@ -976,6 +977,36 @@ test.describe("S1.6 — the checkout page", () => {
     });
     expect(submissions, "nothing was submitted").toBe(0);
     await page.unroute("**/checkout");
+
+    // S1.7 — the review of 2026-11-26, finding 2: the hold the reload restored was never opened on THIS page, yet its
+    // order's window was opened before the reload and may have taken a payment. At the restored hold's deadline the
+    // page asks the server once, by the attempt key alone, and carries out the answer — never "the time has passed"
+    // on its own clock, and the attempt key stays. (The server's deadline is the database's and has not passed, so
+    // the answer holds the page again.)
+    const kept = await page.evaluate(
+      (key) => window.sessionStorage.getItem(key),
+      ATTEMPT_KEY,
+    );
+    expect(kept).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    bodies.length = 0;
+    await page.clock.fastForward("01:01:00");
+    await expect.poll(() => bodies.length, { timeout: 30_000 }).toBe(1);
+    expect(bodies[0]).toMatch(/"attempt_key":"[A-Za-z0-9_-]{43}"/);
+    expect(bodies[0]).not.toContain("turnstile_token");
+    await expect(payButton(page)).toHaveText("Continue to payment", {
+      timeout: 30_000,
+    });
+    await expect(status(page)).not.toHaveText(EXPIRED);
+    await expect(status(page)).not.toHaveText(UNAVAILABLE);
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        ATTEMPT_KEY,
+      ),
+      "the attempt key is kept",
+    ).toBe(kept);
+    expect(await openedWindows(page), "no window opens by itself").toEqual([]);
+    expect(bodies, "one question, no submission").toHaveLength(1);
     expect(pageErrors).toEqual([]);
     expect(policyRefusals(consoleErrors)).toEqual([]);
   });

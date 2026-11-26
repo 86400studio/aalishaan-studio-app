@@ -29,8 +29,10 @@ import type { PaymentStore } from "./store";
  *      or forged signature therefore writes NOTHING: no ledger row, so a forged delivery can never hold the id of
  *      the genuine one (0002: `signature_ok` is immutable, the id is unique, no row can be deleted);
  *   6. the same bytes parsed as an event (an `event` type and a `payload`) — else `400`, still nothing stored;
- *   7. **the ledger first** (`payment_record_event`): the delivery as it arrived, under the provider's event id
- *      (`x-razorpay-event-id`; a digest of the body where the header is absent or malformed);
+ *   7. **the ledger first** (`payment_record_event`): exactly the bytes that were verified — the evidence of what
+ *      Razorpay sent (0006 `provider_events.raw_body`) — beside their parse, the copy the database processes
+ *      (`payload`, which jsonb normalises), under the provider's event id (`x-razorpay-event-id`; a digest of the
+ *      body where the header is absent or malformed);
  *   8. **then its effect** (`payment_process_event`): one database transaction that reads the ledger row alone and
  *      marks it in the same transaction.
  *
@@ -114,8 +116,9 @@ async function readBoundedBytes(
 }
 
 /**
- * The verified bytes as a JSON object, or null. Decoded strictly: bytes that are not UTF-8 are not an event, and
- * nothing is re-serialised — the object stored is the one these bytes parse to.
+ * The verified bytes as a JSON object, or null. Decoded strictly: bytes that are not UTF-8 are not an event. The
+ * object is the processing copy only — JSON.parse and jsonb do not keep the bytes (whitespace, key order, escapes,
+ * number text), so the ledger is given the bytes themselves beside it.
  */
 function parseVerifiedBody(bytes: Uint8Array): Record<string, unknown> | null {
   let parsed: unknown;
@@ -135,7 +138,8 @@ function parseVerifiedBody(bytes: Uint8Array): Record<string, unknown> | null {
  * The ledger id of a delivery: the provider's own (`x-razorpay-event-id`, the same on every retry and replay of an
  * event), or — where that header is absent or not of the expected shape — a digest of the verified bytes, so the
  * same bytes are the same event again. The header is not covered by the signature: the database keeps a delivery
- * whose id is already held by other content beside it, never over it (0005 `payment_record_event`).
+ * whose id is already held by other content beside it, never over it (`payment_record_event` — 0005, and 0006 with the
+ * bytes).
  */
 export function ledgerEventId(header: string | null, body: Uint8Array): string {
   if (header !== null && PROVIDER_EVENT_ID_PATTERN.test(header)) return header;
@@ -187,10 +191,12 @@ export async function handleRazorpayWebhook(
     return UNAVAILABLE();
   }
 
+  // The bytes the signature was verified over, exactly — not a re-serialisation of their parse.
   const recorded = await store.recordEvent(
     ledgerEventId(request.headers.get(EVENT_ID_HEADER), body),
     envelope.data.event,
     parsed,
+    body,
   );
   if (!recorded.ok) {
     deps.report(`[webhook] ledger refused (${recorded.refusal})`);

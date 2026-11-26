@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+import { resumeStep } from "@/components/checkout/outcome";
 import type { CheckoutActionResult } from "@/lib/schemas/checkout";
 import type { PaymentHold } from "@/lib/schemas/order-confirmation";
 import {
@@ -21,9 +22,11 @@ import {
 import type { PaymentsGate } from "@/lib/server/payments/config";
 import {
   checkProviderPayments,
+  livePaymentsOf,
   standingOf,
 } from "@/lib/server/payments/reconcile";
 import type {
+  ObservedPayment,
   PaymentRefusal,
   PaymentResult,
   PaymentStore,
@@ -47,10 +50,17 @@ import {
  *   - a payment window opens again only when the provider lists nothing or only failed payments. A captured or an
  *     authorised payment is recorded as a hold and answered `confirming`; a payment in flight or no usable answer is
  *     `uncertain`. Neither ever carries launch data, and neither confirms an order;
- *   - the provider is not asked when there is nothing to ask (a brand-new link, an expired or a held order);
+ *   - the provider is not asked when there is nothing to ask (a brand-new link, an expired or a held order — but a
+ *     review with no payment on record, on a linked attempt, is asked about again, read-only);
  *   - the order's link leaves the server only when a verified payment stands on record AND the token derived now is
  *     the one the order was issued with;
  *   - no answer and no log line carries a secret, the attempt key, the token salt or hash, or an upstream body.
+ * Since the independent review of 2026-11-26 (round 1): the read keeps each payment's observed amount and currency
+ * (finding 4), the check hands the database EVERY distinct live payment in one call (finding 3), an order under
+ * review beside a payment on record is "being confirmed" — never "held" beside a usable form (finding 1) — and a
+ * clear answer for an order whose fulfilment moved on is never a launch (finding 5). Since its re-review: a review the
+ * provider check raised (its payments known, never verified) is asked about again on every later load, read-only, and
+ * is never "held" beside a usable form while the provider lists a live payment.
  * Placeholder values only.
  */
 
@@ -93,8 +103,27 @@ const CUSTOMER = {
   vpa: "asha@exampleupi",
 };
 
-/** Payments as the read answers them. */
-const paid = (id: string, status: string): RazorpayPayment => ({ id, status });
+/** The order's stored amount: the checkout row's and the order's total. */
+const TOTAL = BigInt(4200000);
+/** Payments as the read answers them: the id, the status and the money the provider observed (the order's, here). */
+const paid = (
+  id: string,
+  status: string,
+  amountPaise: bigint = TOTAL,
+  currency = "INR",
+): RazorpayPayment => ({ id, status, amountPaise, currency });
+/** A live payment as the check hands it to the database. */
+const observed = ({
+  id,
+  status,
+  amountPaise,
+  currency,
+}: RazorpayPayment): ObservedPayment => ({
+  id,
+  status: status as ObservedPayment["status"],
+  amountPaise,
+  currency,
+});
 const CAP = paid("pay_PLACEHOLDERcap1", "captured");
 const AUT = paid("pay_PLACEHOLDERaut1", "authorized");
 const FAI = paid("pay_PLACEHOLDERfai1", "failed");
@@ -328,15 +357,21 @@ const SUBMISSION = {
 
 /** A payment as Razorpay lists it — with the customer's details, which the read must drop. */
 const listed = (payment: RazorpayPayment, extra: object = {}) => ({
-  ...payment,
+  id: payment.id,
+  status: payment.status,
   entity: "payment",
-  amount: 4200000,
-  currency: "INR",
+  amount: Number(payment.amountPaise),
+  currency: payment.currency,
   order_id: ORDER_ID,
   method: "upi",
   ...CUSTOMER,
   ...extra,
 });
+/** JSON that can carry a bigint (as its decimal digits), for looking inside an answer. */
+const textOf = (value: unknown) =>
+  JSON.stringify(value, (_key, v: unknown) =>
+    typeof v === "bigint" ? v.toString() : v,
+  );
 const many = (size: number) =>
   Array.from({ length: size }, (_, index) =>
     listed(paid(`pay_PLACEHOLDER${String(index).padStart(4, "0")}`, "failed")),
@@ -403,23 +438,44 @@ describe("fetchRazorpayOrderPayments — the read", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("answers the order's payments as id and status only — nothing of the customer, nothing of the credentials", async () => {
+  it("answers the order's payments as their id, status and observed money — nothing of the customer, nothing of the credentials", async () => {
     const outcome = await fetchRazorpayOrderPayments(
       ORDER_ID,
       CREDENTIALS,
       page([listed(FAI), listed(CAP)]),
     );
     expect(outcome).toStrictEqual(found(FAI, CAP));
-    const text = JSON.stringify(outcome);
+    if (outcome.outcome !== "found") throw new Error("not found");
+    for (const payment of outcome.payments)
+      expect(Object.keys(payment).sort()).toEqual([
+        "amountPaise",
+        "currency",
+        "id",
+        "status",
+      ]);
+    // Exact paise, as a bigint: the amount the provider observed, never a Number.
+    expect(outcome.payments[1].amountPaise).toBe(BigInt(4200000));
+    const text = textOf(outcome);
     for (const hidden of [
       ...Object.values(CUSTOMER),
       "upi",
-      "4200000",
       CREDENTIALS.keyId,
       CREDENTIALS.keySecret,
       BASIC,
     ])
       expect(text).not.toContain(hidden);
+  });
+
+  it("keeps the money the provider observed as it is — another amount or another currency is the database's to judge, not the read's", async () => {
+    const short = paid("pay_PLACEHOLDERsho1", "authorized", TOTAL - BigInt(1));
+    const dollars = paid("pay_PLACEHOLDERusd1", "captured", TOTAL, "USD");
+    expect(
+      await fetchRazorpayOrderPayments(
+        ORDER_ID,
+        CREDENTIALS,
+        page([listed(short), listed(dollars)]),
+      ),
+    ).toStrictEqual(found(short, dollars));
   });
 
   it("trusts a listing one short of the page: 99 payments are found, all of them", async () => {
@@ -471,6 +527,42 @@ describe("fetchRazorpayOrderPayments — the read", () => {
       page([listed(FAI), listed(CAP, { order_id: OTHER_ORDER })]),
     ],
     ["one item without an order", page([listed(FAI, { order_id: undefined })])],
+    // The money of every entry is read exactly, or the listing is not trusted at all (finding 4).
+    ["one item without an amount", page([listed(CAP, { amount: undefined })])],
+    [
+      "one item with a fractional amount",
+      page([listed(CAP, { amount: 4200000.5 })]),
+    ],
+    ["one item with a zero amount", page([listed(CAP, { amount: 0 })])],
+    ["one item with a negative amount", page([listed(CAP, { amount: -100 })])],
+    [
+      "one item with its amount as a string",
+      page([listed(CAP, { amount: "4200000" })]),
+    ],
+    [
+      "one item with an unsafe amount",
+      page([listed(CAP, { amount: 2 ** 53 })]),
+    ],
+    [
+      "one item with more than the money columns hold",
+      page([listed(CAP, { amount: 100000000001 })]),
+    ],
+    [
+      "one item without a currency",
+      page([listed(FAI, { currency: undefined })]),
+    ],
+    [
+      "one item with a lower-case currency",
+      page([listed(CAP, { currency: "inr" })]),
+    ],
+    [
+      "one item with a four-letter currency",
+      page([listed(CAP, { currency: "INRS" })]),
+    ],
+    [
+      "one item with its currency as a number",
+      page([listed(CAP, { currency: 356 })]),
+    ],
   ])(
     "is unavailable on %s — one request, never a partial list, nothing of the upstream body",
     async (_label, fetcher) => {
@@ -515,6 +607,67 @@ describe("standingOf — one standing per listing, strongest first", () => {
   it("an answer that could not be had is unavailable — never clear", () => {
     expect(standingOf(UNAVAILABLE)).toStrictEqual({ standing: "unavailable" });
   });
+
+  it("a listing that contradicts itself about a live payment — its id again with other facts — is unavailable, never a guess", () => {
+    for (const twin of [
+      paid(CAP.id, "authorized"),
+      paid(CAP.id, "failed"),
+      paid(CAP.id, "captured", TOTAL - BigInt(1)),
+      paid(CAP.id, "captured", TOTAL, "USD"),
+    ]) {
+      expect(standingOf(found(CAP, twin))).toStrictEqual({
+        standing: "unavailable",
+      });
+      expect(standingOf(found(twin, CAP))).toStrictEqual({
+        standing: "unavailable",
+      });
+    }
+    // The same payment listed twice with the same facts is one payment.
+    expect(standingOf(found(CAP, { ...CAP }))).toStrictEqual({
+      standing: "captured",
+      paymentId: CAP.id,
+    });
+  });
+});
+
+describe("livePaymentsOf — every distinct live payment, strongest first (finding 3)", () => {
+  const AUT2 = paid("pay_PLACEHOLDERaut2", "authorized");
+  const CAP2 = paid("pay_PLACEHOLDERcap2", "captured");
+
+  it.each<[string, RazorpayPayment[], RazorpayPayment[]]>([
+    ["none", [], []],
+    [
+      "failed, created and refunded only",
+      [FAI, CRE, paid(CAP.id, "refunded")],
+      [],
+    ],
+    ["one captured", [FAI, CAP], [CAP]],
+    ["one authorised", [AUT, CRE], [AUT]],
+    ["captured and authorised, in either order", [AUT, FAI, CAP], [CAP, AUT]],
+    ["two captured", [CAP, CAP2], [CAP, CAP2]],
+    ["two authorised", [AUT2, AUT], [AUT2, AUT]],
+    [
+      "all four, with the dead ones",
+      [AUT, FAI, CAP2, CRE, AUT2, CAP],
+      [CAP2, CAP, AUT, AUT2],
+    ],
+    ["the same payment twice, the same facts", [CAP, { ...CAP }], [CAP]],
+  ])("%s", (_label, listing, live) => {
+    expect(livePaymentsOf(listing)).toStrictEqual(live);
+  });
+
+  it("keeps each payment's observed money exactly as listed", () => {
+    const short = paid("pay_PLACEHOLDERsho1", "authorized", TOTAL - BigInt(1));
+    const dollars = paid("pay_PLACEHOLDERusd1", "captured", TOTAL, "USD");
+    expect(livePaymentsOf([short, dollars])).toStrictEqual([dollars, short]);
+  });
+
+  it("is null for a listing that contradicts itself about a live payment", () => {
+    expect(livePaymentsOf([CAP, paid(CAP.id, "authorized")])).toBeNull();
+    expect(livePaymentsOf([paid(AUT.id, "failed"), AUT])).toBeNull();
+    // A dead payment listed twice decides nothing about live money.
+    expect(livePaymentsOf([FAI, paid(FAI.id, "created")])).toStrictEqual([]);
+  });
 });
 
 describe("checkProviderPayments — the question and its durable result", () => {
@@ -542,11 +695,85 @@ describe("checkProviderPayments — the question and its durable result", () => 
       });
       expect(h.fetchPayments.mock.calls).toEqual([[ORDER_ID, CREDENTIALS]]);
       expect(h.store.recordProviderCheck.mock.calls).toEqual([
-        [PA_ID, payment.id, standing],
+        [PA_ID, [observed(payment)]],
       ]);
       expect(h.report).not.toHaveBeenCalled();
     },
   );
+
+  it.each<[string, RazorpayPayment[], RazorpayPayment[], string]>([
+    ["captured and authorised", [FAI, AUT, CAP], [CAP, AUT], "captured"],
+    [
+      "two captured",
+      [CAP, paid("pay_PLACEHOLDERcap2", "captured")],
+      [CAP, paid("pay_PLACEHOLDERcap2", "captured")],
+      "captured",
+    ],
+    [
+      "two authorised",
+      [AUT, CRE, paid("pay_PLACEHOLDERaut2", "authorized")],
+      [AUT, paid("pay_PLACEHOLDERaut2", "authorized")],
+      "authorized",
+    ],
+  ])(
+    "hands the database EVERY live payment in one call when the provider lists %s — never one id picked from the list",
+    async (_label, listing, live, standing) => {
+      const h = harness(found(...listing));
+      h.store.recordProviderCheck.mockResolvedValue(
+        ok({
+          held: false,
+          paymentStatus: "pending",
+          needsReview: true,
+          paymentHold: null,
+        }),
+      );
+      expect(await checkProviderPayments(ORDER, CREDENTIALS, h)).toStrictEqual({
+        standing,
+        paymentId: live[0].id,
+      });
+      expect(h.store.recordProviderCheck.mock.calls).toEqual([
+        [PA_ID, live.map(observed)],
+      ]);
+      expect(h.report).not.toHaveBeenCalled();
+    },
+  );
+
+  it("passes the observed money through unchanged — another amount or another currency is the database's to judge (finding 4)", async () => {
+    const short = paid("pay_PLACEHOLDERsho1", "authorized", TOTAL - BigInt(1));
+    const dollars = paid("pay_PLACEHOLDERusd1", "captured", TOTAL, "USD");
+    const h = harness(found(short, dollars));
+    h.store.recordProviderCheck.mockResolvedValue(
+      holdRecord("capture_unverified"),
+    );
+    await checkProviderPayments(ORDER, CREDENTIALS, h);
+    expect(h.store.recordProviderCheck.mock.calls).toEqual([
+      [
+        PA_ID,
+        [
+          {
+            id: dollars.id,
+            status: "captured",
+            amountPaise: TOTAL,
+            currency: "USD",
+          },
+          {
+            id: short.id,
+            status: "authorized",
+            amountPaise: TOTAL - BigInt(1),
+            currency: "INR",
+          },
+        ],
+      ],
+    ]);
+  });
+
+  it("records nothing for a listing that contradicts itself about a live payment: unavailable", async () => {
+    const h = harness(found(CAP, paid(CAP.id, "authorized")));
+    expect(await checkProviderPayments(ORDER, CREDENTIALS, h)).toStrictEqual({
+      standing: "unavailable",
+    });
+    expect(h.store.recordProviderCheck).not.toHaveBeenCalled();
+  });
 
   it.each([
     "unavailable",
@@ -707,7 +934,28 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
     ["confirmed meanwhile", CONFIRMED_ORDER, confirmed(ORDER_PATH)],
     ["put on a hold meanwhile", review("capture_unverified"), confirming(null)],
     ["flagged meanwhile", review(null), HELD],
+    // Finding 1: a review beside a payment on record is a payment being checked, never "held".
+    [
+      "flagged meanwhile beside a captured payment",
+      review(null, { captured: 1 }),
+      confirming(ORDER_PATH),
+    ],
     ["with no deadline", orderRead({ expiresAt: null }), HELD],
+    // Finding 5: an order whose fulfilment no longer awaits the payment is never payable — nor "expired".
+    ["cancelled meanwhile", orderRead({ fulfilmentStatus: "cancelled" }), HELD],
+    [
+      "put on a fulfilment hold meanwhile",
+      orderRead({ fulfilmentStatus: "on_hold" }),
+      HELD,
+    ],
+    [
+      "cancelled, and past its deadline",
+      orderRead({
+        fulfilmentStatus: "cancelled",
+        serverTime: new Date(EXPIRES_AT.getTime() + 1),
+      }),
+      HELD,
+    ],
   ])(
     "a clear provider answer for an order %s is what the order now is — never a launch",
     async (_label, order, expected) => {
@@ -745,7 +993,7 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
       // No verified signature stands on record (the provider's listing is not one): the link stays on the server.
       expect(result).toStrictEqual(confirming(null));
       expect(d.payments.recordProviderCheck.mock.calls).toEqual([
-        [PA_ID, payment.id, status],
+        [PA_ID, [observed(payment)]],
       ]);
       // The read carries no payment id: the provider's listing is never recorded as a verified return.
       expect(d.payments.returnState.mock.calls).toEqual([
@@ -881,8 +1129,8 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
     // No standing is kept in memory: each request asks the provider and records the same hold.
     expect(d.fetchPayments).toHaveBeenCalledTimes(2);
     expect(d.payments.recordProviderCheck.mock.calls).toEqual([
-      [PA_ID, CAP.id, "captured"],
-      [PA_ID, CAP.id, "captured"],
+      [PA_ID, [observed(CAP)]],
+      [PA_ID, [observed(CAP)]],
     ]);
   });
 
@@ -896,7 +1144,7 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
     expect(result).toStrictEqual(confirming(null));
     expect(d.fetchPayments.mock.calls).toEqual([[ORDER_ID, CREDENTIALS]]);
     expect(d.payments.recordProviderCheck.mock.calls).toEqual([
-      [PA_ID, AUT.id, "authorized"],
+      [PA_ID, [observed(AUT)]],
     ]);
     expectNoLaunch(result);
   });
@@ -942,7 +1190,7 @@ describe("the retry rule — when the provider is not asked", () => {
       const result = await resume();
       expect(result).toStrictEqual(confirming(null));
       expect(d.payments.recordProviderCheck.mock.calls).toEqual([
-        [PA_ID, payment.id, status],
+        [PA_ID, [observed(payment)]],
       ]);
       expectNoLaunch(result);
     },
@@ -973,7 +1221,23 @@ describe("the retry rule — when the provider is not asked", () => {
       review("authorized_only", { authorized: 1 }),
       confirming(ORDER_PATH),
     ],
-    ["an order under review without a hold", review(null), HELD],
+    // Finding 1: under review beside a payment on record — a capture stored after the deadline (late_capture), an
+    // authorised or a reported one — the order is being checked: its page, never a usable form.
+    [
+      "an order under review beside a captured payment (a late capture)",
+      review(null, { captured: 1 }),
+      confirming(ORDER_PATH),
+    ],
+    [
+      "an order under review beside an authorised payment",
+      review(null, { authorized: 1 }),
+      confirming(ORDER_PATH),
+    ],
+    [
+      "an order under review beside a reported payment",
+      review(null, { reported: 1 }),
+      confirming(ORDER_PATH),
+    ],
     ["a failed order", orderRead({ paymentStatus: "failed" }), HELD],
     ["an expired order", EXPIRED_ORDER, HELD],
     [
@@ -988,6 +1252,32 @@ describe("the retry rule — when the provider is not asked", () => {
       orderReads(ok(order));
       const result = await resume();
       expect(result).toStrictEqual(expected);
+      expect(d.payments.returnState.mock.calls).toEqual([
+        [attemptHash(KEY), null],
+      ]);
+      expectProviderNotAsked();
+      expectNoLaunch(result);
+    },
+  );
+
+  // Under review without a hold or a payment on record, an order whose attempt was never linked (an S1.6 anomaly
+  // closed for a person — a link conflict, a credentials refusal) has no provider order to ask about: held. The same
+  // review on a linked attempt asks the provider again (below: "a review the provider check raised, then a reload").
+  it.each<[string, Partial<AttemptState>]>([
+    [
+      "closed unknown",
+      { providerOrderState: "unknown", providerOrderId: null },
+    ],
+    ["closed failed", { providerOrderState: "failed", providerOrderId: null }],
+  ])(
+    "an order under review without a hold or a payment on record, its attempt %s, is held — the order is read once, the provider is not asked",
+    async (_label, attempt) => {
+      d.store.attemptState.mockResolvedValue(
+        ok({ ...LINKED, ...attempt, needsReview: true }),
+      );
+      orderReads(ok(review(null)));
+      const result = await resume();
+      expect(result).toStrictEqual(HELD);
       expect(d.payments.returnState.mock.calls).toEqual([
         [attemptHash(KEY), null],
       ]);
@@ -1021,6 +1311,198 @@ describe("the retry rule — when the provider is not asked", () => {
     expect(result).toStrictEqual(confirmed(ORDER_PATH));
     expectProviderNotAsked();
     expectNoLaunch(result);
+  });
+});
+
+describe("a review beside money is a payment being checked — never a usable form (the review of 2026-11-26, findings 1, 3 and 4)", () => {
+  it("a direct reload, before and after a late capture: both answers lead to the order's page, never to a form that can pay again", async () => {
+    // The order page's provider check held a reported payment; its signed capture is stored after the deadline: the
+    // finalizer records it captured, flags the order and drops the hold (0005: late_capture).
+    for (const order of [
+      review("capture_unverified", { reported: 1 }),
+      review(null, { captured: 1 }),
+    ]) {
+      d = doubles();
+      attemptIs(order);
+      orderReads(ok(order));
+      const result = await resume();
+      expect(result).toStrictEqual(confirming(ORDER_PATH));
+      // What the checkout page does with it on load: it leaves for the order's page — no notice beside a form.
+      expect(resumeStep(result)).toStrictEqual({
+        do: "order",
+        path: ORDER_PATH,
+      });
+      expectProviderNotAsked();
+      expectNoLaunch(result);
+      expect(d.store.createPendingOrder).not.toHaveBeenCalled();
+    }
+  });
+
+  it("without a link it can give (an order issued under another order-link secret), it is still 'being confirmed' — no pay button", async () => {
+    d.deriveToken.mockImplementation(deriveConfirmationToken);
+    const issuedElsewhere = deriveConfirmationToken("E".repeat(43), SALT);
+    const order = {
+      ...review(null, { captured: 1 }),
+      tokenHash: sha256(issuedElsewhere),
+    };
+    attemptIs(order);
+    orderReads(ok(order));
+    const result = await resume();
+    expect(result).toStrictEqual(confirming(null));
+    expect(resumeStep(result)).toMatchObject({
+      do: "notice",
+      notice: { id: "confirming" },
+      forget: false,
+      block: true,
+    });
+    expectNoLaunch(result);
+  });
+
+  it("a relaunch whose provider check finds a review already standing beside a captured payment answers confirming with its link", async () => {
+    providerLists(CAP);
+    d.payments.recordProviderCheck.mockResolvedValue(
+      ok({
+        held: false,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: null,
+      }),
+    );
+    orderReads(ok(review(null, { captured: 1 })));
+    const result = await resume();
+    expect(result).toStrictEqual(confirming(ORDER_PATH));
+    expectNoLaunch(result);
+  });
+
+  it.each<[string, RazorpayPayment[]]>([
+    ["two live payments", [CAP, AUT]],
+    [
+      "one authorised payment for one paisa less",
+      [paid("pay_PLACEHOLDERsho1", "authorized", TOTAL - BigInt(1))],
+    ],
+    [
+      "one captured payment in another currency",
+      [paid("pay_PLACEHOLDERusd1", "captured", TOTAL, "USD")],
+    ],
+  ])(
+    "a relaunch that finds %s records them all and answers confirming — the review the check raised is never 'held' beside a form",
+    async (_label, listing) => {
+      providerLists(FAI, ...listing);
+      // What 0006 answers for such a listing: a review no capture clears — the flag without a hold.
+      d.payments.recordProviderCheck.mockResolvedValue(
+        ok({
+          held: false,
+          paymentStatus: "pending",
+          needsReview: true,
+          paymentHold: null,
+        }),
+      );
+      // No verified signature stands on record: the provider check's rows are known, not verified.
+      orderReads(ok(review(null)));
+      const result = await resume();
+      expect(result).toStrictEqual(confirming(null));
+      expect(d.payments.recordProviderCheck.mock.calls).toEqual([
+        [PA_ID, livePaymentsOf(listing)?.map(observed)],
+      ]);
+      expect(resumeStep(result)).toMatchObject({ do: "notice", block: true });
+      expectNoLaunch(result);
+    },
+  );
+
+  // The re-review of round 1's fixes (2026-11-26, blocking): the provider check's review records its payments as
+  // known, never as verified, so no payment stands on record and the order's own read cannot say that money moved.
+  // Every later load of that order asks Razorpay again — read-only — and answers by what it lists now.
+  it.each<[string, () => unknown, CheckoutActionResult]>([
+    [
+      "lists the two live payments again: confirming",
+      () => providerLists(FAI, CAP, AUT),
+      confirming(null),
+    ],
+    [
+      "lists a captured payment: confirming",
+      () => providerLists(CAP),
+      confirming(null),
+    ],
+    [
+      "lists an authorised payment: confirming",
+      () => providerLists(AUT),
+      confirming(null),
+    ],
+    [
+      "lists a payment in flight: uncertain",
+      () => providerLists(FAI, CRE),
+      UNCERTAIN,
+    ],
+    [
+      "gives no usable answer: uncertain",
+      () => d.fetchPayments.mockResolvedValue(UNAVAILABLE),
+      UNCERTAIN,
+    ],
+    ["lists no live payment: held", () => providerLists(FAI), HELD],
+  ])(
+    "a review the provider check raised, then a reload: the provider is asked again — it %s — and nothing is written",
+    async (_label, listsNow, expected) => {
+      // As the review left the order: nothing on record (the reviewer's case), or a failed payment only — no money.
+      for (const left of [review(null), review(null, { failed: 1 })]) {
+        // The relaunch that raised it: two live payments, a review no capture clears (0006) — "being confirmed".
+        d = doubles();
+        providerLists(FAI, CAP, AUT);
+        d.payments.recordProviderCheck.mockResolvedValue(
+          ok({
+            held: false,
+            paymentStatus: "pending",
+            needsReview: true,
+            paymentHold: null,
+          }),
+        );
+        orderReads(ok(left));
+        expect(await resume()).toStrictEqual(confirming(null));
+        expect(d.payments.recordProviderCheck.mock.calls).toEqual([
+          [PA_ID, [observed(CAP), observed(AUT)]],
+        ]);
+
+        // The reload: the attempt now reads as flagged, the order as the review left it.
+        d = doubles();
+        attemptIs(left);
+        orderReads(ok(left));
+        listsNow();
+        const result = await resume();
+        expect(result).toStrictEqual(expected);
+        // One question to the provider, for the stored order; one read of the order, without a payment id.
+        expect(d.fetchPayments.mock.calls).toEqual([[ORDER_ID, CREDENTIALS]]);
+        expect(d.payments.returnState.mock.calls).toEqual([
+          [attemptHash(KEY), null],
+        ]);
+        // Nothing written: no provider check recorded, no event, no new order — and no link without a verified
+        // payment on record.
+        expect(d.payments.recordProviderCheck).not.toHaveBeenCalled();
+        expect(d.payments.recordEvent).not.toHaveBeenCalled();
+        expect(d.payments.processEvent).not.toHaveBeenCalled();
+        expect(d.store.createPendingOrder).not.toHaveBeenCalled();
+        expect(d.deriveToken).not.toHaveBeenCalled();
+        expectNoLaunch(result);
+        // On load, "being confirmed" and "could not be checked" take the pay button away; only a listing with no
+        // live payment leaves the line beside a usable form.
+        expect(resumeStep(result)).toMatchObject({
+          do: "notice",
+          block: expected.status !== "held",
+        });
+      }
+    },
+  );
+
+  it("an order no longer pending stays held after the provider showed a payment for it", async () => {
+    providerLists(CAP, AUT);
+    d.payments.recordProviderCheck.mockResolvedValue(
+      ok({
+        held: false,
+        paymentStatus: "expired",
+        needsReview: false,
+        paymentHold: null,
+      }),
+    );
+    orderReads(ok(EXPIRED_ORDER));
+    expect(await resume()).toStrictEqual(HELD);
   });
 });
 

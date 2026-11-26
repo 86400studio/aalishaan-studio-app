@@ -14,9 +14,12 @@ import type { BagRow } from "./rows";
  *      quantity, and nothing else. A bag that was edited since — one row added, removed or changed — is left alone.
  * The attempt key is then dropped, so nothing here can run for that order again: reopening an old order page cannot
  * touch a newer bag. The same drop — without touching the bag — ends the attempt when the order is confirmed but the
- * bag has changed, when the order's time to pay has passed, and when the order is under review (it is in the studio's
- * hands; the checkout is free for another order). While a payment is still being confirmed, or the order can still
- * be paid for, the key is kept: the checkout page needs it.
+ * bag has changed, and when the order is over without a payment (`failed/closed`: its time to pay has passed, or it no
+ * longer awaits a payment). While the order is `confirming` — a payment being confirmed, or a review being made — or
+ * can still be paid for, the key is kept: the checkout page needs it to say where the order stands instead of
+ * offering the same bag as a new order (the review of 2026-11-26, finding 1 — an order page's review always stands
+ * beside a payment: its link is given only once a verified payment signal exists). The key still ends with the
+ * attempt's honoured time, or with the tab; a later confirmation by a person clears the bag through it.
  */
 
 /** One bought item: its variant code and its quantity. */
@@ -40,7 +43,7 @@ export function bagEqualsPurchase(
 
 /** What the page showing an order may do about the bag and the attempt key. */
 export type PurchasedBagDecision =
-  /** Not this browser's order, or the order is not settled: nothing is touched. */
+  /** Not this browser's order, or the order is not settled (confirming, or still payable): nothing is touched. */
   | "keep"
   /** This browser's order is over, and the bag is not (or no longer) the purchase: the key is dropped only. */
   | "release"
@@ -81,5 +84,6 @@ export function purchasedBagDecision(
   }
   if (state.state === "failed")
     return state.reason === "closed" ? "release" : "keep";
-  return state.reason === "review" ? "release" : "keep";
+  // Confirming — a payment being confirmed or a review being made — keeps the key, whatever its reason.
+  return "keep";
 }

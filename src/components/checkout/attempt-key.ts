@@ -23,10 +23,12 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   never capture a later order. A malformed stored value is ignored.
  * - **The hold** is the launch the server answered for an order, kept in memory for the page's life: while it
  *   stands, the page offers only "continue to payment" for that order, never a new one. It is released by
- *   `forget()` alone — the callers release it when the server says the attempt is over or when its deadline has
- *   passed (`holdExpired`), never because a browser callback fired. The deadline is the moment the answer was
- *   received plus the time the SERVER said remains (`expires_in_ms`): the server has already judged the order
- *   payable by the database's clock, and a device clock that is wrong must neither discard that answer nor extend it.
+ *   `forget()` alone — the callers release it when the server says the attempt is over (S1.7: once its deadline has
+ *   passed — `holdExpired` — the page asks the server, whether or not a window was opened for it; only a launch that
+ *   arrives already past its deadline is released before its first window), never because a browser callback fired.
+ *   The deadline is the moment the answer was received plus the time the SERVER said remains (`expires_in_ms`): the
+ *   server has already judged the order payable by the database's clock, and a device clock that is wrong must
+ *   neither discard that answer nor extend it.
  *   A hold made in answer to a pay press also keeps the order's rows as that press submitted them (./held-order.ts),
  *   so the summary shows the order being paid for, not the bag as it is now; a hold found after a reload has none.
  *   They are kept in memory with the hold and never stored.
@@ -34,6 +36,8 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   reload) — the page presents it when it asks the server to verify what Razorpay's window reported, and when it
  *   asks whether the window may open again — and whether a window was opened for this launch (`opened`): the first
  *   opening follows the server's launch directly; every later one asks the server first (./checkout-form.tsx).
+ *   `opened` speaks for THIS page only: a hold found after a reload starts unopened though its order's window may
+ *   have been opened before, so it is never a reason to end a hold without the server's word.
  */
 
 export { ATTEMPT_STORAGE_KEY };

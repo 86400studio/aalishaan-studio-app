@@ -11,8 +11,9 @@ import { attemptKeySchema } from "@/lib/schemas/checkout";
  *   object: an order id, an order number, an amount or a status from the browser is refused, never ignored — the
  *   server verifies the signature against the provider order id IT stored for that attempt.
  * - **The webhook envelope** is the least a verified Razorpay delivery must be to enter the ledger: an event object
- *   with a type and a payload. The delivery is stored as delivered; what its payment says is read from the ledger
- *   row by the database (0005_payment_finalization `payment_process_event`), not here.
+ *   with a type and a payload. The ledger keeps the delivery's verified bytes exactly (0006 `raw_body`) and their
+ *   parse as the processing copy; what its payment says is read from the ledger row by the database
+ *   (`payment_process_event`), not here.
  */
 
 /** A Razorpay payment id as Checkout and the webhooks give it. */

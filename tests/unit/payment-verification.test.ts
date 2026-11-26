@@ -491,10 +491,12 @@ describe("POST /api/webhooks/razorpay — signature first, the ledger next, the 
     expect(response.headers.get("cache-control")).toBe("no-store");
 
     expect(store.recordEvent).toHaveBeenCalledTimes(1);
+    // The parse to process, and beside it the bytes that were verified — the evidence (0006 raw_body).
     expect(store.recordEvent).toHaveBeenCalledWith(
       EVENT_ID,
       "payment.captured",
       EVENT,
+      new TextEncoder().encode(BODY),
     );
     expect(store.processEvent).toHaveBeenCalledTimes(1);
     expect(store.processEvent).toHaveBeenCalledWith(EVENT_ROW);
@@ -506,6 +508,25 @@ describe("POST /api/webhooks/razorpay — signature first, the ledger next, the 
     expect(store.returnState).not.toHaveBeenCalled();
     expect(store.recordProviderCheck).not.toHaveBeenCalled();
     expect(report).not.toHaveBeenCalled();
+  });
+
+  it("the ledger is given exactly the bytes that were verified, byte for byte — never their parse written out again (the review of 2026-11-26, finding 7)", async () => {
+    // Bytes no re-serialisation reproduces: spaces and line breaks, escaped characters, keys in the sender's order,
+    // and an integer beyond 2^53 that a parse rounds.
+    const text = `{ "entity" : "event",\n  "event":"payment.captured", "note":"\\u20b9 a\\/b",\n  "big": 12345678901234567890, "payload": {"payment": {"entity": {"id": "${PAYMENT_ID}", "amount": 4200000}}} }`;
+    const bytes = new TextEncoder().encode(text);
+    const response = await send(delivery(bytes));
+    expect(response.status).toBe(200);
+    expect(store.recordEvent).toHaveBeenCalledTimes(1);
+    const [eventId, eventType, parsed, raw] = store.recordEvent.mock.calls[0];
+    expect([eventId, eventType]).toEqual([EVENT_ID, "payment.captured"]);
+    expect(raw).toEqual(bytes);
+    expect(new TextDecoder().decode(raw)).toBe(text);
+    // What the parse keeps is not what arrived: the bytes are the only exact copy.
+    expect(parsed).toMatchObject({ note: "₹ a/b" });
+    expect(new TextEncoder().encode(JSON.stringify(parsed))).not.toEqual(bytes);
+    expect(JSON.stringify(parsed)).not.toContain("12345678901234567890");
+    expect(store.processEvent).toHaveBeenCalledWith(EVENT_ROW);
   });
 
   it.each(["GET", "PUT", "PATCH", "DELETE", "OPTIONS"])(

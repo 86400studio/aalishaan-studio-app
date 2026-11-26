@@ -18,7 +18,7 @@ import {
 import type { ThrottleOutcome } from "../login-throttle";
 import { privilegedPaymentStore } from "../payments/client";
 import { paymentsGate, type PaymentsGate } from "../payments/config";
-import { checkProviderPayments } from "../payments/reconcile";
+import { checkProviderPayments, standingOf } from "../payments/reconcile";
 import { verifyCheckoutSignature } from "../payments/signature";
 import type { PaymentStore, ReturnState } from "../payments/store";
 import {
@@ -77,8 +77,9 @@ import {
  *     process died): closed `unknown`, then the recovery read.
  *   - `unknown` → never created again. One bounded read by receipt; exactly one exact match is linked, anything
  *     else stays held.
- *   - `linked` → launch data, only while the order is pending, not under review and not past its deadline. The
- *     deadline is never extended: a resume returns the same order with the same `expires_at`.
+ *   - `linked` → launch data, only while the order is pending, not under review and not past its deadline (and, on a
+ *     launch after the first, while its fulfilment still awaits the payment — S1.7). The deadline is never extended:
+ *     a resume returns the same order with the same `expires_at`.
  *   - `failed` → `start_failed`: the customer starts again as a new order under a new attempt key.
  * No step here marks anything paid, failed-as-payment or confirmed: only a verified captured event does (the
  * webhook — src/lib/server/payments/webhook.ts).
@@ -87,12 +88,15 @@ import {
  * "Uncertainty"). The launch that directly follows the link of a brand-new provider order needs no question: no
  * payment can exist for it. Every other launch of a linked order — a reload, a second press, a return to the page —
  * first asks Razorpay what it holds for that order (`relaunch`):
- *   - nothing, or only failed payments → the launch (the same provider order is continued);
- *   - a captured or an authorised payment → no launch. The order is flagged with a hold the signed captured event
- *     clears (D-68), and the answer is `confirming`;
+ *   - nothing, or only failed payments → the launch (the same provider order is continued) — while the order still
+ *     awaits its payment (pending, its fulfilment `pending_payment`, under no review);
+ *   - a captured or an authorised payment → no launch. Every live payment listed is recorded with its money: the
+ *     order is flagged with a hold the signed captured event clears (D-68) — or, for more than one live payment or
+ *     money that is not the stored intent, a review a person resolves (0006) — and the answer is `confirming`;
  *   - a payment still in flight, or no usable answer → no launch: `uncertain`. Not known is never "not paid".
  * An order that is not payable from here says what it is: `confirmed` (a verified captured payment), `confirming`
- * (a hold stands), otherwise `held`.
+ * (a hold stands, a review beside a payment on record, or a review with none on record while Razorpay — asked again,
+ * read-only — lists a live payment for it), `uncertain` when that question has no usable answer, otherwise `held`.
  *
  * **S1.7 — the verified return** (`verifyCheckoutReturn`). Razorpay's window hands the page a payment id and a
  * signature. The server verifies that signature against the provider order id IT stored for the attempt the caller
@@ -214,7 +218,14 @@ function orderPathFor(
   }
 }
 
-/** What an order that is not payable from here is — or null when it is neither confirmed nor on a hold. */
+/**
+ * What an order that is not payable from here is — or null when it is neither confirmed nor a payment being checked.
+ * Under review, an order is `confirming` while a hold stands (a payment its signed capture clears) and whenever a
+ * payment stands on record for it — reported by a verified return, authorised or captured by a signed event: a
+ * review beside money is a payment being checked, never "held" beside a usable form (the review of 2026-11-26,
+ * finding 1 — a capture stored after the deadline, an extra payment, a mismatch). A review with no payment on
+ * record is null here: the caller decides (`notPayable` first asks the provider again, read-only).
+ */
 function standingOfOrder(
   order: ReturnState,
   step: Step,
@@ -225,10 +236,11 @@ function standingOfOrder(
       order_number: order.orderNumber,
       order_path: orderPathFor(order, step.config.orderTokenSecret, step.deps),
     };
+  const { reported, authorized, captured } = order.payments;
   if (
-    order.paymentStatus === "pending" &&
     order.needsReview &&
-    order.paymentHold !== null
+    ((order.paymentStatus === "pending" && order.paymentHold !== null) ||
+      reported + authorized + captured > 0)
   )
     return {
       status: "confirming",
@@ -240,9 +252,19 @@ function standingOfOrder(
 
 /**
  * An order that is no longer pending, or is under review: `confirmed`, `confirming` (a hold a signed capture
- * clears), otherwise `held`. Never a launch. When its detail cannot be read, a pending order may be on a hold — a
- * payment known and being confirmed — so it is `uncertain` (no new payment from the page); an order no longer
- * pending is `held`.
+ * clears, or a review beside a payment on record), otherwise `held`. Never a launch. When its detail cannot be read,
+ * a pending order may be on a hold — a payment known and being confirmed — so it is `uncertain` (no new payment from
+ * the page); an order no longer pending is `held`.
+ *
+ * A pending order under a review without a hold, with no payment on record (none reported, authorised or captured —
+ * a failed one is no money) and its attempt linked to a provider order, may still have money at the provider: the
+ * provider check's own review (0006 — more than one live payment, or money that is not the stored intent) records
+ * those payments as known, never as verified, and nothing here counts them. So Razorpay is asked again — read-only:
+ * the listing's standing alone, nothing recorded (0006's provider check would write nothing for such an order
+ * either: it never touches a review that is not a hold). A captured or an authorised payment is `confirming` (the
+ * order's link only under `orderPathFor`'s evidence rule); a payment in flight, or no usable answer, is
+ * `uncertain`; no live payment is `held` (the re-review of round 1's fixes, 2026-11-26: never "held" beside a
+ * usable form while the provider lists a payment for the order).
  */
 async function notPayable(
   state: AttemptState,
@@ -256,7 +278,43 @@ async function notPayable(
   if (!payments) return unread;
   const found = await payments.returnState(step.attemptHash, null);
   if (!found.ok || found.value === null) return unread;
-  return standingOfOrder(found.value, step) ?? { status: "held" };
+  const order = found.value;
+  const standing = standingOfOrder(order, step);
+  if (standing !== null) return standing;
+  const { reported, authorized, captured } = order.payments;
+  if (
+    order.paymentStatus !== "pending" ||
+    !order.needsReview ||
+    order.paymentHold !== null ||
+    reported + authorized + captured > 0 ||
+    state.providerOrderState !== "linked" ||
+    state.providerOrderId === null
+  )
+    return { status: "held" };
+  const listing = standingOf(
+    await step.deps.fetchPayments(
+      state.providerOrderId,
+      credentialsOf(step.config),
+    ),
+  );
+  switch (listing.standing) {
+    case "captured":
+    case "authorized":
+      return {
+        status: "confirming",
+        order_number: order.orderNumber,
+        order_path: orderPathFor(
+          order,
+          step.config.orderTokenSecret,
+          step.deps,
+        ),
+      };
+    case "in_flight":
+    case "unavailable":
+      return { status: "uncertain" };
+    case "clear":
+      return { status: "held" };
+  }
 }
 
 function credentialsOf(config: CheckoutConfig): RazorpayCredentials {
@@ -462,10 +520,14 @@ async function relaunch(
         };
       // The answer is judged by this read — the database's own, made after the provider's — never by the attempt
       // read before both: the order may have been confirmed or held meanwhile, and its deadline may have passed.
+      // An order whose fulfilment no longer awaits its payment (cancelled, on hold) is not payable from here whatever
+      // its payment status says — the finalizer would only flag the payment (0005: order_not_payable) — and it is
+      // never "expired" either (the review of 2026-11-26, finding 5).
       const standing = standingOfOrder(order, step);
       if (standing !== null) return standing;
       if (
         order.paymentStatus !== "pending" ||
+        order.fulfilmentStatus !== "pending_payment" ||
         order.needsReview ||
         order.expiresAt === null
       )
@@ -484,10 +546,28 @@ async function relaunch(
     }
     case "captured":
     case "authorized": {
-      // The hold is recorded (or another review already stood): say what the order is now — never a launch.
+      // What the provider showed is recorded — a hold, or a review (more than one live payment, or money that is not
+      // the stored intent: 0006), or nothing beside a review that already stood: say what the order is now — never a
+      // launch. Razorpay has just listed a live payment for it, so an order still pending is being confirmed even
+      // where no verified signature stands on record yet (a review the provider check raised): never "held" beside a
+      // usable form.
       const found = await payments.returnState(step.attemptHash, null);
       if (!found.ok || found.value === null) return { status: "uncertain" };
-      return standingOfOrder(found.value, step) ?? { status: "held" };
+      const order = found.value;
+      return (
+        standingOfOrder(order, step) ??
+        (order.paymentStatus === "pending"
+          ? {
+              status: "confirming",
+              order_number: order.orderNumber,
+              order_path: orderPathFor(
+                order,
+                step.config.orderTokenSecret,
+                step.deps,
+              ),
+            }
+          : { status: "held" })
+      );
     }
     case "in_flight":
     case "unavailable":

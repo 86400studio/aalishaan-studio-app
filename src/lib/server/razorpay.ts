@@ -14,8 +14,9 @@ import { RAZORPAY_PAYMENT_ID_PATTERN } from "@/lib/schemas/payments";
  *     (`pa_<payment attempt id>`) and one note, the order number. No customer detail is sent.
  *   - `findRazorpayOrdersByReceipt` — `GET /v1/orders?receipt=…`, the bounded recovery read.
  *   - `fetchRazorpayOrderPayments` — S1.7: `GET /v1/orders/<stored order id>/payments`, the read that says what
- *     payments the provider holds for an order before another one may be started (docs/sprint-prompts/
- *     S1.7-razorpay-verification.md §H.3 "Uncertainty"). It confirms nothing: only a signed event does.
+ *     payments the provider holds for an order — each with its status, amount and currency — before another one may
+ *     be started (docs/sprint-prompts/S1.7-razorpay-verification.md §H.3 "Uncertainty"). It confirms nothing: only a
+ *     signed event does.
  *
  * The create call has no idempotency key and the receipt is not one (a repeated receipt is refused, not replayed),
  * so the caller makes it exactly once per attempt and this module sorts every answer into three kinds:
@@ -236,23 +237,41 @@ export const RAZORPAY_READ_TIMEOUT_MS = 5000;
 /** The most payments one read asks for; an order that holds more is answered `unavailable`, never in part. */
 export const RAZORPAY_PAYMENTS_PAGE = 100;
 
-/** A payment as the provider lists it for an order: its id and its status. Nothing of the customer is kept. */
+/**
+ * A payment as the provider lists it for an order: its id, its status and the money the provider observed for it —
+ * the amount in exact paise and the currency (the review of 2026-11-26, finding 4: the provider check judges them
+ * against the stored intent; nothing here compares). Nothing of the customer is kept.
+ */
 export type RazorpayPayment = {
   id: string;
   /** `created`, `authorized`, `captured`, `refunded` or `failed` — or whatever the provider answers. */
   status: string;
+  amountPaise: bigint;
+  /** Three upper-case letters, as the provider answers it — not necessarily INR. */
+  currency: string;
 };
 
 export type OrderPaymentsOutcome =
   | { outcome: "found"; payments: RazorpayPayment[] }
   | { outcome: "unavailable" };
 
-const paymentSchema = z.object({
-  id: z.string().regex(RAZORPAY_PAYMENT_ID_PATTERN),
-  entity: z.literal("payment"),
-  status: z.string().min(1).max(40),
-  order_id: z.string().min(1).max(120),
-});
+const paymentSchema = z
+  .object({
+    id: z.string().regex(RAZORPAY_PAYMENT_ID_PATTERN),
+    entity: z.literal("payment"),
+    status: z.string().min(1).max(40),
+    amount: z.number().int().positive(),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    order_id: z.string().min(1).max(120),
+  })
+  .transform((payment, ctx) => {
+    const amount = parsePaise(payment.amount);
+    if (!amount.ok) {
+      ctx.addIssue({ code: "custom", message: "not exact paise" });
+      return z.NEVER;
+    }
+    return { ...payment, amountPaise: amount.paise };
+  });
 
 const paymentCollectionSchema = z.object({
   entity: z.literal("collection"),
@@ -263,8 +282,9 @@ const paymentCollectionSchema = z.object({
 /**
  * The payments Razorpay holds for one of OUR provider orders. The id is the stored one and is held to its shape, so
  * no input can change the endpoint. Any failure — a timeout, a non-200, a body that does not parse, one entry that
- * does not parse or names another order, or a listing that is not complete — is `unavailable`: the caller treats it
- * as "not known", never as "no payment".
+ * does not parse (its amount not exact paise, its currency not three upper-case letters included) or names another
+ * order, or a listing that is not complete — is `unavailable`: the caller treats it as "not known", never as "no
+ * payment".
  */
 export async function fetchRazorpayOrderPayments(
   providerOrderId: string,
@@ -306,7 +326,12 @@ export async function fetchRazorpayOrderPayments(
     const parsed = paymentSchema.safeParse(item);
     if (!parsed.success || parsed.data.order_id !== providerOrderId)
       return { outcome: "unavailable" };
-    payments.push({ id: parsed.data.id, status: parsed.data.status });
+    payments.push({
+      id: parsed.data.id,
+      status: parsed.data.status,
+      amountPaise: parsed.data.amountPaise,
+      currency: parsed.data.currency,
+    });
   }
   return { outcome: "found", payments };
 }

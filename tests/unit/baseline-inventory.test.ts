@@ -33,9 +33,13 @@ describe("supabase/migrations — forward discovery", () => {
     // S1.7 (D-67): the atomic confirmation of a captured payment. The roadmap first said "Migrations: none"; the
     // one-transaction rule needs a database function, as D-60 found for the checkout. The next free number again.
     ["0005_payment_finalization.sql", "0005", "payment_finalization"],
+    // S1.7, after the independent review's round 1: the ledger's verified bytes, the provider check over every live
+    // payment and its money, a repeated event's money judged. 0005 is applied on TEST and never edited, so the fixes
+    // are a forward file of their own — the next free number (S1.8's planned migration moves to 0007).
+    ["0006_payment_evidence.sql", "0006", "payment_evidence"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the S1.7 migration under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the two S1.7 migrations under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

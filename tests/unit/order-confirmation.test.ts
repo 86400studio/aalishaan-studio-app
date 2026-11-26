@@ -256,8 +256,83 @@ describe("orderPageState — the page's state from the stored order", () => {
       { ...held("authorized_only"), ...captured },
       CONFIRMED,
     ],
+    // Finding 5: only an order whose fulfilment still awaits the payment can be retried (0005's own rule).
+    [
+      "cancelled, before the deadline",
+      { fulfilment_status: "cancelled", server_time: at(-1) },
+      CLOSED,
+    ],
+    [
+      "on a fulfilment hold, failed payments only",
+      { ...lost, fulfilment_status: "on_hold" },
+      CLOSED,
+    ],
+    [
+      "cancelled, no deadline",
+      { fulfilment_status: "cancelled", ...open },
+      REVIEW,
+    ],
+    // A payment that may have been made is never "the time to pay has passed".
+    [
+      "cancelled, a payment reported",
+      { ...paid, fulfilment_status: "cancelled" },
+      PAYMENT,
+    ],
+    [
+      "cancelled, under review",
+      { ...review, fulfilment_status: "cancelled" },
+      REVIEW,
+    ],
   ])("a pending order, or: %s", (_label, overrides, expected) => {
     expect(state(overrides)).toEqual(expected);
+  });
+
+  it("offers a retry only to an order that still awaits its payment: pending, fulfilment pending_payment, under no review, no live payment, before its deadline (finding 5)", () => {
+    const fulfilments = [
+      "pending_payment",
+      "confirmed",
+      "in_production",
+      "shipped",
+      "delivered",
+      "part_delivered",
+      "on_hold",
+      "cancelled",
+    ] as const;
+    const statuses = ["pending", "captured", "failed", "expired"] as const;
+    const kinds = ["reported", "authorized", "captured", "failed"] as const;
+    const payments = [counts(), ...kinds.map((kind) => counts({ [kind]: 1 }))];
+    let judged = 0;
+    for (const fulfilment_status of fulfilments)
+      for (const payment_status of statuses)
+        for (const needs_review of [false, true])
+          for (const server_time of [at(-1), at(0), at(1)])
+            for (const known of payments) {
+              const page = state({
+                fulfilment_status,
+                payment_status,
+                needs_review,
+                server_time,
+                payments: known,
+              });
+              const live = known.reported + known.authorized + known.captured;
+              const payable =
+                fulfilment_status === "pending_payment" &&
+                payment_status === "pending" &&
+                !needs_review &&
+                live === 0 &&
+                server_time.getTime() < DEADLINE.getTime();
+              expect(
+                page.state === "failed" && page.reason === "retry",
+                JSON.stringify({
+                  fulfilment_status,
+                  payment_status,
+                  needs_review,
+                  live,
+                }),
+              ).toBe(payable);
+              judged += 1;
+            }
+    expect(judged).toBe(960);
   });
 
   it("judges the deadline by the row's own server_time, never by this machine's clock", () => {
@@ -391,9 +466,18 @@ const HOLD: PaymentResult<ProviderCheckRecord> = {
     paymentHold: "capture_unverified",
   },
 };
+/** The provider's listing: one payment per status, the last one PAYMENT_ID, each for the order's total in INR. */
 const listing = (...statuses: string[]): OrderPaymentsOutcome => ({
   outcome: "found",
-  payments: statuses.map((status) => ({ id: PAYMENT_ID, status })),
+  payments: statuses.map((status, index) => ({
+    id:
+      index === statuses.length - 1
+        ? PAYMENT_ID
+        : `pay_PLACEHOLDERother${index}`,
+    status,
+    amountPaise: BigInt(6100000),
+    currency: "INR",
+  })),
 });
 
 /**
@@ -633,7 +717,14 @@ describe("orderStatus — the page's status question", () => {
       });
       const views = [found(REPORTED), found(heldOrder)];
       const { calls, deps } = doubles(views, { payments });
-      const held = ["hold", PA_ID, PAYMENT_ID, standing];
+      // Every live payment the provider listed, with the money it observed (the failed one is not live).
+      const live = {
+        id: PAYMENT_ID,
+        status: standing,
+        amountPaise: BigInt(6100000),
+        currency: "INR",
+      };
+      const held = ["hold", PA_ID, [live]];
       expect(await status(deps)).toStrictEqual(answer(PAYMENT));
       expect(calls).toEqual([...asked, held, ["read", TOKEN_HASH]]);
       // The answer is the second read's, not the first's: a signed capture that confirmed the order meanwhile.
@@ -668,6 +759,49 @@ describe("orderStatus — the page's status question", () => {
       expect(reports.join(" ")).not.toContain(PAYMENT_ID);
     },
   );
+
+  it("hands the database EVERY live payment the provider listed, with its money — two of them are a review, and the page says 'being checked' (finding 3)", async () => {
+    const both: OrderPaymentsOutcome = {
+      outcome: "found",
+      payments: [
+        {
+          id: "pay_PLACEHOLDERcap1",
+          status: "captured",
+          amountPaise: BigInt(6100000),
+          currency: "INR",
+        },
+        {
+          id: PAYMENT_ID,
+          status: "authorized",
+          amountPaise: BigInt(6100000),
+          currency: "INR",
+        },
+      ],
+    };
+    // What 0006 answers: a review no capture clears — the flag without a hold.
+    const review: PaymentResult<ProviderCheckRecord> = {
+      ok: true,
+      value: {
+        held: false,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: null,
+      },
+    };
+    const flagged = row({
+      ...REPORTED,
+      needs_review: true,
+      payment_hold: null,
+    });
+    const views = [found(REPORTED), found(flagged)];
+    const { calls, deps } = doubles(views, { payments: both, hold: review });
+    expect(await status(deps)).toStrictEqual(answer(REVIEW));
+    expect(calls).toEqual([
+      ...asked,
+      ["hold", PA_ID, both.payments],
+      ["read", TOKEN_HASH],
+    ]);
+  });
 
   it("keeps the state it read first when the second read fails", async () => {
     const { calls, deps } = doubles([found(REPORTED), DOWN], captured);
@@ -834,13 +968,10 @@ describe("the bag after a purchase", () => {
     },
   );
 
-  it.each([CLOSED, REVIEW])(
-    "releases the key when this browser's order is %o, whatever the bag holds",
-    (state) => {
-      expect(decide({ state })).toBe("release");
-      expect(decide({ state, ...holding([], false) })).toBe("release");
-    },
-  );
+  it("releases the key when this browser's order is over without a payment (failed/closed), whatever the bag holds", () => {
+    expect(decide({ state: CLOSED })).toBe("release");
+    expect(decide({ state: CLOSED, ...holding([], false) })).toBe("release");
+  });
 
   it.each<[string, Partial<PurchasedBagFacts>]>([
     ["another browser's key", { storedKeyHash: "e".repeat(64) }],
@@ -849,6 +980,12 @@ describe("the bag after a purchase", () => {
     ["neither hash", { storedKeyHash: null, orderAttemptHash: null }],
     ["a bag not read yet", holding(EXACT, false)],
     ["a payment still being confirmed", { state: PAYMENT }],
+    // Finding 1: an order page's review always stands beside a payment — the checkout needs the key to say so.
+    ["an order under review", { state: REVIEW }],
+    [
+      "an order under review, its bag unread",
+      { state: REVIEW, ...holding([], false) },
+    ],
     ["an order that can still be paid for", { state: RETRY }],
   ])("keeps everything with %s", (_label, overrides) => {
     expect(decide(overrides)).toBe("keep");
@@ -875,14 +1012,33 @@ describe("the bag after a purchase", () => {
     },
   );
 
-  it("releases the key for a flag that is not a hold — a check a person makes", () => {
-    const flagged = orderPageState({
+  it("keeps the key through a review without a hold — a capture stored after the deadline — so a person's confirmation then clears the bag through it (finding 1)", () => {
+    // The stored order as 0005 leaves a late capture: pending, flagged, no hold, the payment's row captured.
+    const lateCapture = orderPageState({
       ...row(),
       needs_review: true,
       payment_hold: null,
+      payments: counts({ captured: 1 }),
     });
-    expect(flagged).toEqual(REVIEW);
-    expect(decide({ state: flagged })).toBe("release");
+    expect(lateCapture).toEqual(REVIEW);
+    expect(decide({ state: lateCapture })).toBe("keep");
+    // A person confirms it: the same browser, the same key, the bag as it was bought.
+    const confirmedOrder = orderPageState({
+      ...row(),
+      payment_status: "captured",
+      fulfilment_status: "confirmed",
+      payments: counts({ captured: 1 }),
+    });
+    expect(decide({ state: confirmedOrder })).toBe("clear");
+  });
+
+  it("releases the key for an order whose fulfilment moved on before it was paid for — failed/closed, never 'Return to checkout' (finding 5)", () => {
+    const cancelled = orderPageState({
+      ...row(),
+      fulfilment_status: "cancelled",
+    });
+    expect(cancelled).toEqual(CLOSED);
+    expect(decide({ state: cancelled })).toBe("release");
   });
 
   it("never clears outside the one case, across every state, key, hydration and bag", () => {
@@ -1208,6 +1364,16 @@ describe("the order page's server render", () => {
     for (const html of [retry, closed]) {
       expect(html).not.toMatch(new RegExp(`${WATCHER}|<noscript>`));
       expect(html).not.toMatch(/A beautiful choice\.|is confirmed\./);
+    }
+  });
+
+  it("failed: an order whose fulfilment moved on before it was paid for offers no way back to checkout, even before its deadline (finding 5)", () => {
+    for (const fulfilment_status of ["cancelled", "on_hold"] as const) {
+      const html = render(row({ fulfilment_status }));
+      expect(html).toContain("<h1>The time to pay for this order has passed.");
+      expect(html).not.toContain('href="/checkout"');
+      expect(textOf(html)).not.toMatch(/Return to checkout/);
+      expect(html).toMatch(/<a[^>]*href="\/shop"[^>]*>Explore artworks<\/a>/);
     }
   });
 

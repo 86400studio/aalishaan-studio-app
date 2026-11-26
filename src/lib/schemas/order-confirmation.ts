@@ -26,13 +26,17 @@ import {
  * | under review (`needs_review`), whatever else                                     | `confirming/review` |
  * | pending, with a payment reported, authorised or captured                         | `confirming/payment`|
  * | pending, no such payment, no deadline                                            | `confirming/review` |
- * | pending, no such payment, before its deadline                                    | `failed/retry`      |
- * | pending, no such payment, at or after its deadline; or `failed` / `expired`      | `failed/closed`     |
+ * | pending, no such payment, before its deadline, fulfilment `pending_payment`      | `failed/retry`      |
+ * | pending, no such payment, at or after its deadline                               | `failed/closed`     |
+ * | pending, no such payment, its fulfilment moved on (cancelled, on hold …)         | `failed/closed`     |
+ * | `failed` / `expired`                                                             | `failed/closed`     |
  *
+ * (A hold — a review its own signed capture clears — is `confirming/payment` while the order is pending.)
  * `confirmed` is the only state that says the order is confirmed, and only a verified captured payment makes it.
  * `confirming` never invites a payment: a payment is known and not yet confirmed, or the order is being checked.
- * `failed/retry` is the recoverable state: no live payment is known and the order's deadline (the database's own,
- * judged against the database's own clock) has not passed.
+ * `failed/retry` is the recoverable state: no live payment is known, the order still awaits its payment (pending,
+ * fulfilment `pending_payment` — the finalizer's own rule, 0005) and its deadline (the database's own, judged
+ * against the database's own clock) has not passed.
  */
 
 export const PAYMENT_HOLDS = ["authorized_only", "capture_unverified"] as const;
@@ -119,6 +123,8 @@ export type OrderPageState =
 /** The facts the state rule reads — a subset of the row, so it is testable without one. */
 export type OrderStateFacts = {
   payment_status: z.infer<typeof paymentStatusSchema>;
+  /** Only `pending_payment` still awaits the payment: an order whose fulfilment moved on is never retried. */
+  fulfilment_status: z.infer<typeof fulfilmentStatusSchema>;
   needs_review: boolean;
   /** Why the flag stands when the payment's own capture may clear it (0005); null beside every other review. */
   payment_hold: PaymentHold | null;
@@ -143,7 +149,8 @@ export function orderPageState(order: OrderStateFacts): OrderPageState {
     return { state: "confirming", reason: "payment" };
   if (order.expires_at === null)
     return { state: "confirming", reason: "review" };
-  return order.server_time.getTime() < order.expires_at.getTime()
+  return order.fulfilment_status === "pending_payment" &&
+    order.server_time.getTime() < order.expires_at.getTime()
     ? { state: "failed", reason: "retry" }
     : { state: "failed", reason: "closed" };
 }

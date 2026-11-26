@@ -112,8 +112,8 @@ import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
  *   stands — once, when the page loads.
  * - Razorpay's window (./razorpay.ts) opens only with a `launch` the server answered. From then on that order holds
  *   the page: the fields are read-only and the button is for that order's window — never a new submission — until
- *   the page is reloaded or the order's deadline passes. No callback of the window writes to storage or empties the
- *   bag, and a closed window and a failed payment only show their lines.
+ *   the page is reloaded or, at the order's deadline, the server says the attempt is over. No callback of the window
+ *   writes to storage or empties the bag, and a closed window and a failed payment only show their lines.
  * - **S1.7 — the report.** A reported payment shows the unverified state (NS-05) at once, exactly as before — the
  *   report is not proof. The payment id and signature Razorpay handed over are then sent to the server
  *   (`verifyReport`), which checks the signature against the order id IT stored. Only a verified report changes
@@ -123,6 +123,10 @@ import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
  *   (after the window was closed, or a payment failed) first asks the server where the attempt stands (`reopen`):
  *   it asks Razorpay what it holds for the order, and answers a launch only when no payment is captured, authorised
  *   or still in flight. A payment that is known, or an answer that cannot be had, offers no payment.
+ * - **S1.7 — the hold's deadline** asks the server too, whether or not this page opened a window for it — a hold found
+ *   after a reload may stand for an order whose window was opened before (the review of 2026-11-26, finding 2) — and
+ *   so does a press after the deadline. The page's own clock ends a hold only when a launch the server has just given
+ *   is already past its deadline as its first window is to open.
  * - **S1.7 — the order's page.** When the server says the order has a page it may give (`order`), the checkout's
  *   part is over: the page leaves for exactly that path — the only navigation this page makes, and only to a path
  *   of that shape. The stored attempt key is left where it is: the order's page recognises the browser that placed
@@ -565,7 +569,11 @@ function OpenCheckout({
     else setFocusRequest((count) => count + 1);
   };
 
-  /** Releases the hold once the order's deadline has passed. */
+  /**
+   * Releases a hold whose launch is already past its deadline when its window is to be opened for the first time
+   * (`openWindow`) — a launch the server answered a moment ago, for which no window was ever opened. Every other
+   * deadline asks the server (`endHold`).
+   */
   const releaseExpired = () => {
     attemptKeys.forget();
     setHold(null);
@@ -778,17 +786,15 @@ function OpenCheckout({
   };
 
   /**
-   * S1.7 — the order's deadline has passed on this page. A window that was never opened for this hold took no
-   * payment: the hold ends here. One that was opened may have: the server is asked first — it asks Razorpay — and
-   * its answer is carried out: the order's page, "being confirmed", "could not be checked", or "the time to pay has
-   * passed" only when the server says so. A launch it still gives (its deadline is the database's, not this page's)
-   * holds the page again for that launch and opens nothing by itself.
+   * S1.7 — the order's deadline has passed on this page. The page's own clock ends nothing: whether or not THIS page
+   * opened a window for the hold, one may have been opened for its order — before a reload (a hold found after a
+   * reload starts unopened), or in another tab with the same attempt — and taken a payment (the review of 2026-11-26,
+   * finding 2). So the server is asked first — it asks Razorpay — and its answer is carried out: the order's page,
+   * "being confirmed", "could not be checked", or "the time to pay has passed" only when the server says so. A launch
+   * it still gives (its deadline is the database's, not this page's) holds the page again for that launch and opens
+   * nothing by itself.
    */
   const endHold = async (target: CheckoutHold) => {
-    if (!target.opened) {
-      releaseExpired();
-      return;
-    }
     const step = await askAfterWindow(target);
     if (step === null) {
       cannotAsk();
@@ -814,7 +820,7 @@ function OpenCheckout({
    * S1.7 — the window of the order that holds the page, opened AGAIN: the server is asked first where the attempt
    * stands, and the window opens only on its `launch` — which it gives only after Razorpay has said that no payment
    * for the order is captured, authorised or still in flight. Every other answer is carried out as it is: no window.
-   * Past the deadline the question is the deadline's (`endHold`).
+   * Past the deadline — for a hold opened or not — the question is the deadline's (`endHold`).
    */
   const reopen = async (target: CheckoutHold) => {
     if (holdExpired(target, Date.now())) {
@@ -830,10 +836,10 @@ function OpenCheckout({
     carryOut(step, target.prefill, target.order);
   };
 
-  // The hold ends when the order's deadline passes — never because a browser callback fired. An order Razorpay
-  // reported complete to this page is not released at all: the page keeps the unverified state and offers no
-  // payment until it is reloaded, when the server says where the order stands. S1.7: once a window has been
-  // opened for the hold, the deadline only asks the server (`endHold`).
+  // The hold ends when the server says so at the order's deadline — never because a browser callback fired. An order
+  // Razorpay reported complete to this page is not released at all: the page keeps the unverified state and offers no
+  // payment until it is reloaded, when the server says where the order stands. S1.7: the deadline only asks the
+  // server (`endHold`), whether or not this page opened a window for the hold.
   const onDeadline = useEffectEvent((target: CheckoutHold) => {
     // One question at a time: a press already asking about this order decides — its answer re-holds the order
     // (and re-arms this timer) or ends the hold; a press after the deadline asks through endHold itself.
@@ -869,8 +875,9 @@ function OpenCheckout({
       return;
     }
     if (hold !== null) {
-      // The first opening follows the server's launch; a later one asks the server before it opens anything.
-      if (hold.opened) void reopen(hold);
+      // The first opening follows the server's launch; a later one asks the server before it opens anything — and so
+      // does a press after the hold's deadline, opened or not: that question is the deadline's (`reopen` → `endHold`).
+      if (hold.opened || holdExpired(hold, Date.now())) void reopen(hold);
       else openWindow(hold);
       return;
     }

@@ -42,8 +42,8 @@ import {
  *   missing order.
  * - Reading an order changes nothing. The one thing a status question may do beyond reading is ask Razorpay what it
  *   holds for the order (D-68) — only when the page asks for it, only while a reported payment still waits for its
- *   confirmation, within the resume quota, and only to record the hold that flags the order for the studio. It
- *   never confirms.
+ *   confirmation, within the resume quota, and only to record what it shows (every live payment, with its money —
+ *   0006): the hold, or the review, that flags the order for the studio. It never confirms.
  */
 
 export type OrderRead =
@@ -167,7 +167,8 @@ function providerQuestionApplies(row: OrderConfirmationRow): boolean {
 /**
  * The page's state for a token — the status question the order page asks while it shows "confirming". With
  * `askProvider`, and only where `providerQuestionApplies`, Razorpay is asked once what it holds for the order; a
- * captured or an authorised payment there flags the order (the hold), and the state is read again. Every refusal on
+ * captured or an authorised payment there flags the order (the hold — or, for more than one live payment or other
+ * money, a review: 0006), and the state is read again. Every refusal on
  * that path — a closed gate, the quota, an unreachable provider — leaves the state exactly as the database has it.
  */
 export async function orderStatus(
