@@ -50,17 +50,14 @@ import {
  *   - a payment window opens again only when the provider lists nothing or only failed payments. A captured or an
  *     authorised payment is recorded as a hold and answered `confirming`; a payment in flight or no usable answer is
  *     `uncertain`. Neither ever carries launch data, and neither confirms an order;
- *   - the provider is not asked when there is nothing to ask (a brand-new link, an expired or a held order — but a
- *     review with no payment on record, on a linked attempt, is asked about again, read-only);
+ *   - a pending linked order under review cannot be reopened by a later provider listing;
  *   - the order's link leaves the server only when a verified payment stands on record AND the token derived now is
  *     the one the order was issued with;
  *   - no answer and no log line carries a secret, the attempt key, the token salt or hash, or an upstream body.
  * Since the independent review of 2026-11-26 (round 1): the read keeps each payment's observed amount and currency
  * (finding 4), the check hands the database EVERY distinct live payment in one call (finding 3), an order under
  * review beside a payment on record is "being confirmed" — never "held" beside a usable form (finding 1) — and a
- * clear answer for an order whose fulfilment moved on is never a launch (finding 5). Since its re-review: a review the
- * provider check raised (its payments known, never verified) is asked about again on every later load, read-only, and
- * is never "held" beside a usable form while the provider lists a live payment.
+ * clear answer for an order whose fulfilment moved on is never a launch (finding 5).
  * Placeholder values only.
  */
 
@@ -933,7 +930,11 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
   it.each<[string, ReturnState, CheckoutActionResult]>([
     ["confirmed meanwhile", CONFIRMED_ORDER, confirmed(ORDER_PATH)],
     ["put on a hold meanwhile", review("capture_unverified"), confirming(null)],
-    ["flagged meanwhile", review(null), HELD],
+    [
+      "provider review committed while an older clear listing was in flight",
+      review(null),
+      confirming(null),
+    ],
     // Finding 1: a review beside a payment on record is a payment being checked, never "held".
     [
       "flagged meanwhile beside a captured payment",
@@ -1100,7 +1101,7 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
     ["empty", ok(null)],
     ["impossible (no payments adapter)", "no adapter"],
   ])(
-    "a pending, flagged order whose detail cannot be read is uncertain — it may be on a hold; one no longer pending is held (%s)",
+    "a pending, flagged order whose detail cannot be read is uncertain — it may be on a hold; a captured order also stays blocked (%s)",
     async (_label, answer) => {
       const arrange = () => {
         if (answer === "no adapter") d.paymentsFactory.mockReturnValue(null);
@@ -1116,7 +1117,7 @@ describe("the retry rule — a linked, pending, unexpired order", () => {
       // No longer pending: nothing can be paid for there, whatever the detail says.
       attemptIs(orderRead({ paymentStatus: "captured" }));
       arrange();
-      expect(await resume()).toStrictEqual(HELD);
+      expect(await resume()).toStrictEqual(UNCERTAIN);
     },
   );
 
@@ -1262,7 +1263,7 @@ describe("the retry rule — when the provider is not asked", () => {
 
   // Under review without a hold or a payment on record, an order whose attempt was never linked (an S1.6 anomaly
   // closed for a person — a link conflict, a credentials refusal) has no provider order to ask about: held. The same
-  // review on a linked attempt asks the provider again (below: "a review the provider check raised, then a reload").
+  // review on a linked attempt blocks payment even when its provider listing is empty.
   it.each<[string, Partial<AttemptState>]>([
     [
       "closed unknown",
@@ -1291,12 +1292,12 @@ describe("the retry rule — when the provider is not asked", () => {
     ["refuses", () => d.payments.returnState.mockImplementation(refuse)],
     ["knows no such attempt", () => orderReads(ok(null))],
   ])(
-    "answers held for an order that is not payable when the payments adapter %s",
+    "keeps a captured order blocked when the payments adapter %s",
     async (_label, arrange) => {
       attemptIs(CONFIRMED_ORDER);
       arrange();
       const result = await resume();
-      expect(result).toStrictEqual(HELD);
+      expect(result).toStrictEqual(UNCERTAIN);
       expectProviderNotAsked();
       expectNoLaunch(result);
     },
@@ -1409,85 +1410,23 @@ describe("a review beside money is a payment being checked — never a usable fo
     },
   );
 
-  // The builder's second check of round 1's fixes (2026-11-26 — the S1.7 record → H.14): the provider check's review records its payments as
-  // known, never as verified, so no payment stands on record and the order's own read cannot say that money moved.
-  // Every later load of that order asks Razorpay again — read-only — and answers by what it lists now.
-  it.each<[string, () => unknown, CheckoutActionResult]>([
-    [
-      "lists the two live payments again: confirming",
-      () => providerLists(FAI, CAP, AUT),
-      confirming(null),
-    ],
-    [
-      "lists a captured payment: confirming",
-      () => providerLists(CAP),
-      confirming(null),
-    ],
-    [
-      "lists an authorised payment: confirming",
-      () => providerLists(AUT),
-      confirming(null),
-    ],
-    [
-      "lists a payment in flight: uncertain",
-      () => providerLists(FAI, CRE),
-      UNCERTAIN,
-    ],
-    [
-      "gives no usable answer: uncertain",
-      () => d.fetchPayments.mockResolvedValue(UNAVAILABLE),
-      UNCERTAIN,
-    ],
-    ["lists no live payment: held", () => providerLists(FAI), HELD],
-  ])(
-    "a review the provider check raised, then a reload: the provider is asked again — it %s — and nothing is written",
-    async (_label, listsNow, expected) => {
-      // As the review left the order: nothing on record (the reviewer's case), or a failed payment only — no money.
-      for (const left of [review(null), review(null, { failed: 1 })]) {
-        // The relaunch that raised it: two live payments, a review no capture clears (0006) — "being confirmed".
-        d = doubles();
-        providerLists(FAI, CAP, AUT);
-        d.payments.recordProviderCheck.mockResolvedValue(
-          ok({
-            held: false,
-            paymentStatus: "pending",
-            needsReview: true,
-            paymentHold: null,
-          }),
-        );
-        orderReads(ok(left));
-        expect(await resume()).toStrictEqual(confirming(null));
-        expect(d.payments.recordProviderCheck.mock.calls).toEqual([
-          [PA_ID, [observed(CAP), observed(AUT)]],
-        ]);
-
-        // The reload: the attempt now reads as flagged, the order as the review left it.
-        d = doubles();
-        attemptIs(left);
-        orderReads(ok(left));
-        listsNow();
-        const result = await resume();
-        expect(result).toStrictEqual(expected);
-        // One question to the provider, for the stored order; one read of the order, without a payment id.
-        expect(d.fetchPayments.mock.calls).toEqual([[ORDER_ID, CREDENTIALS]]);
-        expect(d.payments.returnState.mock.calls).toEqual([
-          [attemptHash(KEY), null],
-        ]);
-        // Nothing written: no provider check recorded, no event, no new order — and no link without a verified
-        // payment on record.
-        expect(d.payments.recordProviderCheck).not.toHaveBeenCalled();
-        expect(d.payments.recordEvent).not.toHaveBeenCalled();
-        expect(d.payments.processEvent).not.toHaveBeenCalled();
-        expect(d.store.createPendingOrder).not.toHaveBeenCalled();
-        expect(d.deriveToken).not.toHaveBeenCalled();
-        expectNoLaunch(result);
-        // On load, "being confirmed" and "could not be checked" take the pay button away; only a listing with no
-        // live payment leaves the line beside a usable form.
-        expect(resumeStep(result)).toMatchObject({
-          do: "notice",
-          block: expected.status !== "held",
-        });
-      }
+  it.each([review(null), review(null, { failed: 1 })])(
+    "a linked review with no verified live rows stays blocked on reload",
+    async (left) => {
+      attemptIs(left);
+      orderReads(ok(left));
+      providerLists(FAI);
+      const result = await resume();
+      expect(result).toStrictEqual(confirming(null));
+      expect(resumeStep(result)).toMatchObject({
+        do: "notice",
+        block: true,
+        forget: false,
+      });
+      expect(d.fetchPayments).not.toHaveBeenCalled();
+      expect(d.payments.recordProviderCheck).not.toHaveBeenCalled();
+      expect(d.store.createPendingOrder).not.toHaveBeenCalled();
+      expect(d.deriveToken).not.toHaveBeenCalled();
     },
   );
 

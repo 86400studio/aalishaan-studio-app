@@ -2451,7 +2451,85 @@ open(
       ]);
     });
 
-    it("an order under another review, a confirmed order and an order no longer awaiting payment are left exactly as they are", async () => {
+    it.each(["failure-first", "listing-first"])(
+      "a signed failure and a live observation of the same payment require review (%s)",
+      async (sequence) => {
+        const o = await newOrder();
+        const a = pay(o);
+        const listing = [live(o, a.id, "captured")];
+        if (sequence === "failure-first") {
+          expect(await outcomeOf(FAILED, a)).toBe("recorded:failed");
+          expect(await checked(o, listing)).toEqual(REVIEWED);
+        } else {
+          expect((await checked(o, listing)).held).toBe(true);
+          expect(await outcomeOf(FAILED, a)).toBe(
+            "review:payment_state_conflict",
+          );
+        }
+        expect(await standing(o.id)).toEqual(FLAGGED);
+        expect(await payRow(a.id)).toMatchObject({
+          status: "failed",
+          signature_verified: true,
+        });
+        expect(
+          await audits(o.id, "payment.review.payment_state_conflict"),
+        ).toHaveLength(1);
+        expect(await outcomeOf(CAPTURED, pay(o))).toBe(
+          "review:order_under_review",
+        );
+        expect(await standing(o.id)).toEqual(FLAGGED);
+        expect(await stages(o.id)).toEqual([0]);
+        expect(await outbox(o.id)).toEqual([]);
+      },
+    );
+
+    it("records an extra observed payment after confirmation once and preserves fulfilment", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      const b = paymentId();
+      await confirm(o, a);
+      const listing = [live(o, a.id, "captured"), live(o, b, "authorized")];
+      const expected = { ...REVIEWED, paymentStatus: "captured" };
+      expect(await checked(o, listing)).toEqual(expected);
+      const after = await orderRow(o.id);
+      expect(after).toMatchObject({
+        payment_status: "captured",
+        fulfilment_status: "confirmed",
+        needs_review: true,
+      });
+      expect(await payRow(a.id)).toMatchObject({
+        status: "captured",
+        signature_verified: true,
+      });
+      expect(await payRow(b)).toEqual(known(o, o.total));
+      expect(await checked(o, [...listing].reverse())).toEqual(expected);
+      expect(await orderRow(o.id)).toEqual(after);
+      const entries = await audits(o.id, "payment.review.extra_payment");
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({
+        reason: "provider_check",
+        next: {
+          payments: [
+            {
+              id: a.id,
+              status: "captured",
+              amount_paise: Number(o.total),
+              currency: "INR",
+            },
+            {
+              id: b,
+              status: "authorized",
+              amount_paise: Number(o.total),
+              currency: "INR",
+            },
+          ],
+        },
+      });
+      expect(await stages(o.id)).toEqual([1]);
+      expect(await outbox(o.id)).toHaveLength(1);
+    });
+
+    it("an order under another review and an order no longer awaiting payment are left exactly as they are", async () => {
       const reviewed = await newOrder();
       expect(
         await outcomeOf(
@@ -2459,15 +2537,13 @@ open(
           pay(reviewed, { amount: reviewed.total - BigInt(1) }),
         ),
       ).toBe("review:amount_mismatch");
-      const done = await newOrder();
-      await confirm(done);
       const cancelled = await newOrder();
       const cut = await privileged
         .from("orders")
         .update({ fulfilment_status: "cancelled" })
         .eq("id", cancelled.id);
       expect(cut.error).toBeNull();
-      for (const order of [reviewed, done, cancelled]) {
+      for (const order of [reviewed, cancelled]) {
         const before = {
           counts: await counts(),
           order: await orderRow(order.id),

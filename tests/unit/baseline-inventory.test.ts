@@ -37,9 +37,10 @@ describe("supabase/migrations — forward discovery", () => {
     // payment and its money, a repeated event's money judged. 0005 is applied on TEST and never edited, so the fixes
     // are a forward file of their own — the next free number (S1.8's planned migration moves to 0007).
     ["0006_payment_evidence.sql", "0006", "payment_evidence"],
+    ["0007_payment_review.sql", "0007", "payment_review"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the two S1.7 migrations under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the three S1.7 migrations under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

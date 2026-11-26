@@ -2,6 +2,7 @@ import {
   CHECKOUT_FIELD_MESSAGES,
   CHECKOUT_NOTICES,
 } from "@/content/public/checkout";
+import { ORDER_CONFIRMED } from "@/content/public/order";
 import {
   CHECKOUT_FIELDS,
   type CheckoutActionResult,
@@ -56,7 +57,8 @@ export type CheckoutNotice =
         | "uncertain";
     }
   | {
-      readonly id: "waiting" | "dismissed" | "unverified" | "confirming";
+      readonly id:
+        "waiting" | "dismissed" | "unverified" | "confirming" | "confirmed";
       readonly orderNumber: string;
     };
 
@@ -87,7 +89,7 @@ export type CheckoutStep =
 function notice(
   id: Exclude<
     CheckoutNotice["id"],
-    "waiting" | "dismissed" | "unverified" | "confirming"
+    "waiting" | "dismissed" | "unverified" | "confirming" | "confirmed"
   >,
   options: { forget?: boolean; recheckBag?: boolean; block?: boolean } = {},
 ): CheckoutStep {
@@ -104,23 +106,21 @@ function notice(
  * S1.7 — the three answers that offer no payment. With the order's page: go to it. Without it (no verified
  * signature stands on record yet, or the link cannot be derived here): a payment that is known says so and takes
  * the pay button away; a confirmed order is simply not payable from this page; `uncertain` takes the button away
- * until the page is loaded again. `quiet` is the load-time question, where a not-payable order is a line only.
+ * until the page is loaded again.
  */
 function withoutPayment(
   result: Extract<
     CheckoutActionResult,
     { status: "confirming" | "confirmed" | "uncertain" }
   >,
-  quiet: boolean,
 ): CheckoutStep {
   if (result.status === "uncertain")
     return notice("uncertain", { block: true });
   if (isOrderPath(result.order_path))
     return { do: "order", path: result.order_path };
-  if (result.status === "confirmed") return notice("held", { block: !quiet });
   return {
     do: "notice",
-    notice: { id: "confirming", orderNumber: result.order_number },
+    notice: { id: result.status, orderNumber: result.order_number },
     forget: false,
     recheckBag: false,
     block: true,
@@ -161,7 +161,7 @@ export function submitStep(result: CheckoutActionResult): CheckoutStep {
     case "confirming":
     case "confirmed":
     case "uncertain":
-      return withoutPayment(result, false);
+      return withoutPayment(result);
   }
 }
 
@@ -198,7 +198,7 @@ export function resumeStep(result: CheckoutActionResult): CheckoutStep {
     case "confirming":
     case "confirmed":
     case "uncertain":
-      return withoutPayment(result, true);
+      return withoutPayment(result);
   }
 }
 
@@ -333,7 +333,8 @@ export function isNeutralNotice(shown: CheckoutNotice): boolean {
     shown.id === "waiting" ||
     shown.id === "dismissed" ||
     shown.id === "unverified" ||
-    shown.id === "confirming"
+    shown.id === "confirming" ||
+    shown.id === "confirmed"
   );
 }
 
@@ -350,6 +351,8 @@ export function noticeText(shown: CheckoutNotice): string {
       return CHECKOUT_NOTICES.unverified(shown.orderNumber);
     case "confirming":
       return CHECKOUT_NOTICES.confirming(shown.orderNumber);
+    case "confirmed":
+      return ORDER_CONFIRMED.status(shown.orderNumber);
     case "held":
       return `${CHECKOUT_NOTICES.held.before}${CHECKOUT_NOTICES.held.link.label}${CHECKOUT_NOTICES.held.after}`;
     default:

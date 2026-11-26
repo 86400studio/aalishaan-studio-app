@@ -1110,13 +1110,13 @@ describe("the checkout page's mapping of the three S1.7 answers", () => {
     "never navigates for the path %j: a known payment says so, a confirmed order is not payable here, and no pay button is offered",
     (path) => {
       const waiting = { id: "confirming", orderNumber: ORDER_NUMBER };
-      const held = { id: "held" };
+      const confirmed = { id: "confirmed", orderNumber: ORDER_NUMBER };
       const paying = known("confirming", path);
       const done = known("confirmed", path);
       expect(submitStep(paying)).toEqual(notice(waiting, true));
       expect(resumeStep(paying)).toEqual(notice(waiting, true));
-      expect(submitStep(done)).toEqual(notice(held, true));
-      expect(resumeStep(done)).toEqual(notice(held, false));
+      expect(submitStep(done)).toEqual(notice(confirmed, true));
+      expect(resumeStep(done)).toEqual(notice(confirmed, true));
     },
   );
 
