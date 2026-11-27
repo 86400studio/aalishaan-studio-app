@@ -32,12 +32,13 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   A hold made in answer to a pay press also keeps the order's rows as that press submitted them (./held-order.ts),
  *   so the summary shows the order being paid for, not the bag as it is now; a hold found after a reload has none.
  *   They are kept in memory with the hold and never stored.
- * - **S1.7.** The hold also keeps the key of its own attempt (the slot's after a pay press, the stored one after a
- *   reload) — the page presents it when it asks the server to verify what Razorpay's window reported, and when it
- *   asks whether the window may open again — and whether a window was opened for this launch (`opened`): the first
- *   opening follows the server's launch directly; every later one asks the server first (./checkout-form.tsx).
- *   `opened` speaks for THIS page only: a hold found after a reload starts unopened though its order's window may
- *   have been opened before, so it is never a reason to end a hold without the server's word.
+ * - **S1.7.** The hold also keeps the key of its own attempt (the key its pay press submitted with, the stored one
+ *   after a reload) — the page presents it when it asks the server to verify what Razorpay's window reported, and
+ *   when it asks whether the window may open again. A window opens only in answer to a press of this page, as its
+ *   launch arrives; every press on a hold asks the server first (./checkout-form.tsx — the independent review's
+ *   round 3, finding 1: whatever this page did with a hold, its order's window may have been opened before, and its
+ *   standing may have changed since). Nothing here is a reason to end a hold, or to open one, without the server's
+ *   word.
  */
 
 export { ATTEMPT_STORAGE_KEY };
@@ -67,8 +68,6 @@ export type CheckoutHold = {
   readonly order: HeldOrder | null;
   /** The key of this hold's own attempt, for the questions the page asks the server about it; null when unknown. */
   readonly attemptKey: string | null;
-  /** True once a payment window was opened for this launch: opening one again asks the server first (S1.7). */
-  readonly opened: boolean;
 };
 
 export type AttemptEnvironment = {
@@ -103,8 +102,6 @@ export type AttemptKeys = {
   ) => void;
   /** Marks the hold as reported complete by the browser (unverified). */
   markReported: () => void;
-  /** Marks that a payment window was opened for the hold's launch. */
-  markOpened: () => void;
   /** The hold, or null. Expiry is the caller's check (`holdExpired`). */
   held: () => CheckoutHold | null;
 };
@@ -232,14 +229,10 @@ export function createAttemptKeys(
         order,
         attemptKey:
           attemptKey !== undefined ? attemptKey : (slot?.key ?? readStored()),
-        opened: false,
       };
     },
     markReported() {
       if (hold !== null) hold = { ...hold, reported: true };
-    },
-    markOpened() {
-      if (hold !== null) hold = { ...hold, opened: true };
     },
     held: () => hold,
   };

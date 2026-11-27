@@ -68,6 +68,8 @@ const downLower = down.toLowerCase();
 const up6 = read("supabase/migrations/0006_payment_evidence.sql");
 /** 0007 re-creates two of them with the same signatures (tests/unit/payment-review.test.ts guards it). */
 const up7 = read("supabase/migrations/0007_payment_review.sql");
+/** 0008 re-creates the processor and the verified return with the same signatures (payment-discrepancies.test.ts). */
+const up8 = read("supabase/migrations/0008_payment_discrepancies.sql");
 
 /** The SQL without its comments; lines split on LF or CRLF. */
 function statementsOnly(sql: string): string {
@@ -797,13 +799,13 @@ describe("createPaymentStore — the database adapter", () => {
       ],
       ["order_confirmation_view", { p_token_hash: HASH }],
     ]);
-    // The argument names are the ones the function's latest definition declares: 0007 re-created the event step and
-    // the provider check, 0006 replaced the ledger step, 0005 holds the rest.
+    // The argument names are the ones the function's latest definition declares: 0008 re-created the event step and
+    // the verified return, 0007 the provider check, 0006 replaced the ledger step, 0005 holds the rest.
     const latest: Record<string, string> = {
       payment_record_event: up6,
-      payment_process_event: up7,
+      payment_process_event: up8,
       payment_record_provider_check: up7,
-      payment_return_state: up,
+      payment_return_state: up8,
       order_confirmation_view: up,
     };
     for (const [name, args] of rpc.mock.calls) {

@@ -64,6 +64,15 @@ import {
  * (finding 2); and the AS-1566 shape — a verified return, the check's hold, then that payment's own capture stored
  * after the deadline — is the late-capture review with no task, its timely twin one confirmation and one task.
  *
+ * Since 0008_payment_discrepancies (the independent review's round 3; docs/database-changes/S1.7-0008-payment-
+ * discrepancies.md) the suite needs 0008 applied as well — again the same signatures, so its cases fail as plain
+ * mismatches against a 0007 database — and also proves: a provider-check hold, then a signed authorisation of that
+ * payment, then its signed failure is the review no capture clears, its timely capture a review too, never a
+ * confirmation (finding 2), while a stale failure beside no such hold is stale as before; and a payment newly
+ * reported by a verified return after confirmation, or for an order no longer awaiting its payment, flags the order
+ * once and moves nothing else — a repeated return, or the return of the payment that confirmed the order, writes
+ * nothing (finding 3).
+ *
  * Orders are made through 0004's own functions, so the suite needs the effective business rule to be OPEN and
  * SYNTHETIC (the S1.6 test rule on TEST). While the rule is CLOSED only the access cases and the migration-text case
  * run and the rest are reported as skipped, never passed. The deadline cases (D-20) need what no function makes
@@ -799,11 +808,12 @@ describe("0005_payment_finalization — a confirmation never depends on the sale
   // Preview), so the case is proven here by reading: the function that confirms does not read business_rules at
   // all. The server's own half — the webhook processes payments whatever SALES_MODE says — is
   // tests/unit/payment-verification.test.ts ("paymentsGate").
-  it("payment_process_event's body never names business_rules — as 0005 wrote it, and as 0006 and 0007 re-create it", () => {
+  it("payment_process_event's body never names business_rules — as 0005 wrote it, and as 0006, 0007 and 0008 re-create it", () => {
     for (const file of [
       "../../supabase/migrations/0005_payment_finalization.sql",
       "../../supabase/migrations/0006_payment_evidence.sql",
       "../../supabase/migrations/0007_payment_review.sql",
+      "../../supabase/migrations/0008_payment_discrepancies.sql",
     ]) {
       const sql = readFileSync(
         fileURLToPath(new URL(file, import.meta.url)),
@@ -2891,6 +2901,211 @@ open(
         }
       },
     );
+  },
+);
+
+open(
+  "0008 — a contradicted hold and a payment reported after confirmation are reviews (the independent review's round 3, findings 2 and 3)",
+  () => {
+    const checked = async (o: Order, shown: ObservedPayment[]) => {
+      const result = await payments.recordProviderCheck(o.paId, shown);
+      if (!result.ok) throw new Error(`check refused: ${result.refusal}`);
+      return result.value;
+    };
+    const returned = async (o: Order, id: string) => {
+      const result = await payments.returnState(o.attemptHash, id);
+      if (!result.ok || result.value === null)
+        throw new Error("the verified return could not be recorded");
+      return result.value;
+    };
+    /** A payment reported by a verified return: created, verified, the checkout row's amount. */
+    const reported = (o: Order) => ({
+      order_id: o.id,
+      provider_order_id: o.providerOrderId,
+      amount_paise: Number(o.total),
+      currency: "INR",
+      status: "created",
+      signature_verified: true,
+      provider_order_state: null,
+    });
+
+    it.each(["captured", "authorized"] as const)(
+      "the provider check lists A %s (the hold), A's signed authorisation, then A's signed failure: the review no capture clears — A's timely capture confirms nothing",
+      async (status) => {
+        const o = await newOrder();
+        const a = pay(o);
+        expect((await checked(o, [live(o, a.id, status)])).held).toBe(true);
+        // The signed authorisation beside a standing hold is recorded; the hold stands.
+        expect(await outcomeOf(AUTHORIZED, a)).toBe("recorded:authorized");
+        expect(await payRow(a.id)).toMatchObject({
+          status: "authorized",
+          signature_verified: true,
+        });
+        // Under 0007 this failure was stale_failed and the hold stood; under 0008 it contradicts the hold.
+        const before = await snapshot(o);
+        const failed = await deliver(FAILED, a);
+        expect(failed.outcome).toBe("review:payment_state_conflict");
+        expect(await orderRow(o.id)).toMatchObject({
+          payment_status: "pending",
+          fulfilment_status: "pending_payment",
+          needs_review: true,
+          payment_hold: null,
+          confirmed_at: null,
+        });
+        expect(
+          await audits(o.id, "payment.review.payment_state_conflict"),
+        ).toMatchObject([
+          {
+            reason: "payment_state_conflict",
+            external_ref: a.id,
+            next: {
+              needs_review: true,
+              payment_hold: null,
+              payment: { status: "failed" },
+              event: failed.row,
+            },
+          },
+        ]);
+        // The payment keeps its stronger signed status: the row never moves back.
+        expect(await payRow(a.id)).toMatchObject({
+          status: "authorized",
+          signature_verified: true,
+        });
+        expect(await outbox(o.id)).toEqual(before.outbox);
+        // A's own timely signed capture meets an order under a review that is not a hold: never a confirmation.
+        expect(await outcomeOf(CAPTURED, a)).toBe("review:order_under_review");
+        expect(await standing(o.id)).toEqual(FLAGGED);
+        expect(await stages(o.id)).toEqual([0]);
+        expect(await outbox(o.id)).toEqual([]);
+      },
+    );
+
+    it("a signed failure after a signed authorisation, with no provider-check hold, is stale as before — and the capture confirms once", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect(await outcomeOf(AUTHORIZED, a)).toBe("hold:authorized_only");
+      expect(await outcomeOf(FAILED, a)).toBe("stale_failed");
+      expect(await standing(o.id)).toEqual(held("authorized_only"));
+      expect(await audits(o.id, "payment.review.%")).toEqual([]);
+      await confirm(o, a);
+      expect(await standing(o.id)).toEqual(CONFIRMED);
+      expect(await stages(o.id)).toEqual([1]);
+      expect(await outbox(o.id)).toHaveLength(1);
+    });
+
+    it("after A's capture confirmed the order, B's verified return flags it once — A's confirmation, its stage and its one task kept, B reported only; a repeated return of B and A's own return write nothing", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      await confirm(o, a);
+      const confirmedRow = await orderRow(o.id);
+      const b = paymentId();
+      const first = await returned(o, b);
+      expect(first).toMatchObject({
+        paymentStatus: "captured",
+        fulfilmentStatus: "confirmed",
+        needsReview: true,
+        paymentHold: null,
+        recorded: true,
+      });
+      expect(await payRow(b)).toEqual(reported(o));
+      expect(await audits(o.id, "payment.review.%")).toEqual([
+        {
+          actor_type: "system",
+          action: "payment.review.extra_payment",
+          entity_type: "order",
+          entity_id: o.id,
+          previous: {
+            payment_status: "captured",
+            needs_review: false,
+            payment_hold: null,
+          },
+          next: {
+            payment_status: "captured",
+            needs_review: true,
+            payment_hold: null,
+            payment: { status: "created" },
+          },
+          reason: "checkout_signature",
+          external_ref: b,
+        },
+      ]);
+      expect(await orderRow(o.id)).toMatchObject({
+        payment_status: "captured",
+        fulfilment_status: "confirmed",
+        confirmed_at: confirmedRow.confirmed_at,
+        needs_review: true,
+      });
+      expect(await payRow(a.id)).toMatchObject({
+        status: "captured",
+        signature_verified: true,
+      });
+      expect(await stages(o.id)).toEqual([1]);
+      expect(await outbox(o.id)).toHaveLength(1);
+      // The same return of B again, and the return of A itself: nothing new.
+      const before = await counts();
+      expect((await returned(o, b)).recorded).toBe(false);
+      expect((await returned(o, a.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+      // B's own signed capture later: a review, never a second confirmation.
+      expect(await outcomeOf(CAPTURED, pay(o, { id: b }))).toBe(
+        "review:extra_payment",
+      );
+      expect(await outbox(o.id)).toHaveLength(1);
+      expect(await audits(o.id, "payment.captured.%")).toHaveLength(1);
+    });
+
+    it("the opposite arrival order: B's verified return on a pending order flags nothing, and A's capture beside it is the event path's extra payment", async () => {
+      const o = await newOrder();
+      const b = paymentId();
+      expect(await returned(o, b)).toMatchObject({
+        paymentStatus: "pending",
+        needsReview: false,
+        recorded: true,
+      });
+      expect(await audits(o.id, "payment.review.%")).toEqual([]);
+      expect(await outcomeOf(CAPTURED, pay(o))).toBe("review:extra_payment");
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await outbox(o.id)).toEqual([]);
+    });
+
+    it("A's verified return before its own capture is the ordinary path: reported, then confirmed once, and its return again writes nothing", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect((await returned(o, a.id)).recorded).toBe(true);
+      await confirm(o, a);
+      const before = await counts();
+      expect((await returned(o, a.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+      expect(await standing(o.id)).toEqual(CONFIRMED);
+      expect(await audits(o.id, "payment.review.%")).toEqual([]);
+    });
+
+    it("a verified return for an order no longer awaiting its payment flags it (order_not_payable) — once", async () => {
+      const o = await newOrder();
+      const cut = await privileged
+        .from("orders")
+        .update({ fulfilment_status: "cancelled" })
+        .eq("id", o.id);
+      expect(cut.error).toBeNull();
+      const b = paymentId();
+      expect(await returned(o, b)).toMatchObject({
+        paymentStatus: "pending",
+        fulfilmentStatus: "cancelled",
+        needsReview: true,
+        recorded: true,
+      });
+      expect(await audits(o.id, "payment.review.%")).toMatchObject([
+        {
+          action: "payment.review.order_not_payable",
+          reason: "checkout_signature",
+          external_ref: b,
+        },
+      ]);
+      expect(await outbox(o.id)).toEqual([]);
+      const before = await counts();
+      expect((await returned(o, b)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+    });
   },
 );
 
