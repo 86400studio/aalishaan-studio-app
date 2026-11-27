@@ -1,4 +1,23 @@
--- Restore the 0006 RPCs. Existing payment and audit records are retained.
+-- 0007_payment_review.down.sql — the schema-recovery artifact paired with
+-- supabase/migrations/0007_payment_review.sql (S1.7, after the independent review's round 2).
+--
+-- This file lives outside supabase/migrations/ on purpose: `supabase db push` discovers only that folder, so
+-- forward discovery can never run it. It is a plan, not permission: it is run only on a written authorisation
+-- that names this file and the project, after the checks in docs/database-changes/S1.7-0007-payment-review.md
+-- → "Rollback plan", and only when forward-fixing is not possible — on TEST by the owner in the SQL editor or by
+-- the builder under the owner's scoped delegation, on PROD by the human owner only. Suspend payments first.
+-- It restores the two functions exactly as 0006 wrote them — payment_process_event(uuid) and
+-- payment_record_provider_check(uuid, jsonb), each with its comment, revoke and grant. From then on a signed failure
+-- of the payment a provider-check hold names is recorded beside a hold another payment's capture can clear, and the
+-- provider check records nothing for a confirmed order or one under a review that is not a hold, as before 0007:
+-- the independent review's round 2, findings 1 and 2, reopen.
+-- Down-SQL reverses schema, never data: it deletes nothing — the reviews, payment rows, ledger rows and audit rows
+-- written under 0007 stay as they are, and an order flagged by its rules stays flagged. No signature changes, so the
+-- application keeps answering through the same entry points either way.
+--
+-- The migration-ledger row is not touched here; the reversal is recorded afterwards with
+-- `supabase migration repair --status reverted 0007 --project-ref <REF>` for the same project, before any later
+-- re-apply.
 
 create or replace function public.payment_process_event(p_event uuid)
 returns jsonb

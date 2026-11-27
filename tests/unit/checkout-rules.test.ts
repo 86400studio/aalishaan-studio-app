@@ -1482,6 +1482,46 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
     expect(restore).not.toContain("markOpened");
   });
 
+  it("a blocking step takes the pay button and the challenge away and no press is sent — on load and after a press alike (S1.7, the independent review's round 2, findings 3 and 4)", () => {
+    // outcome.ts decides `block` (a review of a linked order, a confirmed order without its link, `uncertain`);
+    // these pins carry it through to what the page renders: the load-time question's notice and every later
+    // step's notice set `blocked`, the submit button and the Turnstile widget render only while nothing blocks, and
+    // a press while blocked sends nothing (no fresh attempt key is minted).
+    const form = codeOf("src/components/checkout/checkout-form.tsx");
+    const between = (from: string, to: string) => {
+      const start = form.indexOf(from);
+      const end = form.indexOf(to, start);
+      expect(start, from).toBeGreaterThan(0);
+      expect(end, to).toBeGreaterThan(start);
+      return form.slice(start, end);
+    };
+    expect(form).toContain("const [blocked, setBlocked] = useState(false);");
+    // The load-time question (resumeStep's answer).
+    expect(
+      between(
+        'case "notice":\n          if (step.forget) attemptKeys.forget();',
+        "return;",
+      ),
+    ).toContain("if (step.block) setBlocked(true);");
+    // Every later step (submitStep's answers).
+    expect(
+      between('case "notice":\n        if (step.forget) {', "return;"),
+    ).toContain("if (step.block) setBlocked(true);");
+    // A press while blocked sends nothing.
+    expect(between("const onSubmit = (", "};")).toContain(
+      "if (pressing.current || blocked || reported) return;",
+    );
+    // No submit button and no challenge while blocked.
+    expect(form).toContain(
+      '{blocked || reported ? null : (\n                <button\n                  type="submit"',
+    );
+    expect(form).toContain(
+      "{hold !== null || blocked || reported ? null : (\n                <TurnstileWidget",
+    );
+    // Nothing ever unblocks a page: only a new load starts unblocked.
+    expect(form).not.toContain("setBlocked(false)");
+  });
+
   it("pins the answer mappings of the reviewer's case: after a reload's launch, a deadline answer of confirming — with or without the order's link — keeps the key and the hold and leaves no pay button (S1.7, finding 2)", async () => {
     // A pin of the answer mappings only, built from the page's own framework-free parts in the order
     // ./checkout-form.tsx runs them: the stored key, the load-time question, the restored hold, the deadline's

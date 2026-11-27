@@ -35,8 +35,11 @@ describe("supabase/migrations — forward discovery", () => {
     ["0005_payment_finalization.sql", "0005", "payment_finalization"],
     // S1.7, after the independent review's round 1: the ledger's verified bytes, the provider check over every live
     // payment and its money, a repeated event's money judged. 0005 is applied on TEST and never edited, so the fixes
-    // are a forward file of their own — the next free number (S1.8's planned migration moves to 0007).
+    // are a forward file of their own — the next free number (S1.8's planned migration moved to 0007).
     ["0006_payment_evidence.sql", "0006", "payment_evidence"],
+    // S1.7, after the independent review's round 2: a signed failure beside a live observation of the same payment
+    // is a review, and the provider check keeps what it saw for every linked attempt. 0005 and 0006 are applied on
+    // TEST and never edited — the next free number again (S1.8's planned migration moves on to 0008).
     ["0007_payment_review.sql", "0007", "payment_review"],
   ] as const;
 

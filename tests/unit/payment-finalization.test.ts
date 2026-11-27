@@ -66,6 +66,8 @@ const down = read("supabase/rollbacks/0005_payment_finalization.down.sql");
 const downLower = down.toLowerCase();
 /** 0006 replaces two of the five signatures and re-creates a third (tests/unit/payment-evidence.test.ts guards it). */
 const up6 = read("supabase/migrations/0006_payment_evidence.sql");
+/** 0007 re-creates two of them with the same signatures (tests/unit/payment-review.test.ts guards it). */
+const up7 = read("supabase/migrations/0007_payment_review.sql");
 
 /** The SQL without its comments; lines split on LF or CRLF. */
 function statementsOnly(sql: string): string {
@@ -795,12 +797,12 @@ describe("createPaymentStore — the database adapter", () => {
       ],
       ["order_confirmation_view", { p_token_hash: HASH }],
     ]);
-    // The argument names are the ones the function's latest definition declares: 0006 replaced the ledger step and
-    // the provider check, 0005 holds the rest.
+    // The argument names are the ones the function's latest definition declares: 0007 re-created the event step and
+    // the provider check, 0006 replaced the ledger step, 0005 holds the rest.
     const latest: Record<string, string> = {
       payment_record_event: up6,
-      payment_process_event: up6,
-      payment_record_provider_check: up6,
+      payment_process_event: up7,
+      payment_record_provider_check: up7,
       payment_return_state: up,
       order_confirmation_view: up,
     };

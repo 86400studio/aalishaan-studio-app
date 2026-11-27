@@ -2,7 +2,6 @@ import {
   CHECKOUT_FIELD_MESSAGES,
   CHECKOUT_NOTICES,
 } from "@/content/public/checkout";
-import { ORDER_CONFIRMED } from "@/content/public/order";
 import {
   CHECKOUT_FIELDS,
   type CheckoutActionResult,
@@ -57,8 +56,7 @@ export type CheckoutNotice =
         | "uncertain";
     }
   | {
-      readonly id:
-        "waiting" | "dismissed" | "unverified" | "confirming" | "confirmed";
+      readonly id: "waiting" | "dismissed" | "unverified" | "confirming";
       readonly orderNumber: string;
     };
 
@@ -89,7 +87,7 @@ export type CheckoutStep =
 function notice(
   id: Exclude<
     CheckoutNotice["id"],
-    "waiting" | "dismissed" | "unverified" | "confirming" | "confirmed"
+    "waiting" | "dismissed" | "unverified" | "confirming"
   >,
   options: { forget?: boolean; recheckBag?: boolean; block?: boolean } = {},
 ): CheckoutStep {
@@ -105,8 +103,10 @@ function notice(
 /**
  * S1.7 — the three answers that offer no payment. With the order's page: go to it. Without it (no verified
  * signature stands on record yet, or the link cannot be derived here): a payment that is known says so and takes
- * the pay button away; a confirmed order is simply not payable from this page; `uncertain` takes the button away
- * until the page is loaded again.
+ * the pay button away; a confirmed order is not payable from this page — the held line (NS-38, with its contact
+ * link), the pay button taken away and the attempt kept, on a pay press and on load alike (the independent review's
+ * round 2, finding 4: a confirmed order whose link cannot be supplied never leaves a usable form); `uncertain` takes
+ * the button away until the page is loaded again. Every one of them keeps the attempt key.
  */
 function withoutPayment(
   result: Extract<
@@ -118,9 +118,10 @@ function withoutPayment(
     return notice("uncertain", { block: true });
   if (isOrderPath(result.order_path))
     return { do: "order", path: result.order_path };
+  if (result.status === "confirmed") return notice("held", { block: true });
   return {
     do: "notice",
-    notice: { id: result.status, orderNumber: result.order_number },
+    notice: { id: "confirming", orderNumber: result.order_number },
     forget: false,
     recheckBag: false,
     block: true,
@@ -333,8 +334,7 @@ export function isNeutralNotice(shown: CheckoutNotice): boolean {
     shown.id === "waiting" ||
     shown.id === "dismissed" ||
     shown.id === "unverified" ||
-    shown.id === "confirming" ||
-    shown.id === "confirmed"
+    shown.id === "confirming"
   );
 }
 
@@ -351,8 +351,6 @@ export function noticeText(shown: CheckoutNotice): string {
       return CHECKOUT_NOTICES.unverified(shown.orderNumber);
     case "confirming":
       return CHECKOUT_NOTICES.confirming(shown.orderNumber);
-    case "confirmed":
-      return ORDER_CONFIRMED.status(shown.orderNumber);
     case "held":
       return `${CHECKOUT_NOTICES.held.before}${CHECKOUT_NOTICES.held.link.label}${CHECKOUT_NOTICES.held.after}`;
     default:

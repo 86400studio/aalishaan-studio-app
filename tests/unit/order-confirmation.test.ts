@@ -1110,13 +1110,16 @@ describe("the checkout page's mapping of the three S1.7 answers", () => {
     "never navigates for the path %j: a known payment says so, a confirmed order is not payable here, and no pay button is offered",
     (path) => {
       const waiting = { id: "confirming", orderNumber: ORDER_NUMBER };
-      const confirmed = { id: "confirmed", orderNumber: ORDER_NUMBER };
+      // The independent review's round 2, finding 4: a confirmed order whose link cannot be supplied is the approved
+      // held line (NS-38, with its contact link), with the pay button taken away and the attempt kept — on load as on
+      // a pay press, never a usable form.
+      const held = { id: "held" };
       const paying = known("confirming", path);
       const done = known("confirmed", path);
       expect(submitStep(paying)).toEqual(notice(waiting, true));
       expect(resumeStep(paying)).toEqual(notice(waiting, true));
-      expect(submitStep(done)).toEqual(notice(confirmed, true));
-      expect(resumeStep(done)).toEqual(notice(confirmed, true));
+      expect(submitStep(done)).toEqual(notice(held, true));
+      expect(resumeStep(done)).toEqual(notice(held, true));
     },
   );
 

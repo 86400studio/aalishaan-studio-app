@@ -1,4 +1,31 @@
--- S1.7: preserve conflicting provider evidence across webhook and checkout races.
+-- 0007_payment_review — S1.7, after the independent review's round 2 (findings 1 and 2): a payment the provider
+-- shows live beside its own signed failure is a review, and the provider check keeps what it observed for every
+-- linked attempt — a confirmed order, or one under another review, included (docs/database-changes/
+-- S1.7-0007-payment-review.md; docs/code-reviews/S1.7-razorpay-verification-review.md → "Implementation PR,
+-- round 2"; docs/TECH-ARCHITECTURE.md §4 row 0007).
+--
+-- Why a third S1.7 migration: 0005 and 0006 are applied on TEST and are never edited. Both rules below must hold
+-- under the row locks the payment functions already take (the checkout row, then the order, then the payments).
+--
+-- What changes (function bodies and comments only — no table, column, index, policy, grant or signature):
+--   * payment_process_event(uuid): a signed payment.failed of the payment a standing provider-check hold names is
+--     a review no later capture clears (payment_state_conflict), never "recorded:failed" beside a clearable hold;
+--     and while a hold stands, a provider-check hold naming ANOTHER payment counts as another live payment, so a
+--     hold raised before 0007 for a payment whose row already says failed can never be cleared by a different
+--     payment's capture (extra_payment);
+--   * payment_record_provider_check(uuid, jsonb): every linked attempt's observation is recorded, not only an order
+--     that still awaits its payment. Each payment shown that is not on record gets its known row (created, never
+--     verified). A confirmed order meets an exact repeat of its confirmed payment as a no-op, and anything else —
+--     another payment, other money — as a review that keeps the confirmation, its items' stage and its single
+--     send_confirmation task. An order that no longer awaits its payment is order_not_payable; a payment not on
+--     record for an order under a review that is not a hold is audited beside that review (order_under_review); a
+--     listed payment whose row says failed is payment_state_conflict. Only an order that awaits its payment, under no
+--     review other than a hold, is ever held. Every review audit is written once per distinct observation.
+--
+-- House style of 0004–0006: plpgsql, pinned empty search_path, never SECURITY DEFINER, EXECUTE revoked from
+-- public, anon and authenticated and granted to service_role only; no BEGIN/COMMIT (the CLI applies the file as one
+-- unit). Paired with supabase/rollbacks/0007_payment_review.down.sql, which restores 0006's two definitions word for
+-- word and keeps every row.
 
 create or replace function public.payment_process_event(p_event uuid)
 returns jsonb
@@ -331,7 +358,7 @@ end;
 $fn$;
 
 comment on function public.payment_process_event(uuid) is
-  'S1.7 (0006 amends the rule for a repeated event): processes one verified Razorpay event from its ledger row alone, in one transaction, and marks the row in that same transaction. payment.captured confirms the order it belongs to exactly once — the payment''s row, the order (payment_status captured, fulfilment_status confirmed, confirmed_at), its items'' stage, one audit row and one send_confirmation unit of pending work — only while the order awaits payment, for the stored amount in INR, with no other live payment, within its deadline by the event''s ledger time, and under no review other than a payment hold. payment.authorized raises the authorized_only hold; payment.failed is recorded. A wrong amount or currency, an extra or late payment, an order no longer awaiting payment, a payment id held elsewhere and an unknown reference are flagged and audited, never confirmed. A payment''s row only moves forward, and a repeated or older event of it is the same payment again only if it states the amount and currency a signed event already recorded on that row: an authorised or captured event that contradicts them is flagged and audited (currency_mismatch / amount_mismatch — 0006), never taken for a duplicate. A row already processed or ignored answers its recorded outcome with replayed = true. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
+  'S1.7 (0006 amends the rule for a repeated event; 0007 the rules for a signed failure and for another live payment): processes one verified Razorpay event from its ledger row alone, in one transaction, and marks the row in that same transaction. payment.captured confirms the order it belongs to exactly once — the payment''s row, the order (payment_status captured, fulfilment_status confirmed, confirmed_at), its items'' stage, one audit row and one send_confirmation unit of pending work — only while the order awaits payment, for the stored amount in INR, with no other live payment, within its deadline by the event''s ledger time, and under no review other than a payment hold. Another live payment is any other known payment of the order whose row has not failed, or — while a hold stands — a payment that a provider-check hold of the order named (0007). payment.authorized raises the authorized_only hold. payment.failed is recorded, except the failure of the payment a standing provider-check hold names: a review no later capture clears (payment_state_conflict — 0007). A wrong amount or currency, an extra or late payment, an order no longer awaiting payment, a payment id held elsewhere and an unknown reference are flagged and audited, never confirmed. A payment''s row only moves forward, and a repeated or older event of it is the same payment again only if it states the amount and currency a signed event already recorded on that row: an authorised or captured event that contradicts them is flagged and audited (currency_mismatch / amount_mismatch — 0006), never taken for a duplicate. A row already processed or ignored answers its recorded outcome with replayed = true. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
 
 revoke execute on function public.payment_process_event(uuid) from public, anon, authenticated;
 grant execute on function public.payment_process_event(uuid) to service_role;
@@ -360,6 +387,8 @@ declare
   v_ref          text;
   v_seen         jsonb := '[]'::jsonb;
   v_held         boolean := false;
+  v_holdable     boolean;
+  v_new          boolean := false;
 begin
   -- (a) every value's shape, before anything is read or written: one to 99 live payments (the most one page of the
   --     provider's listing holds), each exactly an id, a status, an amount in exact paise (a decimal string) and a
@@ -419,18 +448,26 @@ begin
     when cardinality(v_ids) > 1 then 'extra_payment'
   end;
 
-  -- The checkout and order locks serialize this snapshot with signed events.
-  if v_pa.provider_order_state = 'linked'
-     and (v_order.payment_status = 'captured'
-          or (v_order.payment_status = 'pending' and v_order.fulfilment_status = 'pending_payment'
-              and (not v_order.needs_review or v_order.payment_hold is not null))) then
+  -- (d) 0007: what the provider showed is kept for EVERY linked attempt — the checkout row's and the order's locks
+  --     (above) serialise this snapshot with signed events, so a webhook that committed first (a confirmation, a
+  --     review) is seen here and the observation is still recorded beside it. Only an order that still awaits its
+  --     payment, under no review other than a hold, can be held; any other order is never held and never cleared.
+  if v_pa.provider_order_state = 'linked' then
+    v_holdable := v_order.payment_status = 'pending'
+                  and v_order.fulfilment_status = 'pending_payment'
+                  and (not v_order.needs_review or v_order.payment_hold is not null);
+
+    -- One payment with the stored intent's money is still a review when another payment stands for the order: on a
+    -- confirmed order, any payment but the one whose signed capture confirmed it; otherwise any other known payment
+    -- whose row has not failed (reported by a verified return, authorised or captured by a signed event, or shown
+    -- by an earlier provider check).
     if v_reason is null and v_order.payment_status = 'captured' and not exists (
       select 1 from public.audit_log a
        where a.entity_type = 'order' and a.entity_id = v_order.id::text
          and a.action = 'payment.captured.confirmed' and a.external_ref = v_ids[1]
     ) then
       v_reason := 'extra_payment';
-    elsif v_reason is null and v_order.payment_status = 'pending' and exists (
+    elsif v_reason is null and v_order.payment_status <> 'captured' and exists (
       select 1 from public.payment_attempts p
        where p.order_id = v_order.id and p.provider_order_state is null
          and p.status <> 'failed' and p.provider_payment_id <> v_ids[1]
@@ -461,6 +498,7 @@ begin
           signature_verified)
         values (
           v_order.id, 'razorpay', v_pa.provider_order_id, v_id, v_amount, 'INR', 'created', false);
+        v_new := true;
       end if;
       v_seen := v_seen || jsonb_build_array(jsonb_build_object(
         'id', v_id,
@@ -469,15 +507,28 @@ begin
         'currency', v_currency));
     end loop;
 
+    -- An order that cannot be held is never left without a record of a live payment: one that no longer awaits its
+    -- payment (fulfilment moved on, or its payment expired or failed) is order_not_payable, as the event path's step
+    -- (e) judges it; one under a review that is not a hold keeps that review, and a payment shown for it that was not
+    -- on record is audited beside it (order_under_review). A listing of payments already on record changes nothing.
+    if v_reason is null and v_order.payment_status <> 'captured' and not v_holdable then
+      v_reason := case
+        when v_order.payment_status <> 'pending' or v_order.fulfilment_status <> 'pending_payment'
+          then 'order_not_payable'
+        when v_new then 'order_under_review'
+      end;
+    end if;
+
     -- The audit row names the strongest payment shown: the first captured one, else the first authorised one, by id.
     select e.value ->> 'id' into v_ref
       from jsonb_array_elements(p_payments) as e(value)
      order by (e.value ->> 'status') = 'captured' desc, e.value ->> 'id'
      limit 1;
 
-    if v_reason is null and v_order.payment_status = 'pending'
+    if v_reason is null and v_holdable
        and (not v_order.needs_review or (v_order.payment_hold = 'authorized_only' and v_hold = 'capture_unverified')) then
-      -- Exactly one payment, the stored intent's money: the hold its own signed capture clears.
+      -- Exactly one payment, the stored intent's money, for an order that awaits it: the hold its own signed capture
+      -- clears. A captured answer replaces the weaker authorized_only hold (0005); an equal or stronger hold stands.
       update public.orders
          set needs_review = true,
              payment_hold = v_hold
@@ -505,7 +556,9 @@ begin
          and a.next -> 'payments' = v_seen
     ) then
       -- A review no later capture clears: the flag stands without a hold, and what the provider showed is audited —
-      -- every payment with the money it observed, which the payment rows cannot always hold.
+      -- every payment with the money it observed, which the payment rows cannot always hold — once per distinct
+      -- observation. The flag is set where it is not and a hold is cleared; an existing review stands as it is, and
+      -- nothing else of the order moves (payment_status, fulfilment, confirmed_at, items, pending work).
       update public.orders
          set needs_review = true,
              payment_hold = null
@@ -543,7 +596,7 @@ end;
 $fn$;
 
 comment on function public.payment_record_provider_check(uuid, jsonb) is
-  'Records live Razorpay observations under the checkout and order locks. Money discrepancies, additional payments and conflicting failures require review. Only a signed event can confirm. Identical observations after confirmation are idempotent.';
+  'S1.7 (0006; D-68; 0007 records every linked attempt''s observation): records what the provider''s API shows for a linked checkout attempt — EVERY live payment it listed (captured or authorised), each with the amount and currency the provider observed — under the checkout row''s and the order''s locks, which serialise it with signed events. Each payment shown that is not on record gets its row, status created, signature_verified false, the observed amount where the row can hold it (INR, within bounds) — never authorised, captured or paid. Only an order that still awaits its payment and is under no review other than a hold is ever held: exactly one payment, for the order''s total and the checkout row''s amount in INR, with no other known payment, is the capture_unverified or authorized_only hold with one audit row payment.hold.<hold> (reason provider_check, the observed money in it); a captured answer replaces the authorized_only hold. Otherwise it is a review no later capture clears, with one audit row payment.review.<reason> (reason provider_check) carrying every payment as observed, written once per distinct observation: more than one live payment, another currency or amount, or one payment beside another known one or other than the payment that confirmed the order (extra_payment / currency_mismatch / amount_mismatch); a listed payment whose row says failed (payment_state_conflict); an order no longer awaiting its payment (order_not_payable); a payment not on record for an order already under a review that is not a hold (order_under_review). A review sets needs_review where it is not set and clears a hold; it never changes payment_status, fulfilment_status, confirmed_at, items or pending work, and never clears a review. An exact repeat — a confirmed order''s own payment, or payments already on record for an order under review — writes nothing. It never confirms an order. A payment id another order holds is refused (ZP021) and nothing of the call is kept. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
 
 revoke execute on function public.payment_record_provider_check(uuid, jsonb) from public, anon, authenticated;
 grant execute on function public.payment_record_provider_check(uuid, jsonb) to service_role;

@@ -95,8 +95,11 @@ import {
  *     money that is not the stored intent, a review a person resolves (0006) — and the answer is `confirming`;
  *   - a payment still in flight, or no usable answer → no launch: `uncertain`. Not known is never "not paid".
  * An order that is not payable from here says what it is: `confirmed` (a verified captured payment), `confirming`
- * (a pending linked order is under review, a hold stands or a review has signed evidence),
- * or `uncertain` when pending or captured order details cannot be read.
+ * (any review of a pending order whose attempt is linked to a provider order — a payment may exist for it, so a
+ * review is never "held" beside a usable form, and Razorpay is not asked again on reload: the independent review's
+ * round 2, finding 3 — or a hold, or a review beside a payment on record), `uncertain` when the order's details
+ * cannot be read while it is pending or captured, otherwise `held` (a review of an order whose attempt was never
+ * linked: no provider order exists to hold a payment).
  *
  * **S1.7 — the verified return** (`verifyCheckoutReturn`). Razorpay's window hands the page a payment id and a
  * signature. The server verifies that signature against the provider order id IT stored for the attempt the caller
@@ -218,7 +221,15 @@ function orderPathFor(
   }
 }
 
-/** A linked order under financial review stays blocked even before a signature arrives. */
+/**
+ * What an order that is not payable from here is — or null when it is neither confirmed nor a payment being checked.
+ * A captured order is `confirmed`. Under review, a pending order is `confirming` whenever its attempt is linked to a
+ * provider order (`linked`: a payment may exist there — a review the provider check raised records its payments as
+ * known, never as verified, so the order's own read cannot say money moved; the independent review's round 2,
+ * finding 3: such a review is never "held" beside a usable form, and nothing asks Razorpay again), while a hold
+ * stands, and whenever a payment stands on record for it (reported by a verified return, authorised or captured by a
+ * signed event — round 1, finding 1). Null otherwise: the caller decides (`notPayable` answers `held`).
+ */
 function standingOfOrder(
   order: ReturnState,
   linked: boolean,
@@ -245,6 +256,12 @@ function standingOfOrder(
   return null;
 }
 
+/**
+ * An order that is no longer pending, or is under review: `confirmed`, `confirming` (see `standingOfOrder`),
+ * otherwise `held`. Never a launch, and never a question to Razorpay. When its detail cannot be read, an order the
+ * attempt reads as pending (it may be on a hold — a payment known and being confirmed) or as captured (a confirmed
+ * order must never leave a usable form) is `uncertain` — no new payment from the page; any other is `held`.
+ */
 async function notPayable(
   state: AttemptState,
   step: Step,
