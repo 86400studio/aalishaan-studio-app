@@ -270,9 +270,19 @@ describe("0007 — payment_record_provider_check: every linked attempt's observa
     expect(checkCode).toMatch(
       /if v_reason is null and v_order\.payment_status = 'captured' and not exists \(\s+select 1 from public\.audit_log a\s+where a\.entity_type = 'order' and a\.entity_id = v_order\.id::text\s+and a\.action = 'payment\.captured\.confirmed' and a\.external_ref = v_ids\[1\]\s+\) then\s+v_reason := 'extra_payment';/,
     );
-    // Otherwise one payment beside another known payment whose row has not failed.
+    // Otherwise one payment beside another live payment, counted as the event path counts one (payment_process_event's
+    // step (e)): another known payment whose row has not failed — a row without a payment id included — or, while a
+    // hold stands, a payment another provider-check hold of the order named. Never a hold its own capture cannot clear.
     expect(checkCode).toMatch(
-      /elsif v_reason is null and v_order\.payment_status <> 'captured' and exists \(\s+select 1 from public\.payment_attempts p\s+where p\.order_id = v_order\.id and p\.provider_order_state is null\s+and p\.status <> 'failed' and p\.provider_payment_id <> v_ids\[1\]\s+\) then\s+v_reason := 'extra_payment';/,
+      /elsif v_reason is null and v_order\.payment_status <> 'captured' and \(exists \(\s+select 1 from public\.payment_attempts p\s+where p\.order_id = v_order\.id and p\.provider_order_state is null\s+and p\.status <> 'failed' and p\.provider_payment_id is distinct from v_ids\[1\]\s+\) or \(v_order\.payment_hold is not null and exists \(\s+select 1 from public\.audit_log a\s+where a\.entity_type = 'order' and a\.entity_id = v_order\.id::text\s+and a\.action in \('payment\.hold\.authorized_only', 'payment\.hold\.capture_unverified'\)\s+and a\.reason = 'provider_check' and a\.external_ref <> v_ids\[1\]\)\)\) then\s+v_reason := 'extra_payment';/,
+    );
+    // The two functions count another live payment by the same two clauses.
+    const eventClauses = statementsOnly(process7);
+    expect(eventClauses).toContain(
+      "and x.provider_payment_id is distinct from v_payment_id)",
+    );
+    expect(eventClauses).toMatch(
+      /or \(v_order\.payment_hold is not null and exists \(\s+select 1 from public\.audit_log a\s+where a\.entity_type = 'order' and a\.entity_id = v_order\.id::text\s+and a\.action in \('payment\.hold\.authorized_only', 'payment\.hold\.capture_unverified'\)\s+and a\.reason = 'provider_check' and a\.external_ref <> v_payment_id\)\);/,
     );
     expect(checkCode).toMatch(
       /if v_pay\.status = 'failed' then\s+v_reason := coalesce\(v_reason, 'payment_state_conflict'\);/,

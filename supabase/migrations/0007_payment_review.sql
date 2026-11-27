@@ -458,20 +458,26 @@ begin
                   and (not v_order.needs_review or v_order.payment_hold is not null);
 
     -- One payment with the stored intent's money is still a review when another payment stands for the order: on a
-    -- confirmed order, any payment but the one whose signed capture confirmed it; otherwise any other known payment
-    -- whose row has not failed (reported by a verified return, authorised or captured by a signed event, or shown
-    -- by an earlier provider check).
+    -- confirmed order, any payment but the one whose signed capture confirmed it; otherwise, as the event path counts
+    -- another live payment (payment_process_event, step (e)), any other known payment whose row has not failed
+    -- (reported by a verified return, authorised or captured by a signed event, or shown by an earlier provider
+    -- check) — or, while a hold stands, a payment that a provider-check hold of the order named (a hold created
+    -- before 0007 can name a payment whose row already says failed): never a hold its own capture could not clear.
     if v_reason is null and v_order.payment_status = 'captured' and not exists (
       select 1 from public.audit_log a
        where a.entity_type = 'order' and a.entity_id = v_order.id::text
          and a.action = 'payment.captured.confirmed' and a.external_ref = v_ids[1]
     ) then
       v_reason := 'extra_payment';
-    elsif v_reason is null and v_order.payment_status <> 'captured' and exists (
+    elsif v_reason is null and v_order.payment_status <> 'captured' and (exists (
       select 1 from public.payment_attempts p
        where p.order_id = v_order.id and p.provider_order_state is null
-         and p.status <> 'failed' and p.provider_payment_id <> v_ids[1]
-    ) then
+         and p.status <> 'failed' and p.provider_payment_id is distinct from v_ids[1]
+    ) or (v_order.payment_hold is not null and exists (
+      select 1 from public.audit_log a
+       where a.entity_type = 'order' and a.entity_id = v_order.id::text
+         and a.action in ('payment.hold.authorized_only', 'payment.hold.capture_unverified')
+         and a.reason = 'provider_check' and a.external_ref <> v_ids[1]))) then
       v_reason := 'extra_payment';
     end if;
 
@@ -596,7 +602,7 @@ end;
 $fn$;
 
 comment on function public.payment_record_provider_check(uuid, jsonb) is
-  'S1.7 (0006; D-68; 0007 records every linked attempt''s observation): records what the provider''s API shows for a linked checkout attempt — EVERY live payment it listed (captured or authorised), each with the amount and currency the provider observed — under the checkout row''s and the order''s locks, which serialise it with signed events. Each payment shown that is not on record gets its row, status created, signature_verified false, the observed amount where the row can hold it (INR, within bounds) — never authorised, captured or paid. Only an order that still awaits its payment and is under no review other than a hold is ever held: exactly one payment, for the order''s total and the checkout row''s amount in INR, with no other known payment, is the capture_unverified or authorized_only hold with one audit row payment.hold.<hold> (reason provider_check, the observed money in it); a captured answer replaces the authorized_only hold. Otherwise it is a review no later capture clears, with one audit row payment.review.<reason> (reason provider_check) carrying every payment as observed, written once per distinct observation: more than one live payment, another currency or amount, or one payment beside another known one or other than the payment that confirmed the order (extra_payment / currency_mismatch / amount_mismatch); a listed payment whose row says failed (payment_state_conflict); an order no longer awaiting its payment (order_not_payable); a payment not on record for an order already under a review that is not a hold (order_under_review). A review sets needs_review where it is not set and clears a hold; it never changes payment_status, fulfilment_status, confirmed_at, items or pending work, and never clears a review. An exact repeat — a confirmed order''s own payment, or payments already on record for an order under review — writes nothing. It never confirms an order. A payment id another order holds is refused (ZP021) and nothing of the call is kept. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
+  'S1.7 (0006; D-68; 0007 records every linked attempt''s observation): records what the provider''s API shows for a linked checkout attempt — EVERY live payment it listed (captured or authorised), each with the amount and currency the provider observed — under the checkout row''s and the order''s locks, which serialise it with signed events. Each payment shown that is not on record gets its row, status created, signature_verified false, the observed amount where the row can hold it (INR, within bounds) — never authorised, captured or paid. Only an order that still awaits its payment and is under no review other than a hold is ever held: exactly one payment, for the order''s total and the checkout row''s amount in INR, with no other known payment (as the event path counts one: another payment row that has not failed, or — while a hold stands — another payment a provider-check hold of the order named), is the capture_unverified or authorized_only hold with one audit row payment.hold.<hold> (reason provider_check, the observed money in it); a captured answer replaces the authorized_only hold. Otherwise it is a review no later capture clears, with one audit row payment.review.<reason> (reason provider_check) carrying every payment as observed, written once per distinct observation: more than one live payment, another currency or amount, or one payment beside another known one or other than the payment that confirmed the order (extra_payment / currency_mismatch / amount_mismatch); a listed payment whose row says failed (payment_state_conflict); an order no longer awaiting its payment (order_not_payable); a payment not on record for an order already under a review that is not a hold (order_under_review). A review sets needs_review where it is not set and clears a hold; it never changes payment_status, fulfilment_status, confirmed_at, items or pending work, and never clears a review. An exact repeat — a confirmed order''s own payment, or payments already on record for an order under review — writes nothing. It never confirms an order. A payment id another order holds is refused (ZP021) and nothing of the call is kept. EXECUTE for service_role only; pinned empty search_path; not SECURITY DEFINER.';
 
 revoke execute on function public.payment_record_provider_check(uuid, jsonb) from public, anon, authenticated;
 grant execute on function public.payment_record_provider_check(uuid, jsonb) to service_role;
