@@ -1,4 +1,8 @@
 import type { CheckoutLaunch } from "@/lib/schemas/checkout";
+import {
+  HMAC_SHA256_HEX_PATTERN,
+  RAZORPAY_PAYMENT_ID_PATTERN,
+} from "@/lib/schemas/payments";
 
 import type { CheckoutPrefill } from "./attempt-key";
 import { loadScriptOnce } from "./load-script";
@@ -11,9 +15,13 @@ import type { RazorpayCheckoutOptions } from "./provider-globals";
  * the order number — never an amount, a key or an order id the browser made up.
  *
  * The three callbacks the window can make — a reported payment, a failed payment, the window closed — are told to
- * the page as bare events. The payment id and the signature Razorpay passes to its `handler` are not received at all
- * (the handler takes no argument): S1.7 verifies payments on the server, and nothing in the browser may treat a
- * callback as proof.
+ * the page as events. Nothing in the browser may treat a callback as proof.
+ *
+ * **S1.7 — the report.** When Razorpay reports a completed payment it hands the page a payment id and a signature.
+ * The page passes exactly those two on (`PaymentReport`) so the SERVER can verify them against the provider order
+ * id it stored (docs/sprint-prompts/S1.7-razorpay-verification.md §H.3 "Verification"). The order id Razorpay
+ * hands back with them is dropped here: the server uses its own, never the browser's. A report that does not have
+ * the expected shape is passed on as `null` — the payment was reported, and nothing can be verified from it.
  */
 
 export const RAZORPAY_CHECKOUT_SRC =
@@ -22,14 +30,36 @@ export const RAZORPAY_CHECKOUT_SRC =
 /** The name the payment window shows: the studio's. */
 export const PAYMENT_WINDOW_NAME = "Aalishaan Studio";
 
+/** What Razorpay's window handed the page for a payment it reported complete — for the server to verify. */
+export type PaymentReport = {
+  readonly paymentId: string;
+  readonly signature: string;
+};
+
 export type PaymentWindowEvents = {
-  /** Razorpay told the browser the payment completed — unverified (NS-05). */
-  onReported: () => void;
+  /**
+   * Razorpay told the browser the payment completed — unverified (NS-05) until the server has checked the report.
+   * `report` is null when the answer did not carry a payment id and a signature of the expected shape.
+   */
+  onReported: (report: PaymentReport | null) => void;
   /** Razorpay told the browser a payment failed; its own window offers the retry. */
   onFailed: () => void;
   /** The window was closed. */
   onDismissed: () => void;
 };
+
+/** The payment id and signature of Razorpay's answer, or null. The order id it carries is never read. */
+export function paymentReportOf(response: unknown): PaymentReport | null {
+  if (typeof response !== "object" || response === null) return null;
+  const { razorpay_payment_id: paymentId, razorpay_signature: signature } =
+    response as { razorpay_payment_id?: unknown; razorpay_signature?: unknown };
+  return typeof paymentId === "string" &&
+    RAZORPAY_PAYMENT_ID_PATTERN.test(paymentId) &&
+    typeof signature === "string" &&
+    HMAC_SHA256_HEX_PATTERN.test(signature)
+    ? { paymentId, signature }
+    : null;
+}
 
 /** Resolves once Checkout.js has loaded and defined its constructor; rejects when it could not. */
 export async function loadRazorpayCheckout(): Promise<void> {
@@ -61,7 +91,7 @@ export function paymentWindowOptions(
             method: prefill.method,
           },
         }),
-    handler: () => events.onReported(),
+    handler: (response) => events.onReported(paymentReportOf(response)),
     modal: { ondismiss: () => events.onDismissed() },
   };
 }

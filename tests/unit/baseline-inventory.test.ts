@@ -30,9 +30,29 @@ describe("supabase/migrations — forward discovery", () => {
     // S1.6 (D-60): the checkout's atomic write. The number is the next free one at the sprint that needed it;
     // the roadmap's later numbers moved with it (docs/ROADMAP.md, docs/TECH-ARCHITECTURE.md §4).
     ["0004_checkout.sql", "0004", "checkout"],
+    // S1.7 (D-67): the atomic confirmation of a captured payment. The roadmap first said "Migrations: none"; the
+    // one-transaction rule needs a database function, as D-60 found for the checkout. The next free number again.
+    ["0005_payment_finalization.sql", "0005", "payment_finalization"],
+    // S1.7, after the independent review's round 1: the ledger's verified bytes, the provider check over every live
+    // payment and its money, a repeated event's money judged. 0005 is applied on TEST and never edited, so the fixes
+    // are a forward file of their own — the next free number (S1.8's planned migration moved to 0007).
+    ["0006_payment_evidence.sql", "0006", "payment_evidence"],
+    // S1.7, after the independent review's round 2: a signed failure beside a live observation of the same payment
+    // is a review, and the provider check keeps what it saw for every linked attempt. 0005 and 0006 are applied on
+    // TEST and never edited — the next free number again (S1.8's planned migration moves on to 0008).
+    ["0007_payment_review.sql", "0007", "payment_review"],
+    // S1.7, after the independent review's round 3: a stale signed failure beside a standing provider-check hold is a
+    // review, and a payment newly reported after confirmation is a review. 0005–0007 are applied on TEST and never
+    // edited — the next free number again (S1.8's planned migration moves on to 0009).
+    ["0008_payment_discrepancies.sql", "0008", "payment_discrepancies"],
+    // S1.7, after the independent review's round 4: what the provider check saw over a hold that already stands, a
+    // signed failure the check meets after it, and a verified return of a payment a signed event recorded first are
+    // each kept and read, whichever came first. 0005–0008 are applied on TEST and never edited — the next free number
+    // again (S1.8's planned migration moves on to 0010).
+    ["0009_payment_observations.sql", "0009", "payment_observations"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration and the S1.6 migration under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the five S1.7 migrations under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

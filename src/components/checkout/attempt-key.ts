@@ -23,13 +23,22 @@ import { ATTEMPT_STORAGE_KEY } from "./storage-key";
  *   never capture a later order. A malformed stored value is ignored.
  * - **The hold** is the launch the server answered for an order, kept in memory for the page's life: while it
  *   stands, the page offers only "continue to payment" for that order, never a new one. It is released by
- *   `forget()` alone — the callers release it when the server says the attempt is over or when its deadline has
- *   passed (`holdExpired`), never because a browser callback fired. The deadline is the moment the answer was
- *   received plus the time the SERVER said remains (`expires_in_ms`): the server has already judged the order
- *   payable by the database's clock, and a device clock that is wrong must neither discard that answer nor extend it.
+ *   `forget()` alone — the callers release it when the server says the attempt is over (S1.7: once its deadline has
+ *   passed — `holdExpired` — the page asks the server, whether or not a window was opened for it; only a launch that
+ *   arrives already past its deadline is released before its first window), never because a browser callback fired.
+ *   The deadline is the moment the answer was received plus the time the SERVER said remains (`expires_in_ms`): the
+ *   server has already judged the order payable by the database's clock, and a device clock that is wrong must
+ *   neither discard that answer nor extend it.
  *   A hold made in answer to a pay press also keeps the order's rows as that press submitted them (./held-order.ts),
  *   so the summary shows the order being paid for, not the bag as it is now; a hold found after a reload has none.
  *   They are kept in memory with the hold and never stored.
+ * - **S1.7.** The hold also keeps the key of its own attempt (the key its pay press submitted with, the stored one
+ *   after a reload) — the page presents it when it asks the server to verify what Razorpay's window reported, and
+ *   when it asks whether the window may open again. A window opens only in answer to a press of this page, as its
+ *   launch arrives; every press on a hold asks the server first (./checkout-form.tsx — the independent review's
+ *   round 3, finding 1: whatever this page did with a hold, its order's window may have been opened before, and its
+ *   standing may have changed since). Nothing here is a reason to end a hold, or to open one, without the server's
+ *   word.
  */
 
 export { ATTEMPT_STORAGE_KEY };
@@ -57,6 +66,8 @@ export type CheckoutHold = {
   readonly deadlineMs: number;
   /** The order's rows as the pay press submitted them; null for a hold found after a reload (not known here). */
   readonly order: HeldOrder | null;
+  /** The key of this hold's own attempt, for the questions the page asks the server about it; null when unknown. */
+  readonly attemptKey: string | null;
 };
 
 export type AttemptEnvironment = {
@@ -79,13 +90,15 @@ export type AttemptKeys = {
   forget: () => void;
   /**
    * Records the launch that now holds the page; `receivedMs` is this device's time when the answer arrived, `order`
-   * the order's rows as the pay press submitted them (none after a reload).
+   * the order's rows as the pay press submitted them (none after a reload). The hold's attempt key is `attemptKey`
+   * when given (a hold that is put back), otherwise the submit slot's, otherwise the stored one.
    */
   hold: (
     launch: CheckoutLaunch,
     prefill: CheckoutPrefill | null,
     receivedMs: number,
     order?: HeldOrder | null,
+    attemptKey?: string | null,
   ) => void;
   /** Marks the hold as reported complete by the browser (unverified). */
   markReported: () => void;
@@ -207,13 +220,15 @@ export function createAttemptKeys(
       hold = null;
       removeStored();
     },
-    hold(launch, prefill, receivedMs, order = null) {
+    hold(launch, prefill, receivedMs, order = null, attemptKey) {
       hold = {
         launch,
         prefill,
         reported: false,
         deadlineMs: launchDeadline(launch, receivedMs),
         order,
+        attemptKey:
+          attemptKey !== undefined ? attemptKey : (slot?.key ?? readStored()),
       };
     },
     markReported() {

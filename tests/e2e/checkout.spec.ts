@@ -22,14 +22,26 @@ import type { ResolvedTarget } from "./harness/target";
  *   the bag is changed through "Edit bag" and the page is returned to or opened again, the button opening only that
  *   order, and keeps it when a payment is reported (Checkout.js is replaced in that one test by a stand-in at its
  *   own address that records each window the page opens and makes the window's callbacks on the test's request).
+ *   Since S1.7 the same test also proves: a window that was already opened is opened AGAIN only after one question
+ *   to the server (the attempt key alone — the server asks Razorpay whether a payment for the order is captured,
+ *   authorised or in flight before it answers a launch); a report with nothing to verify sends nothing; and a
+ *   report that is not Razorpay's — a well-formed payment id under a signature nobody signed — is handed to the
+ *   server's verification and refused by it, leaving the page where it was. A report is never proof. The Preview's
+ *   checkout is open only with RAZORPAY_WEBHOOK_SECRET beside the other names (S1.7). Since the independent review's
+ *   round 3 (finding 1): the launch a reload restores is never opened as it is — the press asks the server once more
+ *   (the attempt key alone) and opens only on that fresh launch; when the order's standing has changed meanwhile (the
+ *   server's own answer to that question rewritten in transit to what it answers for an order under review), the
+ *   window stays closed, the attempt key is kept unchanged and no payment is offered; when nothing has changed, the
+ *   window opens with the fresh launch (its provider order id rewritten in transit to one no Razorpay order has, and
+ *   seen in the window), never the one the reload restored.
  * - **A sealed local run** (`local` mode): the build is made without the checkout's public values, so checkout is
  *   CLOSED, as on Production — the NS-04 panel, no form, no field, no provider script requested, the cart's control
  *   disabled with its approved line. Every request that leaves the loopback server is aborted.
  *
  * Effects on the Preview, per project and run: two synthetic pending orders on TEST (an `@example.test` address, the
  * test number 9000000000, `synthetic = true`), each with its Razorpay **Test Mode** order — no money, retained by
- * design (docs/database-changes/S1.6-0004-checkout.md → "Fixture lifecycle"); three checkout submissions per project,
- * six per run, against the submit limit of ten per address in a fixed ten-minute window — so the spec is not run
+ * design (docs/database-changes/S1.6-0004-checkout.md → "Fixture lifecycle"); four checkout submissions per project (S1.7
+ * added one), eight per run, against the submit limit of ten per address in a fixed ten-minute window — so the spec is not run
  * again within ten minutes of a full run (a second run would be throttled on its last submissions); rate-limit
  * counters under `checkout:` and `bag:` that expire by themselves; Turnstile test verifications. No payment is
  * attempted inside Razorpay's window (the stand-in's reported payment is the test's own call of the page's callback):
@@ -74,16 +86,109 @@ const HELD_NOT_LISTED = (order: string) =>
 const HELD_NOT_LISTED_ONLY = (order: string) =>
   `This page was opened again, so the artworks of order ${order} are not listed here.`;
 /** NS-05: Razorpay reported a completed payment to the browser — not proof. */
+/** The deadline's line — said only when the server says so (S1.7). */
+const EXPIRED =
+  "The time to pay for this order has passed. To order, please start again.";
 const UNVERIFIED = (order: string) =>
   `Order ${order}: your payment is not confirmed yet. The order stays pending until the payment provider confirms it. Please do not pay again.`;
+/** NS-41 (S1.7): a payment for the order is known and being confirmed — the answer for an order under review. */
+const CONFIRMING = (order: string) =>
+  `A payment for order ${order} is being confirmed. Please do not pay again. Reload this page in a few minutes to see where it stands.`;
+
+/** A launch's result as a server action answers it, read from its row. */
+type LaunchResult = { status: "launch"; launch: Record<string, unknown> };
+
+/**
+ * S1.7 — the server's own answer to a resume, with the row that carries the action's result — the row that row 0's
+ * `a` names (`"a":"$@<id>"`) — replaced by `replace` of the launch it carries; every other byte is the server's. Null
+ * when the answer has no such row or its result is not a launch (the test then fails on that, never on a guess).
+ */
+function rewriteLaunch(
+  body: string,
+  replace: (result: LaunchResult) => unknown,
+): string | null {
+  const lines = body.split("\n");
+  const named = /"a":"\$@([0-9a-f]+)"/.exec(
+    lines.find((line) => line.startsWith("0:")) ?? "",
+  );
+  if (named === null) return null;
+  const at = lines.findIndex((line) => line.startsWith(`${named[1]}:`));
+  if (at < 0) return null;
+  let result: unknown;
+  try {
+    result = JSON.parse(lines[at].slice(named[1].length + 1));
+  } catch {
+    return null;
+  }
+  if (
+    typeof result !== "object" ||
+    result === null ||
+    (result as { status?: unknown }).status !== "launch"
+  )
+    return null;
+  lines[at] = `${named[1]}:${JSON.stringify(replace(result as LaunchResult))}`;
+  return lines.join("\n");
+}
+
+/** The answer for an order under review ("being confirmed", NS-41) in place of the launch the server gave. */
+const asConfirming = (body: string, orderNumber: string) =>
+  rewriteLaunch(body, () => ({
+    status: "confirming",
+    order_number: orderNumber,
+    order_path: null,
+  }));
+
+/**
+ * For the page's next resume questions only (a server action that sends an attempt key and nothing of a submission or
+ * a report): the server's own answer, rewritten by `rewrite` before the page reads it. `seen` records each one —
+ * "rewritten", or "no launch in the answer" when it was passed on unchanged — so the test says what reached the page.
+ */
+async function rewriteResumeAnswers(
+  page: Page,
+  rewrite: (body: string) => string | null,
+  seen: string[],
+): Promise<void> {
+  await page.route("**/checkout", async (route) => {
+    const request = route.request();
+    const sent = request.postData() ?? "";
+    if (
+      request.method() !== "POST" ||
+      !request.headers()["next-action"] ||
+      !sent.includes('"attempt_key"') ||
+      sent.includes("turnstile_token") ||
+      sent.includes("razorpay_payment_id")
+    )
+      return route.continue();
+    const response = await route.fetch({ timeout: 30_000 });
+    const changed = rewrite(await response.text());
+    seen.push(changed === null ? "no launch in the answer" : "rewritten");
+    if (changed === null) return route.fulfill({ response });
+    const headers = { ...response.headers() };
+    for (const name of [
+      "content-length",
+      "content-encoding",
+      "transfer-encoding",
+    ])
+      delete headers[name];
+    return route.fulfill({
+      status: response.status(),
+      headers,
+      body: changed,
+    });
+  });
+}
+
+/** S1.7 — a provider order id no Razorpay order has: the fresh launch's, as the test rewrites it in transit. */
+const FRESH_PROVIDER_ORDER = "order_E2EFreshLaunch";
 
 const RAZORPAY_CHECKOUT_SRC = `${RAZORPAY_SCRIPT_ORIGIN}/v1/checkout.js`;
 
 /**
  * For one test only: Checkout.js replaced by a stand-in served at its own address (so the page's policy treats it as
  * the real script). It opens no window: it records the order, amount and description each opening was given, and
- * makes the page's own callbacks on request — `__close()` the window closed, `__report()` a payment reported to the
- * browser — so the test knows exactly which order each press opens.
+ * makes the page's own callbacks on request — `__close()` the window closed, `__report(response)` a payment
+ * reported to the browser, with whatever the test says the window answered — so the test knows exactly which order
+ * each press opens.
  */
 const CHECKOUT_STAND_IN = `
 window.__opened = [];
@@ -92,21 +197,24 @@ window.Razorpay = function (options) {
   this.open = function () {
     window.__opened.push({ order_id: options.order_id, amount: options.amount, description: options.description });
     window.__close = function () { options.modal.ondismiss(); };
-    window.__report = function () { options.handler(); };
+    window.__report = function (response) { options.handler(response); };
   };
 };
 `;
 type StandIn = {
   __opened: Array<{ order_id: string; amount: number; description: string }>;
   __close: () => void;
-  __report: () => void;
+  __report: (response?: unknown) => void;
 };
 const openedWindows = (page: Page) =>
   page.evaluate(() => (window as unknown as StandIn).__opened);
 const closeWindow = (page: Page) =>
   page.evaluate(() => (window as unknown as StandIn).__close());
-const reportPayment = (page: Page) =>
-  page.evaluate(() => (window as unknown as StandIn).__report());
+const reportPayment = (page: Page, response?: Record<string, string>) =>
+  page.evaluate(
+    (answered) => (window as unknown as StandIn).__report(answered),
+    response,
+  );
 
 const FIELDS = [
   ["name", "Full name", "shipping name"],
@@ -213,7 +321,7 @@ async function checkoutIsOpen(
   if (target.mode === "preview")
     expect(
       open,
-      "the Preview's checkout must be open (SALES_MODE=test in the Preview scope, the Razorpay Test Mode key pair, ORDER_TOKEN_SECRET, the Turnstile pair and the Upstash pair) — a closed Preview proves nothing here",
+      "the Preview's checkout must be open (SALES_MODE=test in the Preview scope, the Razorpay Test Mode key pair, RAZORPAY_WEBHOOK_SECRET, ORDER_TOKEN_SECRET, the Turnstile pair and the Upstash pair) — a closed Preview proves nothing here",
     ).toBe(true);
   return open;
 }
@@ -645,7 +753,9 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(page.locator("#main")).not.toContainText(
       /successful|payment received|order confirmed|thank you for your order/i,
     );
-    // "Continue to payment" re-opens the SAME order: no new submission is made (a resume answered, not a submit).
+    // "Continue to payment" re-opens the SAME order: no new submission is made. S1.7 — the independent review's round
+    // 3, finding 1: the launch the reload restored is never opened as it is — the press asks where the attempt stands
+    // once more, by the key alone, and the window opens on that fresh launch.
     const submissions: string[] = [];
     page.on("request", (request) => {
       if (request.method() === "POST" && request.headers()["next-action"])
@@ -653,7 +763,11 @@ test.describe("S1.6 — the checkout page", () => {
     });
     await payButton(page).click();
     await expect(razorpayFrame(page)).toBeVisible({ timeout: 45_000 });
-    expect(submissions, "re-opening sends nothing to the server").toEqual([]);
+    expect(submissions, "one question, never a new submission").toHaveLength(1);
+    expect(submissions[0]).toContain(`"attempt_key":"${stored.attempt}"`);
+    expect(submissions[0]).not.toContain("turnstile_token");
+    for (const secret of [values.name, values.email, values.address])
+      expect(submissions[0]).not.toContain(secret);
     expect(
       await page.evaluate(
         (key) => window.sessionStorage.getItem(key),
@@ -669,7 +783,7 @@ test.describe("S1.6 — the checkout page", () => {
     expect(policyRefusals(consoleErrors)).toEqual([]);
   });
 
-  test("an order that holds the page is what its summary shows — after its window is closed, the bag is changed and the page is returned to or opened again — and the button opens only that order", async ({
+  test("an order that holds the page is what its summary shows — after its window is closed, the bag is changed and the page is returned to or opened again — and the button opens only that order, after a reload only on the server's fresh answer (S1.7, round 3, finding 1)", async ({
     page,
     target,
   }, testInfo) => {
@@ -687,14 +801,17 @@ test.describe("S1.6 — the checkout page", () => {
       await expect(razorpayFrame(page)).toBeHidden();
       return;
     }
-    // One submission, a trip to the cart and back, a reload with its resume call: more than 30 seconds on a cold
-    // Preview function.
-    test.setTimeout(150_000);
+    // One submission, a trip to the cart and back, three reloads with their resume calls and the presses' questions
+    // (S1.7, round 3, finding 1): more than 30 seconds on a cold Preview function.
+    test.setTimeout(240_000);
     const { pageErrors, consoleErrors } = watchErrors(page);
     const actionCalls: string[] = [];
+    const actionBodies: string[] = [];
     page.on("request", (request) => {
-      if (request.method() === "POST" && request.headers()["next-action"])
+      if (request.method() === "POST" && request.headers()["next-action"]) {
         actionCalls.push(request.url());
+        actionBodies.push(request.postData() ?? "");
+      }
     });
     const rows = page.locator("#checkout-items article.bag-row");
     const summary = page.locator(".flow-summary");
@@ -702,7 +819,8 @@ test.describe("S1.6 — the checkout page", () => {
 
     // A payment is started for the artwork once, ₹19,000.
     await expectBagChecked(page);
-    await fill(page, details(`${testInfo.project.name}-held`));
+    const typed = details(`${testInfo.project.name}-held`);
+    await fill(page, typed);
     await expectChallengePassed(page);
     await payButton(page).click();
     await expect
@@ -743,13 +861,24 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(summary).not.toContainText("₹38,000");
     await expect(summary).not.toContainText("Quantity 2");
     await expect(status(page)).toHaveText(WAITING(orderNumber));
-    // "Continue to payment" opens that same order for the same amount, and sends nothing to the server.
+    // "Continue to payment" opens that same order for the same amount. S1.7: this window was opened before, so the
+    // page asks the server first — one question, by the attempt key alone — and the server answers a launch only
+    // after Razorpay has said that no payment for the order is captured, authorised or in flight.
     actionCalls.length = 0;
+    actionBodies.length = 0;
     await expect(payButton(page)).toHaveText("Continue to payment");
     await payButton(page).click();
-    await expect.poll(async () => (await openedWindows(page)).length).toBe(2);
+    await expect
+      .poll(async () => (await openedWindows(page)).length, { timeout: 45_000 })
+      .toBe(2);
     expect((await openedWindows(page))[1]).toEqual(first);
-    expect(actionCalls, "re-opening sends nothing to the server").toEqual([]);
+    expect(actionCalls, "one question before the window opens again").toEqual([
+      page.url(),
+    ]);
+    // The question carries the attempt key and nothing the customer typed: it is not a new submission.
+    expect(actionBodies[0]).toMatch(/"attempt_key":"[A-Za-z0-9_-]{43}"/);
+    for (const personal of [typed.name, typed.email, typed.address])
+      expect(actionBodies[0]).not.toContain(personal);
     await closeWindow(page);
 
     // Opened again (a reload): the page keeps only the attempt key, so it lists none of the order's rows — never
@@ -764,14 +893,101 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(page.locator("dd[data-subtotal]")).toHaveText(UNIT);
     await expect(page.locator("dd[data-test-total]")).toHaveText(UNIT);
     await expect(summary).not.toContainText("₹38,000");
+    // S1.7 — the independent review's round 3, finding 1: the launch the reload restored answered the page's load,
+    // and the order's standing can change before the press (another window's payment authorised, a review raised).
+    // So the press asks the server again, by the attempt key alone, and opens only on that fresh launch. Here the
+    // standing has changed: the press's answer is the server's own, rewritten in transit to what it answers for an
+    // order under review ("being confirmed") — and Razorpay's window stays closed.
     actionCalls.length = 0;
+    actionBodies.length = 0;
+    const storedKey = () =>
+      page.evaluate((key) => window.sessionStorage.getItem(key), ATTEMPT_KEY);
+    const keyBefore = await storedKey();
+    expect(keyBefore).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const rewritten: string[] = [];
+    await rewriteResumeAnswers(
+      page,
+      (body) => asConfirming(body, orderNumber),
+      rewritten,
+    );
     await payButton(page).click();
-    await expect.poll(async () => (await openedWindows(page)).length).toBe(1);
-    expect((await openedWindows(page))[0]).toEqual(first);
-    expect(actionCalls, "re-opening sends nothing to the server").toEqual([]);
+    // What reached the page is said first: the press's one question, its launch rewritten.
+    await expect
+      .poll(() => rewritten, {
+        message:
+          "the press asked the server once, and its launch was rewritten",
+        timeout: 45_000,
+      })
+      .toEqual(["rewritten"]);
+    await expect(status(page)).toHaveText(CONFIRMING(orderNumber), {
+      timeout: 30_000,
+    });
+    expect(actionCalls, "one question before anything opens").toEqual([
+      page.url(),
+    ]);
+    expect(actionBodies[0]).toContain(`"attempt_key":"${keyBefore}"`);
+    for (const personal of [typed.name, typed.email, typed.address])
+      expect(actionBodies[0]).not.toContain(personal);
+    await expect(payButton(page)).toHaveCount(0);
+    expect(
+      await openedWindows(page),
+      "no window opens once the standing changed",
+    ).toEqual([]);
+    expect(await storedKey(), "the attempt key is kept, unchanged").toBe(
+      keyBefore,
+    );
+    await page.unroute("**/checkout");
+
+    // Reloaded again, nothing changed: the restored launch is again a question at the press — one, by the attempt
+    // key alone — and the window opens with the server's fresh launch, never the one the reload restored: the fresh
+    // answer's provider order id is rewritten in transit to one no Razorpay order has, and the window opened carries
+    // exactly that.
+    await page.reload();
+    await checkoutIsOpen(page, target);
+    await expect(status(page)).toHaveText(WAITING(orderNumber), {
+      timeout: 30_000,
+    });
+    await expect(heldLine).toHaveText(HELD_NOT_LISTED(orderNumber));
+    actionCalls.length = 0;
+    actionBodies.length = 0;
+    const fresh: string[] = [];
+    await rewriteResumeAnswers(
+      page,
+      (body) =>
+        rewriteLaunch(body, (result) => ({
+          ...result,
+          launch: { ...result.launch, provider_order_id: FRESH_PROVIDER_ORDER },
+        })),
+      fresh,
+    );
+    await payButton(page).click();
+    await expect
+      .poll(() => fresh, {
+        message: "the press asked the server once, and its launch was marked",
+        timeout: 45_000,
+      })
+      .toEqual(["rewritten"]);
+    await expect
+      .poll(async () => (await openedWindows(page)).length, { timeout: 45_000 })
+      .toBe(1);
+    expect(
+      (await openedWindows(page))[0],
+      "the window opens with the fresh launch",
+    ).toEqual({ ...first, order_id: FRESH_PROVIDER_ORDER });
+    expect(actionCalls, "one question before the window opens").toEqual([
+      page.url(),
+    ]);
+    expect(actionBodies[0]).toContain(`"attempt_key":"${keyBefore}"`);
+    expect(await storedKey(), "the attempt key is kept, unchanged").toBe(
+      keyBefore,
+    );
+    await page.unroute("**/checkout");
+    actionCalls.length = 0;
+    actionBodies.length = 0;
 
     // Razorpay reports a payment to the browser (not proof): the page stays on that order — still no rows, the line
-    // without its offer to continue — shows NS-05 and offers no payment; nothing is sent.
+    // without its offer to continue — shows NS-05 and offers no payment. This report carries nothing that could be
+    // verified, so nothing is sent.
     await reportPayment(page);
     await expect(status(page)).toHaveText(UNVERIFIED(orderNumber));
     await expect(payButton(page)).toHaveCount(0);
@@ -780,8 +996,62 @@ test.describe("S1.6 — the checkout page", () => {
     await expect(summary).not.toContainText("₹38,000");
     expect(
       actionCalls,
-      "a reported payment sends nothing to the server",
+      "a report with nothing to verify sends nothing to the server",
     ).toEqual([]);
+
+    // S1.7 — a report that is not Razorpay's: a well-formed payment id under a signature nobody signed, for this
+    // very order. The page hands exactly that to the server's verification, once; the server refuses it; and the
+    // page stays where it was — the same line, no payment offered, no order page. Nothing was confirmed by a report.
+    // The server's answer is read where the request is sent, before it is handed to the page unchanged: the
+    // browser's own record of a response body can be gone by the time it is asked for (seen on the mobile project).
+    // The page is checked only once the browser has received the whole answer. The server has the step's 30 s to
+    // answer, as before: given no timeout, the fetch would have the 10 s an action gets.
+    const answers: Array<{ status: number; body: string }> = [];
+    await page.route("**/checkout", async (route) => {
+      const request = route.request();
+      if (
+        request.method() !== "POST" ||
+        !request.headers()["next-action"] ||
+        !(request.postData() ?? "").includes("razorpay_payment_id")
+      )
+        return route.continue();
+      const response = await route.fetch({ timeout: 30_000 });
+      answers.push({ status: response.status(), body: await response.text() });
+      return route.fulfill({ response });
+    });
+    const refusal = page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        Boolean(response.request().headers()["next-action"]),
+      { timeout: 30_000 },
+    );
+    await reportPayment(page, {
+      razorpay_payment_id: "pay_E2EForged000001",
+      // What Razorpay hands back for the window: the order id it was opened with (the fresh launch's, above).
+      razorpay_order_id: FRESH_PROVIDER_ORDER,
+      razorpay_signature: "0".repeat(64),
+    });
+    const refused = await refusal;
+    // The browser has the whole answer (its body is not asked of the browser).
+    expect(await refused.finished()).toBeNull();
+    expect(refused.status()).toBe(200);
+    expect(answers).toHaveLength(1);
+    expect(answers[0].status).toBe(200);
+    expect(answers[0].body).toContain('"status":"rejected"');
+    expect(actionCalls, "the report is verified once").toEqual([page.url()]);
+    expect(actionBodies[0]).toContain(
+      '"razorpay_payment_id":"pay_E2EForged000001"',
+    );
+    // The order id is the server's own: neither the one the window was opened with nor the order's is ever sent.
+    expect(actionBodies[0]).not.toContain(FRESH_PROVIDER_ORDER);
+    expect(actionBodies[0]).not.toContain(first.order_id);
+    await expect(status(page)).toHaveText(UNVERIFIED(orderNumber));
+    await expect(payButton(page)).toHaveCount(0);
+    await expect(page).toHaveURL(/\/checkout$/);
+    await expect(page.locator("#main")).not.toContainText(
+      /successful|payment received|order confirmed|is confirmed/i,
+    );
+    await page.unroute("**/checkout");
 
     // The checkout never wrote to the bag: it holds what the customer made it.
     expect(
@@ -792,6 +1062,134 @@ test.describe("S1.6 — the checkout page", () => {
         )) ?? "null",
       ),
     ).toEqual({ v: 1, items: [{ code: VARIANT, quantity: 2 }] });
+    expect(pageErrors).toEqual([]);
+    expect(policyRefusals(consoleErrors)).toEqual([]);
+  });
+
+  test("S1.7 — the page's own clock decides nothing: at a hold's deadline — opened on this page or restored by a reload — it asks the server once, and a press while a reload's question is out sends nothing", async ({
+    page,
+    target,
+  }, testInfo) => {
+    // The page's clock is the test's: time flows, and is moved on past the hold's deadline at will. The server's
+    // deadline is the database's and does not move — so at the page's deadline the server still offers the order.
+    await page.clock.install();
+    await page.route(RAZORPAY_CHECKOUT_SRC, (route) =>
+      route.fulfill({
+        contentType: "text/javascript; charset=utf-8",
+        body: CHECKOUT_STAND_IN,
+      }),
+    );
+    await plantBag(page, "/checkout");
+    const open = await checkoutIsOpen(page, target);
+    if (target.mode === "local" || !open) {
+      // A sealed local run reaches no provider: nothing here is a payment path.
+      await expect(razorpayFrame(page)).toBeHidden();
+      return;
+    }
+    // One submission, a reload with its question, and two deadline questions (S1.7, the review's finding 2).
+    test.setTimeout(180_000);
+    const { pageErrors, consoleErrors } = watchErrors(page);
+    const bodies: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST" && request.headers()["next-action"])
+        bodies.push(request.postData() ?? "");
+    });
+
+    // A payment is started and its window opened, then closed: the window may have taken a payment.
+    const typed = details(`${testInfo.project.name}-deadline`);
+    await expectBagChecked(page);
+    await fill(page, typed);
+    await expectChallengePassed(page);
+    await payButton(page).click();
+    await expect
+      .poll(async () => (await openedWindows(page)).length, { timeout: 45_000 })
+      .toBe(1);
+    const orderNumber = (await openedWindows(page))[0].description;
+    await closeWindow(page);
+    await expect(status(page)).toHaveText(DISMISSED(orderNumber));
+
+    // The page's clock passes the hold's deadline (the TEST rule gives an hour). It asks the server — once, by the
+    // attempt key alone — and the server, which still offers the order, holds the page again. Nothing is said on
+    // the page's own clock: not "the time has passed", not "Nothing was charged"; no window opens by itself.
+    bodies.length = 0;
+    await page.clock.fastForward("01:01:00");
+    await expect.poll(() => bodies.length, { timeout: 30_000 }).toBe(1);
+    expect(bodies[0]).toMatch(/"attempt_key":"[A-Za-z0-9_-]{43}"/);
+    for (const personal of [typed.name, typed.email, typed.address])
+      expect(bodies[0]).not.toContain(personal);
+    await expect(payButton(page)).toHaveText("Continue to payment", {
+      timeout: 30_000,
+    });
+    await expect(status(page)).not.toHaveText(EXPIRED);
+    await expect(status(page)).not.toHaveText(UNAVAILABLE);
+    expect(await openedWindows(page)).toHaveLength(1);
+    expect(bodies, "one question, no submission").toHaveLength(1);
+
+    // A reload asks where the stored attempt stands. While that question is out, the customer fills the form and
+    // presses pay: nothing is sent — the answer, that order's hold, decides; no second order is made.
+    let release: () => void = () => {};
+    const answered = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let submissions = 0;
+    let questions = 0;
+    await page.route("**/checkout", async (route) => {
+      const request = route.request();
+      if (request.method() !== "POST" || !request.headers()["next-action"])
+        return route.continue();
+      if ((request.postData() ?? "").includes("turnstile_token")) {
+        submissions += 1;
+        return route.continue();
+      }
+      questions += 1;
+      await answered;
+      return route.continue();
+    });
+    await page.reload();
+    await checkoutIsOpen(page, target);
+    await expect.poll(() => questions, { timeout: 30_000 }).toBe(1);
+    await fill(page, details(`${testInfo.project.name}-asking`));
+    await expectChallengePassed(page);
+    await payButton(page).click();
+    // The press is busy and sends nothing while the question is out.
+    await expect(payButton(page)).toBeDisabled();
+    expect(submissions, "a press during the question").toBe(0);
+    release();
+    await expect(status(page)).toHaveText(WAITING(orderNumber), {
+      timeout: 30_000,
+    });
+    expect(submissions, "nothing was submitted").toBe(0);
+    await page.unroute("**/checkout");
+
+    // S1.7 — the review of 2026-11-26, finding 2: the hold the reload restored was never opened on THIS page, yet its
+    // order's window was opened before the reload and may have taken a payment. At the restored hold's deadline the
+    // page asks the server once, by the attempt key alone, and carries out the answer — never "the time has passed"
+    // on its own clock, and the attempt key stays. (The server's deadline is the database's and has not passed, so
+    // the answer holds the page again.)
+    const kept = await page.evaluate(
+      (key) => window.sessionStorage.getItem(key),
+      ATTEMPT_KEY,
+    );
+    expect(kept).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    bodies.length = 0;
+    await page.clock.fastForward("01:01:00");
+    await expect.poll(() => bodies.length, { timeout: 30_000 }).toBe(1);
+    expect(bodies[0]).toMatch(/"attempt_key":"[A-Za-z0-9_-]{43}"/);
+    expect(bodies[0]).not.toContain("turnstile_token");
+    await expect(payButton(page)).toHaveText("Continue to payment", {
+      timeout: 30_000,
+    });
+    await expect(status(page)).not.toHaveText(EXPIRED);
+    await expect(status(page)).not.toHaveText(UNAVAILABLE);
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        ATTEMPT_KEY,
+      ),
+      "the attempt key is kept",
+    ).toBe(kept);
+    expect(await openedWindows(page), "no window opens by itself").toEqual([]);
+    expect(bodies, "one question, no submission").toHaveLength(1);
     expect(pageErrors).toEqual([]);
     expect(policyRefusals(consoleErrors)).toEqual([]);
   });

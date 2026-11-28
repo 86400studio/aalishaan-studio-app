@@ -287,10 +287,22 @@ export type CheckoutLaunch = {
  * - `held` — the order exists but is not payable from here (under review, or no longer pending).
  * - `expired` — the order's payment window has passed.
  * - `not_found` — resume only: no attempt for this key (or older than the server honours).
+ * - `confirming` — S1.7: a payment for this order is known and not yet confirmed (reported, authorised, or seen at
+ *   the provider). No payment is offered. `order_path` is the order's page when its link may be given.
+ * - `confirmed` — S1.7: the order is confirmed (a verified captured payment). `order_path` as above.
+ * - `uncertain` — S1.7: whether the last payment finished could not be established (the provider could not be
+ *   asked, or a payment is still in flight). No payment is offered; ask again shortly.
  */
 export type CheckoutActionResult =
   | { status: "launch"; launch: CheckoutLaunch }
   | { status: "invalid"; fields: CheckoutFieldErrors }
+  | {
+      status: "confirming" | "confirmed";
+      order_number: string;
+      /** `/order/<token>` — only once a verified signature stands on record for the order; otherwise null. */
+      order_path: string | null;
+    }
+  | { status: "uncertain" }
   | {
       status:
         | "closed"
@@ -307,6 +319,20 @@ export type CheckoutActionResult =
     };
 
 export type CheckoutActionStatus = CheckoutActionResult["status"];
+
+/**
+ * The answer of the verified-return action (S1.7) — what the page learns after Razorpay's window reported a payment
+ * and the page sent the payment id and signature it was handed:
+ *
+ * - `verified` — the signature is Razorpay's, for this attempt's own order: here is the order's page. It says
+ *   nothing about the payment being captured: the page it leads to shows what the database holds.
+ * - `rejected` — the report could not be verified for this attempt (a wrong or foreign signature, a malformed
+ *   report, no such attempt). One answer for all of them.
+ * - `throttled` / `unavailable` — as for the other actions. Nothing was decided.
+ */
+export type CheckoutReturnResult =
+  | { status: "verified"; order_path: string }
+  | { status: "rejected" | "throttled" | "unavailable" };
 
 /**
  * The canonical form of what an attempt covers — the bag (by code) and the normalised fields. The server binds an

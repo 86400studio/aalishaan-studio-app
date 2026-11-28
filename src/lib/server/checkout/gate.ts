@@ -21,16 +21,21 @@ import { readServerSupabaseEnv, resolveServerIdentity } from "../supabase";
  *   3. the server's database identity resolves, and to the TEST project (src/lib/supabase/config.ts `serverConfig`:
  *      outside Production the API URL's ref must be the configured TEST ref);
  *   4. the public Razorpay key id is a Test Mode key (`rzp_test_…`) and its secret is present;
- *   5. the order-link secret, both Turnstile keys and both Upstash names are present and well formed.
+ *   5. the webhook secret is present (S1.7): a deployment that could not verify a payment's webhook takes none;
+ *   6. the order-link secret, both Turnstile keys and both Upstash names are present and well formed.
  * Anything else is closed, with a reason code for the server's log only — the browser learns "closed" (NS-04) and
  * nothing else. A closed gate means zero business writes and zero calls to Upstash, Turnstile or Razorpay.
  *
  * The database function re-checks the effective business rule inside its own transaction (0004_checkout); this
  * gate is the deployment's half of the decision, never the only one.
  *
+ * `providerGate()` is conditions 2–5 and the order-link secret alone — S1.7 (src/lib/server/payments/config.ts).
+ * The webhook, the verified return and the order page stand on it and NOT on `SALES_MODE`, Turnstile, Upstash or
+ * the business rule: a payment already made is processed whether or not new orders are being taken.
+ *
  * The secrets read here never leave the server: the returned configuration is handed to the server-only checkout
- * modules and is never serialised, logged or returned by an action. `checkoutPageConfig()` is the one projection a
- * page may receive — whether checkout is open and the public Turnstile site key.
+ * and payment modules and is never serialised, logged or returned by an action. `checkoutPageConfig()` is the one
+ * projection a page may receive — whether checkout is open and the public Turnstile site key.
  */
 
 export type SalesGateEnv = ServerSupabaseEnv &
@@ -38,6 +43,7 @@ export type SalesGateEnv = ServerSupabaseEnv &
     SALES_MODE?: string;
     NEXT_PUBLIC_RAZORPAY_KEY_ID?: string;
     RAZORPAY_KEY_SECRET?: string;
+    RAZORPAY_WEBHOOK_SECRET?: string;
     ORDER_TOKEN_SECRET?: string;
     NEXT_PUBLIC_TURNSTILE_SITE_KEY?: string;
     TURNSTILE_SECRET_KEY?: string;
@@ -46,17 +52,37 @@ export type SalesGateEnv = ServerSupabaseEnv &
     VERCEL_PROJECT_PRODUCTION_URL?: string;
   };
 
-export type SalesGateClosedReason =
-  | "mode_off"
-  | "mode_live_not_open"
-  | "mode_invalid"
+/** Why the deployment's provider half is closed (S1.7 `providerGate`). */
+export type ProviderGateClosedReason =
   | "production"
   | "identity"
   | "razorpay_key"
   | "razorpay_secret"
-  | "token_secret"
+  | "razorpay_webhook_secret"
+  | "token_secret";
+
+export type SalesGateClosedReason =
+  | "mode_off"
+  | "mode_live_not_open"
+  | "mode_invalid"
+  | ProviderGateClosedReason
   | "turnstile"
   | "throttle";
+
+/** What the payment modules need of the deployment: the verified TEST identity and the three provider secrets. */
+export type ProviderConfig = {
+  context: "preview" | "development";
+  /** The TEST project's ref: the identity the gate verified. */
+  projectRef: string;
+  razorpayKeyId: string;
+  razorpayKeySecret: string;
+  razorpayWebhookSecret: string;
+  orderTokenSecret: string;
+};
+
+export type ProviderGate =
+  | { open: true; provider: ProviderConfig }
+  | { open: false; reason: ProviderGateClosedReason };
 
 export type CheckoutConfig = {
   context: "preview" | "development";
@@ -82,6 +108,11 @@ export type SalesGate =
 export const RAZORPAY_TEST_KEY_ID_PATTERN = /^rzp_test_[A-Za-z0-9]{8,40}$/;
 /** At least 32 random bytes as base64url (43 characters or more). */
 export const ORDER_TOKEN_SECRET_PATTERN = /^[A-Za-z0-9_-]{43,200}$/;
+/**
+ * The webhook secret the owner sets in the Razorpay dashboard and in Vercel (S1.7): at least 16 characters, no
+ * whitespace. It is its own value — never the API key secret (docs/ENV-VARS-SAFETY.md).
+ */
+export const RAZORPAY_WEBHOOK_SECRET_PATTERN = /^\S{16,300}$/;
 const TURNSTILE_SITE_KEY_PATTERN = /^[A-Za-z0-9_-]{10,100}$/;
 const OPAQUE_SECRET_PATTERN = /^\S{8,300}$/;
 
@@ -93,6 +124,7 @@ export function readSalesGateEnv(): SalesGateEnv {
     SALES_MODE: process.env.SALES_MODE,
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
     ORDER_TOKEN_SECRET: process.env.ORDER_TOKEN_SECRET,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
@@ -123,6 +155,50 @@ function closed(reason: SalesGateClosedReason): SalesGate {
   return { open: false, reason };
 }
 
+/**
+ * The deployment's provider half, with no word about whether new orders are taken: not Production, the server's
+ * identity resolved to the TEST project, a Razorpay Test Mode key with its secret, the webhook secret and the
+ * order-link secret. Reads configuration only — no network.
+ */
+export function providerGate(
+  env: SalesGateEnv = readSalesGateEnv(),
+): ProviderGate {
+  const shut = (reason: ProviderGateClosedReason): ProviderGate => ({
+    open: false,
+    reason,
+  });
+  // Production is decided from the trusted deployment context before anything else is looked at.
+  if (env.VERCEL_ENV === "production") return shut("production");
+  const identity = resolveServerIdentity(env);
+  if (!identity.ok) return shut("identity");
+  const { context, projectRef, testRef } = identity.identity;
+  if (context === "production") return shut("production");
+  if (projectRef !== testRef) return shut("identity");
+
+  const keyId = env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+  if (!RAZORPAY_TEST_KEY_ID_PATTERN.test(keyId)) return shut("razorpay_key");
+  const keySecret = env.RAZORPAY_KEY_SECRET ?? "";
+  if (!OPAQUE_SECRET_PATTERN.test(keySecret)) return shut("razorpay_secret");
+  const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET ?? "";
+  if (!RAZORPAY_WEBHOOK_SECRET_PATTERN.test(webhookSecret))
+    return shut("razorpay_webhook_secret");
+  const tokenSecret = env.ORDER_TOKEN_SECRET ?? "";
+  if (!ORDER_TOKEN_SECRET_PATTERN.test(tokenSecret))
+    return shut("token_secret");
+
+  return {
+    open: true,
+    provider: {
+      context,
+      projectRef,
+      razorpayKeyId: keyId,
+      razorpayKeySecret: keySecret,
+      razorpayWebhookSecret: webhookSecret,
+      orderTokenSecret: tokenSecret,
+    },
+  };
+}
+
 export function salesGate(env: SalesGateEnv = readSalesGateEnv()): SalesGate {
   const mode = env.SALES_MODE;
   if (mode === undefined || mode === "" || mode === "off")
@@ -130,21 +206,15 @@ export function salesGate(env: SalesGateEnv = readSalesGateEnv()): SalesGate {
   if (mode === "live") return closed("mode_live_not_open");
   if (mode !== "test") return closed("mode_invalid");
 
-  // Production is decided from the trusted deployment context before anything else is looked at.
-  if (env.VERCEL_ENV === "production") return closed("production");
-  const identity = resolveServerIdentity(env);
-  if (!identity.ok) return closed("identity");
-  const { context, projectRef, testRef } = identity.identity;
-  if (context === "production") return closed("production");
-  if (projectRef !== testRef) return closed("identity");
-
-  const keyId = env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
-  if (!RAZORPAY_TEST_KEY_ID_PATTERN.test(keyId)) return closed("razorpay_key");
-  const keySecret = env.RAZORPAY_KEY_SECRET ?? "";
-  if (!OPAQUE_SECRET_PATTERN.test(keySecret)) return closed("razorpay_secret");
-  const tokenSecret = env.ORDER_TOKEN_SECRET ?? "";
-  if (!ORDER_TOKEN_SECRET_PATTERN.test(tokenSecret))
-    return closed("token_secret");
+  const provider = providerGate(env);
+  if (!provider.open) return closed(provider.reason);
+  const {
+    context,
+    projectRef,
+    razorpayKeyId: keyId,
+    razorpayKeySecret: keySecret,
+    orderTokenSecret: tokenSecret,
+  } = provider.provider;
   const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const turnstileSecret = env.TURNSTILE_SECRET_KEY ?? "";
   if (

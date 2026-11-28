@@ -20,7 +20,8 @@ import nextTs from "eslint-config-next/typescript";
  *     `src/lib/server/supabase.ts`) and, for `@supabase/ssr`, by the staff session module
  *     (`src/lib/server/staff-session.ts` — S1.2);
  *  4. the server-only environment names (the Supabase secret and refs; since S1.2 the two Upstash names; since
- *     S1.6 the sales mode, the Razorpay key secret, the order-link secret and the Turnstile secret) are
+ *     S1.6 the sales mode, the Razorpay key secret, the order-link secret and the Turnstile secret; since S1.7
+ *     the Razorpay webhook secret) are
  *     read only inside src/lib/server/ — as a member read, a
  *     computed read or a destructuring of `process.env` — and never in `next.config.ts`, whose `env` block
  *     is inlined into every bundle. (An aliased `const e = process.env; e.X` is outside the rule; the
@@ -132,7 +133,7 @@ const SUPABASE_SDK_PATTERNS = [
 ];
 
 const SERVER_ONLY_NAMES =
-  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN|UPSTASH_REDIS_REST_URL|UPSTASH_REDIS_REST_TOKEN|CATALOGUE_REVALIDATION_SECRET|SALES_MODE|RAZORPAY_KEY_SECRET|ORDER_TOKEN_SECRET|TURNSTILE_SECRET_KEY)$";
+  "^(SUPABASE_SECRET_KEY|SUPABASE_TEST_PROJECT_REF|SUPABASE_PROD_PROJECT_REF|S0_2_PROOF_TOKEN|UPSTASH_REDIS_REST_URL|UPSTASH_REDIS_REST_TOKEN|CATALOGUE_REVALIDATION_SECRET|SALES_MODE|RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|ORDER_TOKEN_SECRET|TURNSTILE_SECRET_KEY)$";
 const PROCESS_ENV =
   "[object.type='MemberExpression'][object.object.name='process'][object.property.name='env']";
 const SERVER_ONLY_ENV_MESSAGE =

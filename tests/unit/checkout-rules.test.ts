@@ -80,6 +80,7 @@ import {
   type HeldOrder,
 } from "@/components/checkout/held-order";
 import {
+  afterWindowStep,
   fieldMessage,
   firstRefusedField,
   isNeutralNotice,
@@ -91,9 +92,11 @@ import {
   settleSubmit,
   submitStep,
   UNAVAILABLE_STEP,
+  UNCERTAIN_STEP,
 } from "@/components/checkout/outcome";
 import {
   PAYMENT_WINDOW_NAME,
+  paymentReportOf,
   paymentWindowOptions,
   RAZORPAY_CHECKOUT_SRC,
 } from "@/components/checkout/razorpay";
@@ -138,6 +141,7 @@ const OPEN_ENV: SalesGateEnv = {
   SUPABASE_PROD_PROJECT_REF: PROD_REF,
   NEXT_PUBLIC_RAZORPAY_KEY_ID: "rzp_test_PLACEHOLDER0001",
   RAZORPAY_KEY_SECRET: "placeholder-key-secret",
+  RAZORPAY_WEBHOOK_SECRET: "placeholder-webhook-secret",
   ORDER_TOKEN_SECRET: "A".repeat(43),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
   TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
@@ -256,6 +260,22 @@ describe("salesGate — open only for the explicitly configured TEST flow", () =
       "razorpay_secret",
     ],
     ["a blank key secret", { RAZORPAY_KEY_SECRET: "   " }, "razorpay_secret"],
+    // S1.7: a deployment that could not verify a payment's webhook takes no payment.
+    [
+      "a missing webhook secret",
+      { RAZORPAY_WEBHOOK_SECRET: undefined },
+      "razorpay_webhook_secret",
+    ],
+    [
+      "a webhook secret shorter than sixteen characters",
+      { RAZORPAY_WEBHOOK_SECRET: "short-secret-15" },
+      "razorpay_webhook_secret",
+    ],
+    [
+      "a webhook secret with a space in it",
+      { RAZORPAY_WEBHOOK_SECRET: "placeholder webhook secret" },
+      "razorpay_webhook_secret",
+    ],
     [
       "a missing order-link secret",
       { ORDER_TOKEN_SECRET: undefined },
@@ -760,18 +780,26 @@ describe("the attempt key in the browser (src/components/checkout/attempt-key.ts
     keys.dropStored(other);
     expect(data.has(ATTEMPT_STORAGE_KEY)).toBe(false);
 
-    keys.keyFor("payload");
+    const minted = keys.keyFor("payload");
     keys.hold(LAUNCH, null, 1_000);
     // A hold found after a reload: the page does not know the order's rows (src/components/checkout/held-order.ts).
+    // S1.7: the hold carries its own attempt key (here the submit slot's) and whether a window was opened for it.
     expect(keys.held()).toEqual({
       launch: LAUNCH,
       prefill: null,
       reported: false,
       deadlineMs: 3_601_000,
       order: null,
+      attemptKey: minted,
     });
     keys.markReported();
     expect(keys.held()?.reported).toBe(true);
+    // A hold that is put back keeps the key it is given, whatever the slot holds by then.
+    keys.hold(LAUNCH, null, 1_000, null, "p".repeat(43));
+    expect(keys.held()).toMatchObject({
+      attemptKey: "p".repeat(43),
+      reported: false,
+    });
     keys.forget();
     expect(keys.slot()).toBeNull();
     expect(keys.held()).toBeNull();
@@ -877,17 +905,20 @@ describe("what the page does with each answer (src/components/checkout/outcome.t
       plain("expired", { forget: true }),
     );
     expect(resumeStep({ status: "held" })).toEqual(plain("held"));
-    // A control that could not be reached keeps the key: the customer has asked for nothing yet.
-    for (const status of [
-      "bag_changed",
-      "challenge_failed",
-      "throttled",
-      "unavailable",
-    ] as const)
+    // Answers a resume never gives keep the key and say nothing.
+    for (const status of ["bag_changed", "challenge_failed"] as const)
       expect(resumeStep({ status })).toEqual({
         do: "nothing",
         dropStored: false,
       });
+    // S1.7: a control that could not be reached keeps the key — and, since that attempt's order may have been paid
+    // for, says that it could not be checked and offers no new payment until the page is loaded again.
+    for (const status of ["throttled", "unavailable"] as const) {
+      expect(resumeStep({ status })).toEqual(
+        plain("uncertain", { block: true }),
+      );
+      expect(resumeStep({ status })).toEqual(UNCERTAIN_STEP);
+    }
     expect(resumeStep({ status: "invalid", fields: {} })).toEqual({
       do: "nothing",
       dropStored: false,
@@ -945,7 +976,7 @@ describe("what the page does with each answer (src/components/checkout/outcome.t
     expect(throwingResume).toHaveBeenCalledTimes(1);
   });
 
-  it("the load-time question says nothing when it throws, runs out or the page was left", async () => {
+  it("the load-time question says nothing only when the page was left; when it throws or runs out it says that it could not check (S1.7)", async () => {
     expect(
       await settleResume(
         async () => {
@@ -954,7 +985,7 @@ describe("what the page does with each answer (src/components/checkout/outcome.t
         () => false,
         async () => {},
       ),
-    ).toBeNull();
+    ).toEqual(UNCERTAIN_STEP);
     const polling = vi.fn(async () => ({ status: "in_progress" }) as const);
     expect(
       await settleResume(
@@ -962,8 +993,20 @@ describe("what the page does with each answer (src/components/checkout/outcome.t
         () => false,
         async () => {},
       ),
-    ).toBeNull();
+    ).toEqual(UNCERTAIN_STEP);
     expect(polling).toHaveBeenCalledTimes(RESUME_POLL_LIMIT + 1);
+    // A throw after the page was left says nothing either.
+    let left = false;
+    expect(
+      await settleResume(
+        async () => {
+          left = true;
+          throw new Error("network");
+        },
+        () => left,
+        async () => {},
+      ),
+    ).toBeNull();
     const never = vi.fn(
       async () => ({ status: "launch", launch: LAUNCH }) as const,
     );
@@ -1047,6 +1090,31 @@ describe("what the page does with each answer (src/components/checkout/outcome.t
       /Test Mode: no real payment is taken/,
     );
   });
+
+  it("after a window was opened, an answer that cannot be had is 'could not be checked' — never 'Nothing was charged', and the key is kept (S1.7)", () => {
+    // Unavailable, a thrown action, a wait that ran out: all three are UNAVAILABLE_STEP or the notice behind it.
+    expect(afterWindowStep(UNAVAILABLE_STEP)).toEqual(UNCERTAIN_STEP);
+    expect(afterWindowStep(submitStep({ status: "unavailable" }))).toEqual(
+      UNCERTAIN_STEP,
+    );
+    // An attempt no longer found was "unavailable, forget the key": the key is kept now.
+    expect(afterWindowStep(submitStep({ status: "not_found" }))).toEqual(
+      UNCERTAIN_STEP,
+    );
+    expect(UNCERTAIN_STEP).toEqual(plain("uncertain", { block: true }));
+    expect(noticeText({ id: "uncertain" })).not.toMatch(/nothing was charged/i);
+    expect(noticeText({ id: "unavailable" })).toMatch(/Nothing was charged/);
+    // Every other answer is carried out as it is.
+    for (const result of [
+      { status: "launch", launch: LAUNCH },
+      { status: "expired" },
+      { status: "held" },
+      { status: "throttled" },
+      { status: "uncertain" },
+      { status: "confirming", order_number: "AS-1001", order_path: null },
+    ] as const satisfies readonly CheckoutActionResult[])
+      expect(afterWindowStep(submitStep(result))).toEqual(submitStep(result));
+  });
 });
 
 describe("form memory and the payment window (src/components/checkout/)", () => {
@@ -1067,7 +1135,7 @@ describe("form memory and the payment window (src/components/checkout/)", () => 
     expect(memory.get()).toEqual({ fields: {}, payment: null });
   });
 
-  it("opens the payment window with the server's launch only; the callback's payment id and signature are never received", () => {
+  it("opens the payment window with the server's launch only; its report carries the payment id and the signature for the server to verify — never the order id", () => {
     const events = {
       onReported: vi.fn(),
       onFailed: vi.fn(),
@@ -1100,13 +1168,50 @@ describe("form memory and the payment window (src/components/checkout/)", () => 
       "order_id",
       "prefill",
     ]);
-    // The handler takes no argument: whatever the provider passes is dropped.
-    expect(options.handler.length).toBe(0);
-    (options.handler as (...args: unknown[]) => void)({
-      razorpay_payment_id: "pay_PLACEHOLDER",
-      razorpay_signature: "sig",
+    // S1.7: the handler hands on exactly the payment id and the signature. The order id Razorpay sends back with
+    // them is never read: the server verifies against the one it stored.
+    const signature = "a".repeat(64);
+    options.handler({
+      razorpay_payment_id: "pay_PLACEHOLDER0001",
+      razorpay_order_id: "order_FROMTHEBROWSER01",
+      razorpay_signature: signature,
     });
-    expect(events.onReported).toHaveBeenCalledWith();
+    expect(events.onReported).toHaveBeenLastCalledWith({
+      paymentId: "pay_PLACEHOLDER0001",
+      signature,
+    });
+    expect(
+      Object.keys(
+        paymentReportOf({
+          razorpay_payment_id: "pay_PLACEHOLDER0001",
+          razorpay_order_id: "order_FROMTHEBROWSER01",
+          razorpay_signature: signature,
+          amount: 1,
+        }) ?? {},
+      ).sort(),
+    ).toEqual(["paymentId", "signature"]);
+    // An answer of another shape is still a report — with nothing in it that could be verified.
+    for (const odd of [
+      undefined,
+      null,
+      "pay_PLACEHOLDER0001",
+      {},
+      { razorpay_payment_id: "pay_PLACEHOLDER0001" },
+      { razorpay_signature: signature },
+      {
+        razorpay_payment_id: "order_NOTAPAYMENT01",
+        razorpay_signature: signature,
+      },
+      { razorpay_payment_id: "pay_PLACEHOLDER0001", razorpay_signature: "sig" },
+      {
+        razorpay_payment_id: "pay_PLACEHOLDER0001",
+        razorpay_signature: "A".repeat(64),
+      },
+      { razorpay_payment_id: 5, razorpay_signature: signature },
+    ]) {
+      options.handler(odd);
+      expect(events.onReported).toHaveBeenLastCalledWith(null);
+    }
     options.modal?.ondismiss?.();
     expect(events.onDismissed).toHaveBeenCalledTimes(1);
     // After a reload nothing was typed in the page: nothing is prefilled.
@@ -1181,23 +1286,513 @@ describe("the checkout page's sources — what is stored, loaded and left out", 
     }
   });
 
-  it("the window's callbacks reach no server action, storage, bag or navigation", () => {
+  it("the window's callbacks reach no storage, bag or navigation; a reported payment is handed to the server's verification, and to nothing else", () => {
     const form = codeOf("src/components/checkout/checkout-form.tsx");
-    const callbacks = form.slice(
-      form.indexOf("const opened = openPaymentWindow("),
-      form.indexOf("if (opened) setNotice(null);"),
-    );
+    const start = form.indexOf("const opened = openPaymentWindow(");
+    const end = form.indexOf("if (opened) {", start);
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const callbacks = form.slice(start, end);
     expect(callbacks).toContain("onReported");
     expect(callbacks).toContain("onFailed");
     expect(callbacks).toContain("onDismissed");
+    // No callback calls an action, a submission, storage, the bag or a navigation itself.
     expect(callbacks).not.toMatch(
-      /actions\.|submitCheckoutAction|resumeCheckoutAction|fetch\(|setItem|bagStore|\.clear\(|router|location|forget\(/,
+      /actions\.|submitCheckoutAction|resumeCheckoutAction|verifyCheckoutReturnAction|fetch\(|setItem|bagStore|\.clear\(|router|location|forget\(|leaveForOrder/,
     );
+    // S1.7: a reported payment says "not confirmed yet" first, then hands what Razorpay gave to the verification —
+    // once, only when there is something to verify. A failed payment and a closed window hand nothing to anyone.
+    expect(callbacks.match(/verifyReport\(/g)).toHaveLength(1);
+    expect(callbacks).toContain(
+      "if (report !== null) verifyReport(target, report);",
+    );
+    expect(
+      callbacks.indexOf('announce({ id: "unverified", orderNumber })'),
+    ).toBeLessThan(callbacks.indexOf("verifyReport(target, report)"));
+    expect(callbacks.slice(callbacks.indexOf("onFailed:"))).not.toContain(
+      "verifyReport",
+    );
+
+    // The verification is the one place a report reaches the server, and a verified answer the one thing that
+    // leaves the page — for the path the server answered, and only when it is exactly an order's page.
+    const verify = form.slice(
+      form.indexOf("const verifyReport = ("),
+      form.indexOf("const openWindow = ("),
+    );
+    expect(verify.match(/actions\.confirmReturn\(/g)).toHaveLength(1);
+    expect(verify).toContain("attempt_key: key");
+    expect(verify).toContain("razorpay_payment_id: report.paymentId");
+    expect(verify).toContain("razorpay_signature: report.signature");
+    expect(verify).not.toMatch(/order_id|order_number|amount/);
+    expect(verify).not.toMatch(
+      /actions\.submit|actions\.resume|setItem|bagStore|forget\(|markReported|setHold/,
+    );
+    expect(verify).toContain("leaveForOrder(path)");
+    expect(form.match(/window\.location/g)).toHaveLength(1);
+    expect(form).toMatch(
+      /if \(!isOrderPath\(path\)\) return;\s*leavingFor = path;\s*window\.location\.replace\(path\);/,
+    );
+    // Nothing but a path the server answered is ever passed to it: its own definition, three calls with the answer's
+    // path, and a press while the page is leaving, which goes again to the path that leaving was for.
+    expect(form.match(/leaveForOrder\(/g)).toHaveLength(5);
+    expect(form.match(/leaveForOrder\((?:step\.path|path)\)/g)).toHaveLength(3);
+    expect(form.match(/leaveForOrder\(leavingFor\)/g)).toHaveLength(1);
+    expect(form.match(/leavingFor = /g)).toHaveLength(1);
+    expect(form).toContain("let leavingFor: string | null = null;");
     // The bag is never emptied by the checkout at all: no file reaches the bag's writer, and the page takes neither
     // `clear` nor `remove` from the bag (form memory has its own `clear`, which empties the typed fields only).
     for (const file of checkoutFiles)
       expect(codeOf(file), file).not.toMatch(/bagStore|removeCodes/);
     expect(form).not.toMatch(/\bclear\b|\bremove\b|setQuantity|changeFinish/);
+  });
+
+  it("a provider's script never runs in a document that was opened at an order link — that page loads itself again first (S1.7)", async () => {
+    const { isOrderLinkAddress } =
+      await import("@/components/checkout/load-script");
+    for (const address of [
+      "https://aalishaan.example/order/Zm9vYmFyLXRva2VuLTQz_WNoYXJzLWxvbmct-WJjZGV",
+      "https://aalishaan.example/order/not-a-token",
+      "https://aalishaan.example/order/a/b?x=1",
+    ])
+      expect(isOrderLinkAddress(address), address).toBe(true);
+    for (const address of [
+      "https://aalishaan.example/checkout",
+      "https://aalishaan.example/order",
+      "https://aalishaan.example/orders/x",
+      "https://aalishaan.example/cart?next=/order/x",
+      "not an address",
+      "",
+    ])
+      expect(isOrderLinkAddress(address), address).toBe(false);
+    // Asked before any script element is made; what it answers then is a reload and a promise that never settles.
+    const loader = codeOf("src/components/checkout/load-script.ts");
+    const guard = loader.indexOf("openedAtOrderLink()) {");
+    expect(guard).toBeGreaterThan(0);
+    expect(guard).toBeLessThan(
+      loader.indexOf('document.createElement("script")'),
+    );
+    expect(loader).toContain('performance.getEntriesByType("navigation")');
+    expect(loader).toMatch(
+      /window\.location\.reload\(\);\s*return new Promise<void>\(\(\) => \{\}\);/,
+    );
+    // Both providers' scripts load through it, and through nothing else.
+    for (const file of [
+      "src/components/checkout/razorpay.ts",
+      "src/components/checkout/turnstile-widget.tsx",
+    ])
+      expect(codeOf(file), file).toContain("loadScriptOnce(");
+  });
+
+  it("the deadline, a re-open past it and a press during the load-time question all ask the server before anything is said or sent (S1.7)", () => {
+    const form = codeOf("src/components/checkout/checkout-form.tsx");
+    const between = (from: string, to: string) => {
+      const start = form.indexOf(from);
+      const end = form.indexOf(to, start);
+      expect(start, from).toBeGreaterThan(0);
+      expect(end, to).toBeGreaterThan(start);
+      return form.slice(start, end);
+    };
+    // A component-level function, sliced to its own closing `};` (two spaces in), and a module-level one to its `}`:
+    // a helper added beside either leaves the slice as it is.
+    const own = (from: string, close = "\n  };") => {
+      const start = form.indexOf(from);
+      expect(start, from).toBeGreaterThan(0);
+      const end = form.indexOf(`${close}\n`, start);
+      expect(end, `${from} … ${close.trim()}`).toBeGreaterThan(start);
+      return form.slice(start, end + close.length);
+    };
+    // The timer forgets nothing itself: it hands the hold to endHold.
+    const timer = between(
+      "const onDeadline = useEffectEvent(",
+      "const showHold = (",
+    );
+    expect(timer).toContain("void endHold(current);");
+    expect(timer).toContain("setTimeout(() => onDeadline(hold), remaining)");
+    expect(timer).not.toMatch(/forget\(|setNotice|announce|releaseExpired/);
+    // endHold asks the server first, whether or not this page opened a window for the hold: a hold found after a
+    // reload starts unopened though its order's window may have taken a payment (the review of 2026-11-26, finding
+    // 2). Nothing is released on the page's own clock.
+    const end = between("const endHold = async (", "const reopen = async (");
+    expect(end).toMatch(
+      /const endHold = async \(target: CheckoutHold\) => \{\s*const step = await askAfterWindow\(target\);/,
+    );
+    expect(end).not.toMatch(/forget\(|openWindow\(|releaseExpired/);
+    // A launch the server still gives holds the page again and opens nothing.
+    expect(end).toMatch(
+      /if \(step\.do === "launch"\) \{\s*attemptKeys\.hold\(\s*step\.launch,\s*target\.prefill,\s*Date\.now\(\),\s*target\.order,\s*target\.attemptKey,\s*\);\s*setHold\(attemptKeys\.held\(\)\);\s*return;\s*\}/,
+    );
+    // A re-open past the deadline is the deadline's question; before it, the press's own question, by the hold's key,
+    // decides — reopen is exactly these steps, so nothing can open the hold's stored launch on the way (the
+    // independent review's round 3, finding 1).
+    const reopen = own("const reopen = async (");
+    expect(reopen).toMatch(
+      /^const reopen = async \(target: CheckoutHold\) => \{\s*if \(holdExpired\(target, Date\.now\(\)\)\) \{\s*await endHold\(target\);\s*return;\s*\}\s*const step = await askAfterWindow\(target\);\s*if \(step === null\) \{\s*cannotAsk\(\);\s*return;\s*\}\s*if \(overtaken\(target\)\) return;\s*carryOut\(step, target\.prefill, target\.order, target\.attemptKey\);\s*\};$/,
+    );
+    expect(reopen).not.toContain("releaseExpired");
+    // The question itself is exactly one resume by the hold's own key, through the one mapping that never says
+    // "Nothing was charged" — it can hand back nothing but the server's answer.
+    const ask = own("const askAfterWindow = async (");
+    expect(ask).toMatch(
+      /^const askAfterWindow = async \(\s*target: CheckoutHold,\s*\): Promise<CheckoutStep \| null> => \{\s*const key = target\.attemptKey;\s*if \(key === null\) return null;\s*pressing\.current = true;\s*setBusy\(true\);\s*setNotice\(null\);\s*const ask = \(\) => actions\.resume\(\{ attempt_key: key \}\);\s*let step: CheckoutStep;\s*try \{\s*step = afterWindowStep\(await settleSubmit\(ask, ask\)\);\s*\} catch \{\s*step = UNCERTAIN_STEP;\s*\}\s*pressing\.current = false;\s*setBusy\(false\);\s*return step;\s*\};$/,
+    );
+    // The page never makes a launch step of its own (only outcome.ts reads one from the server's answer), and
+    // Razorpay's window is opened in one place, with the launch of the hold it is opened for.
+    expect(form).not.toMatch(/do:\s*"launch"/);
+    expect(form.match(/openPaymentWindow\(/g)).toHaveLength(1);
+    expect(form).toContain(
+      "const opened = openPaymentWindow(target.launch, target.prefill, {",
+    );
+    // releaseExpired is called in one place only: a launch the server has just given that is already past its
+    // deadline as its first window is to open (openWindow) — never at a deadline, a re-open or a press.
+    expect(form.match(/releaseExpired\(\)/g)).toHaveLength(1);
+    const open = between("const openWindow = (", "const carryOut = (");
+    expect(open).toMatch(
+      /const openWindow = \(target: CheckoutHold\) => \{\s*if \(holdExpired\(target, Date\.now\(\)\)\) \{\s*releaseExpired\(\);\s*return;\s*\}/,
+    );
+    // One question at a time: the deadline asks nothing while a press is asking (round 2 of the builder's review).
+    expect(timer.indexOf("if (pressing.current) return;")).toBeGreaterThan(0);
+    expect(timer.indexOf("if (pressing.current) return;")).toBeLessThan(
+      timer.indexOf("void endHold(current);"),
+    );
+    // An answer is carried out only if nothing overtook it while it was out: a payment Razorpay's window reported
+    // meanwhile (it is being verified), another order on the page, or the page left.
+    const overtaken = between("const overtaken = (", "const endHold = async (");
+    expect(overtaken).toContain("if (!mounted.current) return true;");
+    expect(overtaken).toContain(
+      "current !== null && (current.reported || !sameOrder(current, target))",
+    );
+    for (const [name, body] of [
+      ["endHold", end],
+      ["reopen", reopen],
+    ] as const) {
+      const asked = body.indexOf("const step = await askAfterWindow(target);");
+      const guard = body.indexOf("if (overtaken(target)) return;");
+      expect(asked, name).toBeGreaterThan(0);
+      expect(guard, name).toBeGreaterThan(asked);
+      expect(guard, name).toBeLessThan(body.indexOf("carryOut(step"));
+    }
+    expect(end.indexOf("if (overtaken(target)) return;")).toBeLessThan(
+      end.indexOf('if (step.do === "launch")'),
+    );
+    // A press while the load-time question is unanswered sends nothing.
+    const press = own("const onSubmit = (");
+    const guard = press.indexOf("const asking = storedQuestion.current;");
+    expect(guard).toBeGreaterThan(0);
+    expect(guard).toBeLessThan(press.indexOf("void reopen(target)"));
+    expect(guard).toBeLessThan(press.indexOf("void pay("));
+    expect(
+      press.slice(guard, press.indexOf("const target = current ?? hold;")),
+    ).toMatch(
+      /if \(asking !== null\) \{[\s\S]*void asking\.then\(release, release\);\s*return;\s*\}\s*$/,
+    );
+    // S1.7 — the independent review's round 3, finding 1: EVERY press on an order that holds the page asks the server
+    // first, by the hold's own key — a hold a reload restored, a hold whose launch arrived while the page was left, a
+    // window opened before — through reopen (past the deadline, endHold), and a window opens only on that fresh
+    // launch. Pinned on the Preview by tests/e2e/checkout.spec.ts: the press after a reload sends one question, an
+    // answer that is not a launch keeps Razorpay's window closed, and the window that opens carries the fresh launch.
+    expect(press).toMatch(
+      /const target = current \?\? hold;\s*if \(target !== null\) \{\s*void reopen\(target\);\s*return;\s*\}/,
+    );
+    // A press acts only on the order the page shows: when the module holds another order — or the same order now
+    // reported — than the page last showed (a window opened before the page was left reported a payment, or an answer
+    // was carried out a moment before the click), the press shows it and sends nothing (a review of the round-3
+    // fixes). Everything a press does before the load-time guard is anchored from the press's first line: nothing can
+    // run ahead of it.
+    expect(press.slice(0, guard)).toMatch(
+      /^const onSubmit = \(event: FormEvent<HTMLFormElement>\) => \{\s*event\.preventDefault\(\);\s*if \(leavingFor !== null\) \{\s*leaveForOrder\(leavingFor\);\s*return;\s*\}\s*if \(pressing\.current \|\| blocked \|\| blockedNow\.current \|\| reported\) return;\s*const current = attemptKeys\.held\(\);\s*if \(\s*current !== null &&\s*\(hold === null \|\|\s*!sameOrder\(current, hold\) \|\|\s*current\.reported !== hold\.reported\)\s*\) \{\s*showHold\(current\);\s*return;\s*\}\s*$/,
+    );
+    const show = own("const showHold = (");
+    expect(show).toMatch(
+      /^const showHold = \(held: CheckoutHold\) => \{\s*setToken\(null\);\s*setHold\(held\);\s*const line = noticeOfHold\(held\);\s*if \(line !== null\) announce\(line\);\s*\};$/,
+    );
+    // A press never opens a window itself; nothing is released on the page's own clock there either.
+    expect(press).not.toContain("openWindow(");
+    expect(press).not.toContain("releaseExpired");
+    // The one place a window opens: carryOut, in answer to a press of this page, as its launch arrives. With comments
+    // set aside, the form calls openWindow nowhere else, and every carryOut is handed a step that a press or a
+    // question of this page has just been answered (never a launch the page made up or kept).
+    const carry = between("const carryOut = (", "const pay = async (");
+    expect(carry).toMatch(
+      /attemptKeys\.hold\(\s*step\.launch,\s*prefill,[\s\S]*?attemptKey,\s*\);\s*const held = attemptKeys\.held\(\);\s*setHold\(held\);\s*if \(held !== null && mounted\.current\) openWindow\(held\);/,
+    );
+    expect(form.match(/openWindow\(/g)).toHaveLength(1);
+    expect(form.match(/carryOut\((?!step, )/g)).toBeNull();
+    expect(form.match(/carryOut\(step, /g)).toHaveLength(3);
+    // The hold keeps no record of a window having opened: nothing on the page decides by one.
+    expect(form).not.toMatch(/markOpened|\.opened\b/);
+    // A launch keeps the key it was answered for: the restore holds with the stored key it asked by, reopen hands its
+    // target's key to carryOut, and a pay press its submission's.
+    const restore = between(
+      "const question = settleResume(",
+      "storedQuestion.current = question;",
+    );
+    expect(restore).toContain(
+      "attemptKeys.hold(step.launch, null, Date.now(), null, key);",
+    );
+    // A pay press's answer: carried out for the attempt it was sent with. On a page the customer has left, only while
+    // no checkout is shown and nothing has moved on since — its hold then waits for the return (S1.6); a checkout
+    // shown again keeps its own state, and a later attempt or a later hold is never replaced or forgotten by it (a
+    // review of the round-3 fixes).
+    const payBody = own("const pay = async (");
+    expect(payBody).toMatch(/step = started\.step;\s*key = started\.key;/);
+    expect(payBody).toMatch(
+      /if \(\s*!mounted\.current &&\s*\(formsShown > 0 \|\|\s*key === null \|\|\s*attemptKeys\.slot\(\)\?\.key !== key \|\|\s*attemptKeys\.held\(\) !== null\)\s*\)\s*return;\s*carryOut\(step, prefill, order, key \?\? undefined\);\s*\};$/,
+    );
+    // formsShown counts the forms shown: one more as a form mounts, one fewer as it is left — nowhere else.
+    expect(form).toContain("let formsShown = 0;");
+    expect(form).toMatch(
+      /useEffect\(\(\) => \{\s*mounted\.current = true;\s*formsShown \+= 1;\s*return \(\) => \{\s*mounted\.current = false;\s*formsShown -= 1;\s*\};\s*\}, \[\]\);/,
+    );
+    expect(form.match(/formsShown [+-]?=/g)).toHaveLength(3);
+    const start = own("async function startPayment(", "\n}");
+    expect(start).toContain(
+      "return { step: SCRIPT_UNAVAILABLE_STEP, key: null };",
+    );
+    expect(start).toMatch(
+      /const key = attemptKeys\.keyFor\(canonicalCheckoutPayload\(items, fields\)\);\s*const step = await settleSubmit\(/,
+    );
+    expect(start).toMatch(/return \{ step, key \};\s*\}$/);
+  });
+
+  it("a blocking step takes the pay button and the challenge away and no press is sent — on load and after a press alike (S1.7, the independent review's round 2, findings 3 and 4)", () => {
+    // outcome.ts decides `block` (a review of a linked order, a confirmed order without its link, `uncertain`);
+    // these pins carry it through to what the page renders: the load-time question's notice and every later
+    // step's notice set `blocked`, the submit button and the Turnstile widget render only while nothing blocks, and
+    // a press while blocked sends nothing (no fresh attempt key is minted).
+    const form = codeOf("src/components/checkout/checkout-form.tsx");
+    const between = (from: string, to: string) => {
+      const start = form.indexOf(from);
+      const end = form.indexOf(to, start);
+      expect(start, from).toBeGreaterThan(0);
+      expect(end, to).toBeGreaterThan(start);
+      return form.slice(start, end);
+    };
+    expect(form).toContain("const [blocked, setBlocked] = useState(false);");
+    // The load-time question (resumeStep's answer).
+    expect(
+      between(
+        'case "notice":\n          if (step.forget) attemptKeys.forget();',
+        "return;",
+      ),
+    ).toMatch(
+      /if \(step\.block\) \{\s*blockedNow\.current = true;\s*setBlocked\(true\);\s*\}/,
+    );
+    // Every later step (submitStep's answers).
+    expect(
+      between('case "notice":\n        if (step.forget) {', "return;"),
+    ).toMatch(
+      /if \(step\.block\) \{\s*blockedNow\.current = true;\s*setBlocked\(true\);\s*\}/,
+    );
+    // Every block — these two and cannotAsk — sets the ref with the state, so a press before the next render is
+    // blocked too.
+    expect(form.match(/setBlocked\(true\)/g)).toHaveLength(3);
+    expect(
+      form.match(/blockedNow\.current = true;\s*setBlocked\(true\)/g),
+    ).toHaveLength(3);
+    // A press while blocked or reported sends nothing — read as it stands now (the refs as well as the last render);
+    // a press while the page is leaving for an order's page sends nothing either, and only goes there again.
+    expect(
+      between("const onSubmit = (", "const current = attemptKeys.held();"),
+    ).toMatch(
+      /event\.preventDefault\(\);\s*if \(leavingFor !== null\) \{\s*leaveForOrder\(leavingFor\);\s*return;\s*\}\s*if \(pressing\.current \|\| blocked \|\| blockedNow\.current \|\| reported\) return;\s*$/,
+    );
+    expect(form).toMatch(
+      /function leaveForOrder\(path: string\): void \{\s*if \(!isOrderPath\(path\)\) return;\s*leavingFor = path;\s*window\.location\.replace\(path\);\s*\}/,
+    );
+    // No submit button and no challenge while blocked.
+    expect(form).toContain(
+      '{blocked || reported ? null : (\n                <button\n                  type="submit"',
+    );
+    expect(form).toContain(
+      "{hold !== null || blocked || reported ? null : (\n                <TurnstileWidget",
+    );
+    // Nothing ever unblocks a page: only a new load starts unblocked.
+    expect(form).not.toContain("setBlocked(false)");
+    expect(form).not.toContain("blockedNow.current = false");
+    // Leaving for an order's page is final too: the path starts null with the module (a new load) and is set only by
+    // leaveForOrder, to the path it leaves for.
+    expect(form.match(/leavingFor = /g)).toHaveLength(1);
+    expect(form).toContain("let leavingFor: string | null = null;");
+  });
+
+  it("pins the answer mappings of the reviewer's case: after a reload's launch, a deadline answer of confirming — with or without the order's link — keeps the key and the hold and leaves no pay button (S1.7, finding 2)", async () => {
+    // A pin of the answer mappings only, built from the page's own framework-free parts in the order
+    // ./checkout-form.tsx runs them: the stored key, the load-time question, the restored hold, the deadline's
+    // question. It is not finding 2's regression test: the wiring where finding 2 was — endHold asking the server at
+    // the deadline, and a press after it going through the same question (onSubmit → reopen → endHold) — is proved
+    // by the source pins above and by tests/e2e/checkout.spec.ts ("S1.7 — the page's own clock decides nothing: …").
+    const stored = "s".repeat(43);
+    const ORDER_PAGE = `/order/${"t".repeat(43)}`;
+    const { storage, data } = fakeStorage({ [ATTEMPT_STORAGE_KEY]: stored });
+    const keys = createAttemptKeys({
+      storage: () => storage,
+      fillRandom: counterRandom(),
+    });
+    const asked: string[] = [];
+    const answers: CheckoutActionResult[] = [
+      // On load: Razorpay listed nothing live — the order is offered again (clear).
+      { status: "launch", launch: LAUNCH },
+      // At the deadline: a payment from the window opened before the reload has been captured meanwhile.
+      {
+        status: "confirming",
+        order_number: "AS-1001",
+        order_path: ORDER_PAGE,
+      },
+      { status: "confirming", order_number: "AS-1001", order_path: null },
+    ];
+    const resume = (key: string) => async () => {
+      asked.push(key);
+      const answer = answers.shift();
+      if (answer === undefined) throw new Error("asked once too often");
+      return answer;
+    };
+
+    // The load: the question by the stored key; its launch holds the page — unopened, as a reload leaves it.
+    const key = keys.storedKey();
+    expect(key).toBe(stored);
+    const onLoad = await settleResume(
+      resume(stored),
+      () => false,
+      async () => {},
+    );
+    expect(onLoad).toEqual({ do: "launch", launch: LAUNCH });
+    const received = 1_000;
+    keys.hold(LAUNCH, null, received, null, stored);
+    const restored = keys.held();
+    expect(restored).toMatchObject({ attemptKey: stored, reported: false });
+
+    // The deadline passes on the page's clock. The page asks — it never ends the hold on its own clock.
+    if (restored === null) throw new Error("no hold");
+    expect(holdExpired(restored, received + LAUNCH.expires_in_ms)).toBe(true);
+    const ask = resume(restored.attemptKey ?? "");
+    for (const expected of [
+      { do: "order", path: ORDER_PAGE },
+      {
+        do: "notice",
+        notice: { id: "confirming", orderNumber: "AS-1001" },
+        forget: false,
+        recheckBag: false,
+        block: true,
+      },
+    ]) {
+      const step = afterWindowStep(await settleSubmit(ask, ask));
+      expect(step).toEqual(expected);
+      // Neither answer forgets the attempt or offers a payment: the key and the hold stay, and nothing can mint a
+      // new key — a pay press needs the hold gone (the form is locked while it stands).
+      expect(step.do === "notice" && step.forget).toBe(false);
+      expect(data.get(ATTEMPT_STORAGE_KEY)).toBe(stored);
+      expect(keys.held()).toEqual(restored);
+      expect(keys.slot()).toBeNull();
+    }
+    // Every question was the attempt's own key, and nothing was submitted.
+    expect(asked).toEqual([stored, stored, stored]);
+  });
+
+  it("pins the answer mappings of a press on a hold a reload restored: asked by the key the hold keeps, only a fresh launch maps to a launch — being confirmed, the order's page and could not be checked do not (S1.7, the independent review's round 3, finding 1)", async () => {
+    // A pin of the answer mappings only, built from the page's own framework-free parts in the order
+    // ./checkout-form.tsx runs them for a hold a reload restored: the stored key, the load-time question, the
+    // restored hold (with the key it was asked by), then the press's question by the hold's own key and
+    // `afterWindowStep` of its answer. Each answer starts from a freshly restored hold. It checks the mapping and the
+    // key the questions are asked by, nothing more — it passes on the reviewed head as well. It is not finding 1's
+    // regression test: the wiring — every press on a hold goes through `reopen`, and only carryOut opens a window —
+    // is pinned by the source pins above and proved on the Preview by tests/e2e/checkout.spec.ts ("an order that
+    // holds the page …": a payable order is restored, its standing changes before the press, and the window stays
+    // closed; with nothing changed, the window opens with the fresh launch).
+    const stored = "s".repeat(43);
+    const ORDER_PAGE = `/order/${"t".repeat(43)}`;
+    const cases: Array<{
+      name: string;
+      answer: CheckoutActionResult | "throws";
+      expected: ReturnType<typeof afterWindowStep>;
+    }> = [
+      {
+        name: "another window's payment is being confirmed",
+        answer: {
+          status: "confirming",
+          order_number: "AS-1001",
+          order_path: null,
+        },
+        expected: {
+          do: "notice",
+          notice: { id: "confirming", orderNumber: "AS-1001" },
+          forget: false,
+          recheckBag: false,
+          block: true,
+        },
+      },
+      {
+        name: "being confirmed, with the order's page",
+        answer: {
+          status: "confirming",
+          order_number: "AS-1001",
+          order_path: ORDER_PAGE,
+        },
+        expected: { do: "order", path: ORDER_PAGE },
+      },
+      {
+        name: "the server could not check",
+        answer: { status: "uncertain" },
+        expected: UNCERTAIN_STEP,
+      },
+      {
+        name: "no answer at all",
+        answer: "throws",
+        expected: UNCERTAIN_STEP,
+      },
+      {
+        name: "payable again: a fresh launch",
+        answer: { status: "launch", launch: LAUNCH },
+        expected: { do: "launch", launch: LAUNCH },
+      },
+    ];
+    for (const { name, answer, expected } of cases) {
+      const { storage } = fakeStorage({ [ATTEMPT_STORAGE_KEY]: stored });
+      const keys = createAttemptKeys({
+        storage: () => storage,
+        fillRandom: counterRandom(),
+      });
+      const asked: string[] = [];
+      const answers: Array<CheckoutActionResult | "throws"> = [
+        // On load: payable — the launch the reload restores.
+        { status: "launch", launch: LAUNCH },
+        // At the press: the order's standing as the server finds it then.
+        answer,
+      ];
+      const resume = (key: string) => async () => {
+        asked.push(key);
+        const next = answers.shift();
+        if (next === undefined) throw new Error("asked once too often");
+        if (next === "throws") throw new Error("no answer");
+        return next;
+      };
+      const key = keys.storedKey();
+      expect(key, name).toBe(stored);
+      const onLoad = await settleResume(
+        resume(stored),
+        () => false,
+        async () => {},
+      );
+      expect(onLoad, name).toEqual({ do: "launch", launch: LAUNCH });
+      const received = 1_000;
+      // Whatever storage holds by now, the hold keeps the key it is given: the one its question was asked by.
+      storage.setItem(ATTEMPT_STORAGE_KEY, "u".repeat(43));
+      keys.hold(LAUNCH, null, received, null, key);
+      const restored = keys.held();
+      if (restored === null) throw new Error("no hold");
+      expect(restored, name).toMatchObject({
+        attemptKey: stored,
+        reported: false,
+      });
+      // Before its deadline: the press is a question all the same (onSubmit → reopen → askAfterWindow).
+      expect(holdExpired(restored, received + 1), name).toBe(false);
+      const ask = resume(restored.attemptKey ?? "");
+      expect(afterWindowStep(await settleSubmit(ask, ask)), name).toEqual(
+        expected,
+      );
+      // Both questions were asked by the attempt's own key — the one the load-time question used, which the restored
+      // hold keeps although storage now holds another.
+      expect(asked, name).toEqual([stored, stored]);
+    }
   });
 
   it("without JavaScript the form is hidden behind the no-JavaScript line, as the frozen page's <noscript> style does", () => {
@@ -1416,6 +2011,8 @@ describe("the order that holds the page (src/components/checkout/held-order.ts)"
   const NO_ACTIONS: CheckoutActions = {
     submit: () => Promise.reject(new Error("nothing is submitted in a render")),
     resume: () => Promise.reject(new Error("nothing is resumed in a render")),
+    confirmReturn: () =>
+      Promise.reject(new Error("nothing is verified in a render")),
   };
 
   const Bag = BagProvider as ComponentType<{ children?: ReactNode }>;
@@ -1460,7 +2057,14 @@ describe("the order that holds the page (src/components/checkout/held-order.ts)"
     );
 
   function holdOf(order: HeldOrder | null, reported = false): CheckoutHold {
-    return { launch: LAUNCH_A, prefill: null, reported, deadlineMs: 0, order };
+    return {
+      launch: LAUNCH_A,
+      prefill: null,
+      reported,
+      deadlineMs: 0,
+      order,
+      attemptKey: null,
+    };
   }
 
   describe("its rules", () => {
@@ -1623,11 +2227,11 @@ describe("the order that holds the page (src/components/checkout/held-order.ts)"
       expect(form).toContain("orderForLaunch(order, step.launch)");
       const callbacks = form.slice(
         form.indexOf("const opened = openPaymentWindow("),
-        form.indexOf("if (opened) setNotice(null);"),
+        form.indexOf("if (opened) {"),
       );
       // onReported checks the order before it marks anything; onFailed and onDismissed only while it is offered.
       expect(callbacks).toMatch(
-        /onReported: \(\) => \{\s*const current = attemptKeys\.held\(\);\s*if \(current !== null && !sameOrder\(current, target\)\) return;/,
+        /onReported: \(report\) => \{\s*const current = attemptKeys\.held\(\);\s*if \(current !== null && !sameOrder\(current, target\)\) return;/,
       );
       expect(callbacks.match(/if \(!stillOffered\(\)\) return;/g)).toHaveLength(
         2,

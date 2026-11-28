@@ -41,8 +41,11 @@ export type RazorpayCheckoutOptions = {
   name: string;
   description: string;
   prefill?: RazorpayPrefill;
-  /** The provider passes its payment id and signature here; the checkout takes no argument, so both are discarded. */
-  handler: () => void;
+  /**
+   * The provider passes its payment id, its order id and a signature here. S1.7: the page hands the payment id and
+   * the signature to the server for verification (./razorpay.ts `paymentReportOf`); the order id is never read.
+   */
+  handler: (response: unknown) => void;
   modal?: { ondismiss?: () => void };
 };
 

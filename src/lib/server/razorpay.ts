@@ -3,15 +3,20 @@ import "server-only";
 import { z } from "zod";
 
 import { parsePaise } from "@/lib/money";
+import { RAZORPAY_PAYMENT_ID_PATTERN } from "@/lib/schemas/payments";
 
 /**
  * Razorpay Orders — S1.6 (docs/TECH-ARCHITECTURE.md §5; docs/sprint-prompts/S1.6-checkout-pending-order.md §H.3
- * "Provider step"). Two calls to fixed official endpoints with `fetch` and HTTP Basic credentials — no SDK, no URL
+ * "Provider step"). Calls to fixed official endpoints with `fetch` and HTTP Basic credentials — no SDK, no URL
  * from any input:
  *
  *   - `createRazorpayOrder` — `POST /v1/orders` with the stored amount (integer paise), `INR`, the receipt
  *     (`pa_<payment attempt id>`) and one note, the order number. No customer detail is sent.
  *   - `findRazorpayOrdersByReceipt` — `GET /v1/orders?receipt=…`, the bounded recovery read.
+ *   - `fetchRazorpayOrderPayments` — S1.7: `GET /v1/orders/<stored order id>/payments`, the read that says what
+ *     payments the provider holds for an order — each with its status, amount and currency — before another one may
+ *     be started (docs/sprint-prompts/S1.7-razorpay-verification.md §H.3 "Uncertainty"). It confirms nothing: only a
+ *     signed event does.
  *
  * The create call has no idempotency key and the receipt is not one (a repeated receipt is refused, not replayed),
  * so the caller makes it exactly once per attempt and this module sorts every answer into three kinds:
@@ -225,4 +230,108 @@ export async function findRazorpayOrdersByReceipt(
     orders.push(parsed.data);
   }
   return { outcome: "found", orders };
+}
+
+/** A shorter deadline for the S1.7 read: a customer is waiting on the answer, and no answer is never a "no". */
+export const RAZORPAY_READ_TIMEOUT_MS = 5000;
+/** The most payments one read asks for; an order that holds more is answered `unavailable`, never in part. */
+export const RAZORPAY_PAYMENTS_PAGE = 100;
+
+/**
+ * A payment as the provider lists it for an order: its id, its status and the money the provider observed for it —
+ * the amount in exact paise and the currency (the review of 2026-11-26, finding 4: the provider check judges them
+ * against the stored intent; nothing here compares). Nothing of the customer is kept.
+ */
+export type RazorpayPayment = {
+  id: string;
+  /** `created`, `authorized`, `captured`, `refunded` or `failed` — or whatever the provider answers. */
+  status: string;
+  amountPaise: bigint;
+  /** Three upper-case letters, as the provider answers it — not necessarily INR. */
+  currency: string;
+};
+
+export type OrderPaymentsOutcome =
+  | { outcome: "found"; payments: RazorpayPayment[] }
+  | { outcome: "unavailable" };
+
+const paymentSchema = z
+  .object({
+    id: z.string().regex(RAZORPAY_PAYMENT_ID_PATTERN),
+    entity: z.literal("payment"),
+    status: z.string().min(1).max(40),
+    amount: z.number().int().positive(),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    order_id: z.string().min(1).max(120),
+  })
+  .transform((payment, ctx) => {
+    const amount = parsePaise(payment.amount);
+    if (!amount.ok) {
+      ctx.addIssue({ code: "custom", message: "not exact paise" });
+      return z.NEVER;
+    }
+    return { ...payment, amountPaise: amount.paise };
+  });
+
+const paymentCollectionSchema = z.object({
+  entity: z.literal("collection"),
+  count: z.number().int().min(0),
+  items: z.array(z.unknown()).max(RAZORPAY_PAYMENTS_PAGE),
+});
+
+/**
+ * The payments Razorpay holds for one of OUR provider orders. The id is the stored one and is held to its shape, so
+ * no input can change the endpoint. Any failure — a timeout, a non-200, a body that does not parse, one entry that
+ * does not parse (its amount not exact paise, its currency not three upper-case letters included) or names another
+ * order, or a listing that is not complete — is `unavailable`: the caller treats it as "not known", never as "no
+ * payment".
+ */
+export async function fetchRazorpayOrderPayments(
+  providerOrderId: string,
+  credentials: RazorpayCredentials,
+  fetcher: typeof fetch = globalThis.fetch,
+): Promise<OrderPaymentsOutcome> {
+  if (!RAZORPAY_ORDER_ID_PATTERN.test(providerOrderId))
+    return { outcome: "unavailable" };
+  const url = new URL(`${RAZORPAY_ORDERS_URL}/${providerOrderId}/payments`);
+  url.searchParams.set("count", String(RAZORPAY_PAYMENTS_PAGE));
+  let response: Response;
+  try {
+    response = await fetcher(url.toString(), {
+      method: "GET",
+      headers: { Authorization: authorization(credentials) },
+      signal: AbortSignal.timeout(RAZORPAY_READ_TIMEOUT_MS),
+      cache: "no-store",
+      redirect: "error",
+    });
+  } catch {
+    return { outcome: "unavailable" };
+  }
+  if (response.status !== 200) return { outcome: "unavailable" };
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    return { outcome: "unavailable" };
+  }
+  const collection = paymentCollectionSchema.safeParse(body);
+  if (!collection.success) return { outcome: "unavailable" };
+  // A listing that says it holds more than it carries is not the whole truth about the order.
+  if (collection.data.count !== collection.data.items.length)
+    return { outcome: "unavailable" };
+  if (collection.data.items.length >= RAZORPAY_PAYMENTS_PAGE)
+    return { outcome: "unavailable" };
+  const payments: RazorpayPayment[] = [];
+  for (const item of collection.data.items) {
+    const parsed = paymentSchema.safeParse(item);
+    if (!parsed.success || parsed.data.order_id !== providerOrderId)
+      return { outcome: "unavailable" };
+    payments.push({
+      id: parsed.data.id,
+      status: parsed.data.status,
+      amountPaise: parsed.data.amountPaise,
+      currency: parsed.data.currency,
+    });
+  }
+  return { outcome: "found", payments };
 }
