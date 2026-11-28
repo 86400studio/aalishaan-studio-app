@@ -106,11 +106,16 @@ Addresses must end in `@example.test`; nothing is written without `--apply`; PRO
 
 Prefer forward fixes: every planned migration is additive, except `0006_payment_evidence` (reversible: two
 function signatures replaced; its down file deletes `raw_body`), `0007_payment_review` (reversible: two function
-bodies re-created with 0006's signatures; its down file restores 0006's and deletes nothing) and
+bodies re-created with 0006's signatures; its down file restores 0006's and deletes nothing),
 `0008_payment_discrepancies` (reversible: two function bodies re-created with their predecessors' signatures;
-its down file restores 0007's `payment_process_event` and 0005's `payment_return_state` and deletes nothing).
+its down file restores 0007's `payment_process_event` and 0005's `payment_return_state` and deletes nothing) and
+`0009_payment_observations` (reversible: three function bodies re-created with their predecessors' signatures;
+its down file restores 0007's `payment_record_provider_check` and 0008's `payment_process_event` and
+`payment_return_state` and deletes nothing).
 When a schema rollback is unavoidable, the paired `rollbacks/*.down.sql` is run by hand after the checks in the
-change record, on TEST first, newest file first: from S1.7's round 3 on `0008_payment_discrepancies.down.sql`
+change record, on TEST first, newest file first: from S1.7's round 4 on `0009_payment_observations.down.sql`
+(it restores 0007's `payment_record_provider_check` and 0008's two functions) with
+`supabase migration repair --status reverted 0009 --project-ref <REF>`, then `0008_payment_discrepancies.down.sql`
 (it restores 0007's `payment_process_event` and 0005's `payment_return_state`) with
 `supabase migration repair --status reverted 0008 --project-ref <REF>`, then `0007_payment_review.down.sql`
 (it restores 0006's two functions) with `supabase migration repair --status reverted 0007 --project-ref <REF>`,
@@ -122,7 +127,8 @@ drops; 0003's function depends on the `staff_role` type that 0002's down file dr
 catalogue), and the
 reversal is then recorded in the ledger with `supabase migration repair --status reverted <version>
 --project-ref <REF>` (until 2026-11-27 the S1.7 order began at `0006_payment_evidence.down.sql`, "from S1.7's
-review"; then, from S1.7's round 2 until `0008`, at `0007_payment_review.down.sql`). Who may run a down file
+review"; then, from S1.7's round 2 until `0008`, at `0007_payment_review.down.sql`; then, from S1.7's round 3 until
+`0009`, at `0008_payment_discrepancies.down.sql`). Who may run a down file
 and through which channel is stated once, in
 `docs/database-changes/S1.1-0001-catalogue.md` → "Rollback rehearsal": on TEST the owner in the SQL editor,
 or the builder with `db query --linked --project-ref <TEST_REF> --file …` under the owner's written
