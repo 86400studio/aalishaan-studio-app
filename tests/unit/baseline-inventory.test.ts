@@ -45,9 +45,14 @@ describe("supabase/migrations — forward discovery", () => {
     // review, and a payment newly reported after confirmation is a review. 0005–0007 are applied on TEST and never
     // edited — the next free number again (S1.8's planned migration moves on to 0009).
     ["0008_payment_discrepancies.sql", "0008", "payment_discrepancies"],
+    // S1.7, after the independent review's round 4: what the provider check saw over a hold that already stands, a
+    // signed failure the check meets after it, and a verified return of a payment a signed event recorded first are
+    // each kept and read, whichever came first. 0005–0008 are applied on TEST and never edited — the next free number
+    // again (S1.8's planned migration moves on to 0010).
+    ["0009_payment_observations.sql", "0009", "payment_observations"],
   ] as const;
 
-  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the four S1.7 migrations under the roadmap's names", () => {
+  it("holds exactly the S0.2 baseline, the two S1.1 migrations, the S1.2 migration, the S1.6 migration and the five S1.7 migrations under the roadmap's names", () => {
     expect(files).toEqual(EXPECTED.map(([file]) => file));
   });
 

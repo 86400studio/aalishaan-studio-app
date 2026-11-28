@@ -808,12 +808,13 @@ describe("0005_payment_finalization — a confirmation never depends on the sale
   // Preview), so the case is proven here by reading: the function that confirms does not read business_rules at
   // all. The server's own half — the webhook processes payments whatever SALES_MODE says — is
   // tests/unit/payment-verification.test.ts ("paymentsGate").
-  it("payment_process_event's body never names business_rules — as 0005 wrote it, and as 0006, 0007 and 0008 re-create it", () => {
+  it("payment_process_event's body never names business_rules — as 0005 wrote it, and as 0006, 0007, 0008 and 0009 re-create it", () => {
     for (const file of [
       "../../supabase/migrations/0005_payment_finalization.sql",
       "../../supabase/migrations/0006_payment_evidence.sql",
       "../../supabase/migrations/0007_payment_review.sql",
       "../../supabase/migrations/0008_payment_discrepancies.sql",
+      "../../supabase/migrations/0009_payment_observations.sql",
     ]) {
       const sql = readFileSync(
         fileURLToPath(new URL(file, import.meta.url)),
@@ -2993,7 +2994,7 @@ open(
       expect(await outbox(o.id)).toHaveLength(1);
     });
 
-    it("after A's capture confirmed the order, B's verified return flags it once — A's confirmation, its stage and its one task kept, B reported only; a repeated return of B and A's own return write nothing", async () => {
+    it("after A's capture confirmed the order, B's verified return flags it once — A's confirmation, its stage and its one task kept, B reported only; a repeated return of B writes nothing, and A's own first return only its record (0009)", async () => {
       const o = await newOrder();
       const a = pay(o);
       await confirm(o, a);
@@ -3041,11 +3042,33 @@ open(
       });
       expect(await stages(o.id)).toEqual([1]);
       expect(await outbox(o.id)).toHaveLength(1);
-      // The same return of B again, and the return of A itself: nothing new.
+      // The same return of B again: nothing new. The return of A itself — its first — is recorded once since 0009
+      // (round 4, finding 2: a verified return is recorded by its own row, per payment): one audit row naming A, the
+      // payment's captured status in it, and no review; then nothing new.
       const before = await counts();
       expect((await returned(o, b)).recorded).toBe(false);
-      expect((await returned(o, a.id)).recorded).toBe(false);
       expect(await counts()).toEqual(before);
+      expect(await returned(o, a.id)).toMatchObject({
+        recorded: true,
+        paymentStatus: "captured",
+        fulfilmentStatus: "confirmed",
+      });
+      expect(await counts()).toEqual({
+        ...before,
+        audit_log: before.audit_log + 1,
+      });
+      expect(await audits(o.id, "payment.return.verified")).toMatchObject([
+        { external_ref: b, next: { payment: { status: "created" } } },
+        {
+          external_ref: a.id,
+          reason: "checkout_signature",
+          next: { payment_status: "captured", payment: { status: "captured" } },
+        },
+      ]);
+      expect(await audits(o.id, "payment.review.%")).toHaveLength(1);
+      const own = await counts();
+      expect((await returned(o, a.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(own);
       // B's own signed capture later: a review, never a second confirmation.
       expect(await outcomeOf(CAPTURED, pay(o, { id: b }))).toBe(
         "review:extra_payment",
@@ -3105,6 +3128,432 @@ open(
       const before = await counts();
       expect((await returned(o, b)).recorded).toBe(false);
       expect(await counts()).toEqual(before);
+    });
+  },
+);
+
+open(
+  "0009 — every observation a later rule reads is kept, whichever writer took the order first (the independent review's round 4, findings 1 and 2)",
+  () => {
+    const checked = async (o: Order, shown: ObservedPayment[]) => {
+      const result = await payments.recordProviderCheck(o.paId, shown);
+      if (!result.ok) throw new Error(`check refused: ${result.refusal}`);
+      return result.value;
+    };
+    const returned = async (o: Order, id: string) => {
+      const result = await payments.returnState(o.attemptHash, id);
+      if (!result.ok || result.value === null)
+        throw new Error("the verified return could not be recorded");
+      return result.value;
+    };
+    /** What lasts of an order and its payments A and B — never the audit rows, which say who wrote first. */
+    const lasting = async (o: Order, a: string, b: string) => ({
+      standing: await standing(o.id),
+      stages: await stages(o.id),
+      tasks: (await outbox(o.id)).length,
+      a: (await payRow(a))?.status ?? null,
+      b: (await payRow(b))?.status ?? null,
+    });
+    type Step = (
+      o: Order,
+      a: PaymentFields,
+      b: PaymentFields,
+    ) => Promise<unknown>;
+    const STEPS: Record<string, Step> = {
+      "A authorised (signed)": (_o, a) => deliver(AUTHORIZED, a),
+      "A failed (signed)": (_o, a) => deliver(FAILED, a),
+      "A failed in USD (signed)": (_o, a) =>
+        deliver(FAILED, { ...a, currency: "USD" }),
+      "the check lists A authorised": (o, a) =>
+        checked(o, [live(o, a.id, "authorized")]),
+      "A's verified return": (o, a) => returned(o, a.id),
+      "B failed (signed)": (_o, _a, b) => deliver(FAILED, b),
+      "B's verified return": (o, _a, b) => returned(o, b.id),
+    };
+    const orders = (steps: string[]): string[][] =>
+      steps.length <= 1
+        ? [steps]
+        : steps.flatMap((step, i) =>
+            orders([...steps.slice(0, i), ...steps.slice(i + 1)]).map(
+              (rest) => [step, ...rest],
+            ),
+          );
+    /** Every arrival order of `steps`, each on a fresh order, then A's timely capture: what lasts of each. */
+    async function everyOrderOf(steps: string[]) {
+      const ends: Array<{ order: string[]; end: unknown }> = [];
+      for (const order of orders(steps)) {
+        const o = await newOrder();
+        const a = pay(o);
+        const b = pay(o);
+        for (const step of order) await STEPS[step](o, a, b);
+        await deliver(CAPTURED, a);
+        ends.push({ order, end: await lasting(o, a.id, b.id) });
+      }
+      return ends;
+    }
+
+    it("A's signed authorisation, then the check of A over that hold: the observation is kept once — the provider-check hold record — and the order does not move; a repeated check writes nothing; A's signed failure is then the conflict, and its timely capture confirms nothing", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect(await outcomeOf(AUTHORIZED, a)).toBe("hold:authorized_only");
+      expect(await checked(o, [live(o, a.id, "authorized")])).toEqual({
+        held: false,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: "authorized_only",
+      });
+      expect(await audits(o.id, "payment.hold.%")).toEqual([
+        expect.objectContaining({
+          action: "payment.hold.authorized_only",
+          reason: "authorized_event",
+          external_ref: a.id,
+        }),
+        {
+          actor_type: "system",
+          action: "payment.hold.authorized_only",
+          entity_type: "order",
+          entity_id: o.id,
+          previous: { needs_review: true, payment_hold: "authorized_only" },
+          next: {
+            needs_review: true,
+            payment_hold: "authorized_only",
+            payment: {
+              status: "authorized",
+              amount_paise: Number(o.total),
+              currency: "INR",
+            },
+          },
+          reason: "provider_check",
+          external_ref: a.id,
+        },
+      ]);
+      const before = await counts();
+      await checked(o, [live(o, a.id, "authorized")]);
+      expect(await counts()).toEqual(before);
+      expect(await outcomeOf(FAILED, a)).toBe("review:payment_state_conflict");
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await payRow(a.id)).toMatchObject({
+        status: "authorized",
+        signature_verified: true,
+      });
+      expect(await outcomeOf(CAPTURED, a)).toBe("review:order_under_review");
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await stages(o.id)).toEqual([0]);
+      expect(await outbox(o.id)).toEqual([]);
+    });
+
+    it("the other side of the same rule: A's signed failure, stale beside its signed authorisation, then the check of A — the review, recorded once — and its timely capture confirms nothing", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect(await outcomeOf(AUTHORIZED, a)).toBe("hold:authorized_only");
+      expect(await outcomeOf(FAILED, a)).toBe("stale_failed");
+      expect(await checked(o, [live(o, a.id, "authorized")])).toEqual({
+        held: false,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: null,
+      });
+      expect(
+        await audits(o.id, "payment.review.payment_state_conflict"),
+      ).toMatchObject([
+        {
+          reason: "provider_check",
+          external_ref: a.id,
+          next: {
+            payments: [
+              {
+                id: a.id,
+                status: "authorized",
+                amount_paise: Number(o.total),
+                currency: "INR",
+              },
+            ],
+          },
+        },
+      ]);
+      const before = await counts();
+      await checked(o, [live(o, a.id, "authorized")]);
+      expect(await counts()).toEqual(before);
+      expect(await outcomeOf(CAPTURED, a)).toBe("review:order_under_review");
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(await stages(o.id)).toEqual([0]);
+      expect(await outbox(o.id)).toEqual([]);
+    });
+
+    it("every arrival order of A's signed authorisation, the check of A and A's signed failure ends the same before A's timely capture: the review, at stage 0, with no task", async () => {
+      const ends = await everyOrderOf([
+        "A authorised (signed)",
+        "the check lists A authorised",
+        "A failed (signed)",
+      ]);
+      expect(ends).toHaveLength(6);
+      for (const { order, end } of ends)
+        expect(end, order.join(" → ")).toEqual({
+          standing: FLAGGED,
+          stages: [0],
+          tasks: 0,
+          a: "captured",
+          b: null,
+        });
+    });
+
+    it("a late authorisation — A failed, then authorised — confirms on its capture with no check; with the check after both it is the review", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect(await outcomeOf(FAILED, a)).toBe("recorded:failed");
+      expect(await outcomeOf(AUTHORIZED, a)).toBe("hold:authorized_only");
+      await confirm(o, a);
+      expect(await standing(o.id)).toEqual(CONFIRMED);
+      const c = await newOrder();
+      const p = pay(c);
+      await deliver(FAILED, p);
+      await deliver(AUTHORIZED, p);
+      expect(
+        (await checked(c, [live(c, p.id, "authorized")])).paymentHold,
+      ).toBe(null);
+      expect(await outcomeOf(CAPTURED, p)).toBe("review:order_under_review");
+      expect(await standing(c.id)).toEqual(FLAGGED);
+      expect(await outbox(c.id)).toEqual([]);
+    });
+
+    it("B's signed failure, A's capture, then B's first verified return: recorded once and the order flagged once — B stays failed; A's confirmation, its stage and its one task kept; B's repeated return writes nothing; A's own return its record only", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      const b = pay(o);
+      expect(await outcomeOf(FAILED, b)).toBe("recorded:failed");
+      await confirm(o, a);
+      const confirmedRow = await orderRow(o.id);
+      expect(await returned(o, b.id)).toMatchObject({
+        paymentStatus: "captured",
+        fulfilmentStatus: "confirmed",
+        needsReview: true,
+        paymentHold: null,
+        recorded: true,
+      });
+      expect(await audits(o.id, "payment.return.verified")).toEqual([
+        {
+          actor_type: "system",
+          action: "payment.return.verified",
+          entity_type: "order",
+          entity_id: o.id,
+          previous: null,
+          next: { payment_status: "captured", payment: { status: "failed" } },
+          reason: "checkout_signature",
+          external_ref: b.id,
+        },
+      ]);
+      expect(await audits(o.id, "payment.review.%")).toEqual([
+        {
+          actor_type: "system",
+          action: "payment.review.extra_payment",
+          entity_type: "order",
+          entity_id: o.id,
+          previous: {
+            payment_status: "captured",
+            needs_review: false,
+            payment_hold: null,
+          },
+          next: {
+            payment_status: "captured",
+            needs_review: true,
+            payment_hold: null,
+            payment: { status: "failed" },
+          },
+          reason: "checkout_signature",
+          external_ref: b.id,
+        },
+      ]);
+      expect(await payRow(b.id)).toMatchObject({
+        status: "failed",
+        signature_verified: true,
+      });
+      expect(await orderRow(o.id)).toMatchObject({
+        payment_status: "captured",
+        fulfilment_status: "confirmed",
+        confirmed_at: confirmedRow.confirmed_at,
+        needs_review: true,
+      });
+      expect(await payRow(a.id)).toMatchObject({ status: "captured" });
+      expect(await stages(o.id)).toEqual([1]);
+      expect(await outbox(o.id)).toHaveLength(1);
+      const before = await counts();
+      expect((await returned(o, b.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+      expect((await returned(o, a.id)).recorded).toBe(true);
+      expect(await counts()).toEqual({
+        ...before,
+        audit_log: before.audit_log + 1,
+      });
+      expect(await audits(o.id, "payment.review.%")).toHaveLength(1);
+      const again = await counts();
+      expect((await returned(o, a.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(again);
+      expect(await outbox(o.id)).toHaveLength(1);
+    });
+
+    it("B's verified return and B's signed failure contradict each other: in either order the order is flagged when the second arrives (payment_state_conflict) — never left payable beside them —, A's later capture confirms nothing, and a check of A is a review, never a hold", async () => {
+      // The return first: the signed failure is the conflict.
+      const o = await newOrder();
+      const b = pay(o);
+      expect(await returned(o, b.id)).toMatchObject({ needsReview: false });
+      const failed = await deliver(FAILED, b);
+      expect(failed.outcome).toBe("review:payment_state_conflict");
+      expect(await standing(o.id)).toEqual(FLAGGED);
+      expect(
+        await audits(o.id, "payment.review.payment_state_conflict"),
+      ).toMatchObject([
+        {
+          reason: "payment_state_conflict",
+          external_ref: b.id,
+          next: {
+            needs_review: true,
+            payment_hold: null,
+            payment: { status: "failed" },
+            event: failed.row,
+          },
+        },
+      ]);
+      expect(await payRow(b.id)).toMatchObject({ status: "failed" });
+      // The failure first: the return is the conflict.
+      const p = await newOrder();
+      const c = pay(p);
+      expect(await outcomeOf(FAILED, c)).toBe("recorded:failed");
+      expect(await returned(p, c.id)).toMatchObject({
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: null,
+        recorded: true,
+      });
+      expect(await audits(p.id, "payment.review.%")).toEqual([
+        {
+          actor_type: "system",
+          action: "payment.review.payment_state_conflict",
+          entity_type: "order",
+          entity_id: p.id,
+          previous: {
+            payment_status: "pending",
+            needs_review: false,
+            payment_hold: null,
+          },
+          next: {
+            payment_status: "pending",
+            needs_review: true,
+            payment_hold: null,
+            payment: { status: "failed" },
+          },
+          reason: "checkout_signature",
+          external_ref: c.id,
+        },
+      ]);
+      expect(await payRow(c.id)).toMatchObject({ status: "failed" });
+      const before = await counts();
+      expect((await returned(p, c.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+      // Then, on either order, a check of A is a review beside the flag, and A's timely capture confirms nothing.
+      const a = pay(p);
+      expect(await checked(p, [live(p, a.id, "authorized")])).toEqual({
+        held: false,
+        paymentStatus: "pending",
+        needsReview: true,
+        paymentHold: null,
+      });
+      expect(
+        await audits(p.id, "payment.review.order_under_review"),
+      ).toMatchObject([{ reason: "provider_check", external_ref: a.id }]);
+      expect(await outcomeOf(CAPTURED, a)).toBe("review:order_under_review");
+      // Every arrival order, then A's capture: the same review.
+      const ends = await everyOrderOf([
+        "B failed (signed)",
+        "B's verified return",
+      ]);
+      expect(ends).toHaveLength(2);
+      for (const { order, end } of ends)
+        expect(end, order.join(" → ")).toEqual({
+          standing: FLAGGED,
+          stages: [0],
+          tasks: 0,
+          a: "captured",
+          b: "failed",
+        });
+    });
+
+    it("A's own verified return and A's signed failure contradict each other too: in every arrival order — with A's signed authorisation as well — the review, and A's timely capture confirms nothing", async () => {
+      for (const steps of [
+        ["A's verified return", "A failed (signed)"],
+        ["A's verified return", "A failed (signed)", "A authorised (signed)"],
+      ]) {
+        const ends = await everyOrderOf(steps);
+        expect(ends).toHaveLength(steps.length === 2 ? 2 : 6);
+        for (const { order, end } of ends)
+          expect(end, order.join(" → ")).toEqual({
+            standing: FLAGGED,
+            stages: [0],
+            tasks: 0,
+            a: "captured",
+            b: null,
+          });
+      }
+    });
+
+    it("a signed failure whose money no payment row can hold (USD) writes no row, and still meets the check: in either order the review, never a confirmation", async () => {
+      const ends = await everyOrderOf([
+        "A failed in USD (signed)",
+        "the check lists A authorised",
+      ]);
+      expect(ends).toHaveLength(2);
+      for (const { order, end } of ends)
+        expect(end, order.join(" → ")).toEqual({
+          standing: FLAGGED,
+          stages: [0],
+          tasks: 0,
+          a: "captured",
+          b: null,
+        });
+    });
+
+    it("a verified return for an order cancelled under a signed hold flags it (order_not_payable) once, clearing the hold — the payment's row keeps its signed status", async () => {
+      const o = await newOrder();
+      const a = pay(o);
+      expect(await outcomeOf(AUTHORIZED, a)).toBe("hold:authorized_only");
+      const cut = await privileged
+        .from("orders")
+        .update({ fulfilment_status: "cancelled" })
+        .eq("id", o.id);
+      expect(cut.error).toBeNull();
+      expect(await returned(o, a.id)).toMatchObject({
+        fulfilmentStatus: "cancelled",
+        needsReview: true,
+        paymentHold: null,
+        recorded: true,
+      });
+      expect(await audits(o.id, "payment.review.%")).toMatchObject([
+        {
+          action: "payment.review.order_not_payable",
+          reason: "checkout_signature",
+          external_ref: a.id,
+          next: { payment: { status: "authorized" } },
+        },
+      ]);
+      expect(await payRow(a.id)).toMatchObject({ status: "authorized" });
+      const before = await counts();
+      expect((await returned(o, a.id)).recorded).toBe(false);
+      expect(await counts()).toEqual(before);
+    });
+
+    it("a failure of another payment with no verified return stays only recorded: the check's hold for A and A's capture still confirm, once", async () => {
+      const ends = await everyOrderOf([
+        "B failed (signed)",
+        "the check lists A authorised",
+      ]);
+      expect(ends).toHaveLength(2);
+      for (const { order, end } of ends)
+        expect(end, order.join(" → ")).toEqual({
+          standing: CONFIRMED,
+          stages: [1],
+          tasks: 1,
+          a: "captured",
+          b: "failed",
+        });
     });
   },
 );
